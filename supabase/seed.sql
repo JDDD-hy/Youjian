@@ -1,0 +1,2 @@
+-- M0 intentionally contains no business seed data.
+-- Deterministic development fixtures are added with the M1 schema.

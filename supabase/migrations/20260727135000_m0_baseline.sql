@@ -1,0 +1,1 @@
+-- M0 baseline. Domain schema begins in M1.
