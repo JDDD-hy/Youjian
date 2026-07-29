@@ -99,3 +99,7 @@ npm run db:lint
 ```
 
 本地浏览器 smoke test 使用已安装的 Google Chrome，运行 `npm run test:e2e`。CI 使用 Playwright 管理的 Chromium。
+
+### 发布验收
+
+发布、监控、备份与恢复门禁见 [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)。自动化不能替代的 iOS/Android 双实体手机签字使用 [`docs/REAL_DEVICE_ACCEPTANCE.md`](docs/REAL_DEVICE_ACCEPTANCE.md)。

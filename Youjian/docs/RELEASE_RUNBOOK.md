@@ -80,6 +80,8 @@ npm run db:test
 
 ## 6. 浏览器与真实设备矩阵
 
+实体设备执行时使用 [`REAL_DEVICE_ACCEPTANCE.md`](./REAL_DEVICE_ACCEPTANCE.md)，并把截图编号和签字结果回填到本节。
+
 | 平台 | 版本 | Browser | PWA standalone | 日期 | 结果 |
 |---|---|---|---|---|---|
 | iPhone | 待填 | Safari | 待测 | — | 未验证 |
