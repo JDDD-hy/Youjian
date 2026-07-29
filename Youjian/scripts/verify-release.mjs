@@ -58,6 +58,18 @@ try {
   // Missing headers are already reported above.
 }
 
+try {
+  const html = await fs.readFile('dist/index.html', 'utf8');
+  if (!html.includes('http-equiv="Content-Security-Policy"')) {
+    errors.push('Production HTML must include a CSP meta policy for static hosts.');
+  }
+  if (/127\.0\.0\.1|localhost|%VITE_CSP_CONNECT_SRC%/.test(html)) {
+    errors.push('Production HTML CSP contains a loopback or unresolved connection source.');
+  }
+} catch {
+  // Missing HTML is already reported above.
+}
+
 let largestGzip = 0;
 let largestAsset = '';
 try {
