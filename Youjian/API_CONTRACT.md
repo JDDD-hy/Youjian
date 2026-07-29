@@ -458,7 +458,7 @@ connected | unconfirmed
 错误：
 
 - `SESSION_NOT_FOUND`；
-- `SESSION_NOT_OWNED`；
+- `SESSION_NOT_FOUND`（不存在和非本人统一返回，避免枚举其他成员 session）；
 - `SESSION_NOT_FOCUSING`，返回权威状态；
 - `MEMBER_DISABLED`。
 
@@ -483,7 +483,7 @@ connected | unconfirmed
 错误：
 
 - `SESSION_NOT_FOUND`；
-- `SESSION_NOT_OWNED`；
+- `SESSION_NOT_FOUND`（不存在和非本人统一返回，避免枚举其他成员 session）；
 - `SESSION_NOT_PAUSED`，返回权威状态；
 - `MEMBER_DISABLED`。
 
@@ -505,7 +505,7 @@ connected | unconfirmed
 错误：
 
 - `SESSION_NOT_FOUND`；
-- `SESSION_NOT_OWNED`；
+- `SESSION_NOT_FOUND`（不存在和非本人统一返回，避免枚举其他成员 session）；
 - `MEMBER_DISABLED`，但若停用事务已完成 session，则返回最终权威状态。
 
 ### 7.5 `heartbeat_focus`

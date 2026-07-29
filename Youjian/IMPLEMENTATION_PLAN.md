@@ -443,7 +443,7 @@ get_home_snapshot
 - source map 访问策略确认；
 - service role key 扫描；
 - 数据库函数 execute 权限审计；
-- 生产 CAPTCHA 配置。
+- CAPTCHA 按部署模式配置：公开邀请启用，小范围可信成员可关闭；两种模式都保留邀请限速。
 
 ### 11.2 数据与恢复
 

@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type PropsWithChildren, useState } from 'react';
+import { AppErrorBoundary } from '../components/AppErrorBoundary';
+import { PWAStatus } from '../components/PWAStatus';
 
 export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
@@ -15,6 +17,11 @@ export function AppProviders({ children }: PropsWithChildren) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <PWAStatus />
+        {children}
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }

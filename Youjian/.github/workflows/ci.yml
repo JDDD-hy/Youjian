@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+
 on:
   push:
   pull_request:
@@ -14,14 +17,27 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run format:check
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm run security:scan
+      - run: npm run security:audit
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: npm run release:verify
+      - run: npm run sites:verify
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run db:start
       - run: npm run db:reset
+      - run: npm run test:e2e
       - run: npm run db:lint
+      - run: npm run db:test
+      - run: npm run test:integration
+      - run: npm run test:performance
+      - run: npm run test:performance:scale
+      - run: npm run ops:monitor-check
+      - run: npm run ops:monitor-alert-drill
+      - run: npm run db:test
+      - run: npm run ops:restore-drill
       - if: always()
         run: npm run db:stop

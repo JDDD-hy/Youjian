@@ -3,7 +3,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const host = '127.0.0.1';
 const port = '4173';
-const baseUrl = `http://${host}:${port}`;
+const localBaseUrl = `http://${host}:${port}`;
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? localBaseUrl;
 
 function runNode(modulePath, args) {
   return spawn(process.execPath, [modulePath, ...args], {
@@ -29,23 +30,28 @@ async function waitForServer(timeoutMs = 30_000) {
   throw new Error(`Preview server did not become ready at ${baseUrl}`);
 }
 
-const preview = runNode('node_modules/vite/bin/vite.js', [
-  'preview',
-  '--host',
-  host,
-  '--port',
-  port,
-  '--strictPort',
-]);
+const preview = process.env.PLAYWRIGHT_BASE_URL
+  ? undefined
+  : runNode('node_modules/vite/bin/vite.js', [
+      'preview',
+      '--host',
+      host,
+      '--port',
+      port,
+      '--strictPort',
+    ]);
 
 try {
   await waitForServer();
-  const playwright = runNode('node_modules/@playwright/test/cli.js', ['test']);
+  const playwright = runNode('node_modules/@playwright/test/cli.js', [
+    'test',
+    ...process.argv.slice(2),
+  ]);
   const exitCode = await new Promise((resolve, reject) => {
     playwright.once('error', reject);
     playwright.once('exit', (code) => resolve(code ?? 1));
   });
   process.exitCode = exitCode;
 } finally {
-  preview.kill();
+  preview?.kill();
 }
