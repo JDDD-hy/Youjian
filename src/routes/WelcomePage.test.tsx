@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { WelcomePage } from './WelcomePage';
 
 describe('WelcomePage', () => {
-  it('shows the product message and create action', () => {
+  it('shows the product message and create action after identity restore', async () => {
     const router = createMemoryRouter([
       { path: '/', element: <WelcomePage /> },
     ]);
@@ -18,10 +18,9 @@ describe('WelcomePage', () => {
     );
 
     expect(screen.getByRole('heading', { name: '友间' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '创建友间' })).toHaveAttribute(
-      'href',
-      '/create',
-    );
+    expect(
+      await screen.findByRole('link', { name: '创建友间' }),
+    ).toHaveAttribute('href', '/create');
     expect(screen.getByText(/匿名身份只保存在当前设备中/)).toBeInTheDocument();
   });
 });

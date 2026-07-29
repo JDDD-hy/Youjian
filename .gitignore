@@ -10,3 +10,4 @@ test-results/
 *.local
 supabase/.branches/
 supabase/.temp/
+.artifacts/

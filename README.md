@@ -85,6 +85,8 @@ npm run dev
 
 复制 `.env.example` 为 `.env.local`，并填入 `npm run db:start` 输出的本地 URL 与 publishable key。真实密钥不得提交。
 
+Turnstile 是可选部署能力。小范围可信成员部署可以让 `VITE_TURNSTILE_SITE_KEY` 保持为空，并在对应 Supabase 项目的 Auth CAPTCHA 设置中关闭 CAPTCHA；此时邀请限速、RLS、单身份单友间和成员上限仍然必须启用。若开启 Turnstile，前端 site key 与 Supabase Auth secret 必须来自同一环境。
+
 ### 验证
 
 ```powershell

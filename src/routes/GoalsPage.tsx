@@ -1,0 +1,715 @@
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import type {
+  Achievement,
+  Goal,
+  GoalProposal,
+  GoalType,
+  HomeSnapshot,
+  PeriodType,
+} from '../domain/types';
+import { rpc } from '../lib/api';
+import {
+  formatLocalDateTime,
+  goalTypeLabels,
+  periodLabels,
+} from '../lib/format';
+import { useIntentKey } from '../hooks/useIntentKey';
+import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
+import { AccessibleModal } from '../components/AccessibleModal';
+import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
+import { Icon } from '../components/Icons';
+import { nextPeriodStart, proposalSentence } from '../lib/goalPreview';
+import { loadResolvedGoalProposals } from '../lib/goalHistory';
+import { assertRouteSpace } from '../lib/spaceBoundary';
+
+interface GoalsSnapshot {
+  space_id: string;
+  active_goals: Goal[];
+  scheduled_goals: Goal[];
+  pending_proposals: GoalProposal[];
+  history: Goal[];
+  proposal_history?: GoalProposal[];
+}
+
+function GoalCard({ goal }: { goal: Goal }) {
+  const credited = goal.progress.credited_value;
+  const percent =
+    credited === null
+      ? null
+      : Math.min(100, Math.round((credited / goal.target_value) * 100));
+  const unit = goal.goal_type === 'shared_checkin_days' ? '天' : '分钟';
+  const statusLabel =
+    goal.status === 'scheduled'
+      ? '即将生效'
+      : goal.status === 'failed'
+        ? '未达成'
+        : goal.status === 'completed' || goal.progress.completed
+          ? '已完成'
+          : percent === null
+            ? '按成员计算'
+            : `${percent}%`;
+  return (
+    <article className={`goal-card goal-card--${goal.status}`}>
+      <div className="goal-card__top">
+        <span className="pill">{periodLabels[goal.period_type]}</span>
+        <span>{statusLabel}</span>
+      </div>
+      <h3>{goalTypeLabels[goal.goal_type]}</h3>
+      {credited === null ? (
+        <p>
+          每位成员分别完成 {goal.target_value} {unit}
+        </p>
+      ) : (
+        <p>
+          {credited} / {goal.target_value} {unit}
+        </p>
+      )}
+      {percent !== null && (
+        <progress
+          className="progress-track"
+          value={percent}
+          max={100}
+          aria-label={`目标完成进度 ${percent}%`}
+        >
+          {percent}%
+        </progress>
+      )}
+      {goal.progress.members && (
+        <div className="goal-members">
+          {goal.progress.members.map((member) => (
+            <div key={member.member_id}>
+              <span>{member.display_name}</span>
+              <span>
+                {member.credited_value ?? 0} / {goal.target_value} {unit}{' '}
+                {member.completed && <Icon name="check" />}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <small>
+        {formatLocalDateTime(goal.starts_at)} —{' '}
+        {formatLocalDateTime(goal.ends_at)}
+      </small>
+    </article>
+  );
+}
+
+export function GoalsPage() {
+  const { spaceId = '' } = useParams();
+  const queryClient = useQueryClient();
+  const proposalIntent = useIntentKey();
+  const voteIntent = useIntentKey();
+  const seenIntent = useIntentKey();
+  const [showForm, setShowForm] = useState(false);
+  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+  const [rejectProposal, setRejectProposal] = useState<GoalProposal | null>(
+    null,
+  );
+  const [resolvedProposals, setResolvedProposals] = useState<GoalProposal[]>(
+    [],
+  );
+  const [goalType, setGoalType] = useState<GoalType>('group_total_minutes');
+  const [periodType, setPeriodType] = useState<PeriodType>('weekly');
+  const [target, setTarget] = useState(1200);
+  const targetMax =
+    goalType !== 'shared_checkin_days'
+      ? 1_000_000
+      : periodType === 'daily'
+        ? 1
+        : periodType === 'weekly'
+          ? 7
+          : 31;
+  const goals = useQuery({
+    queryKey: ['goals', spaceId],
+    queryFn: async () => {
+      const result = await rpc<GoalsSnapshot>('get_goals_snapshot', {
+        space_id: spaceId,
+      });
+      assertRouteSpace(spaceId, result.data.space_id, 'goals_snapshot_space');
+      return result;
+    },
+    refetchInterval: 60_000,
+  });
+  const home = useQuery({
+    queryKey: ['goal-form-context', spaceId],
+    queryFn: async () => {
+      const result = await rpc<HomeSnapshot>('get_home_snapshot', {
+        space_id: spaceId,
+      });
+      assertRouteSpace(spaceId, result.data.space.id, 'goal_home_space');
+      return result;
+    },
+  });
+  const achievements = useInfiniteQuery({
+    queryKey: ['achievements', spaceId],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const result = await rpc<{
+        space_id: string;
+        items: Achievement[];
+        next_cursor: string | null;
+      }>('list_achievements', {
+        space_id: spaceId,
+        limit: 30,
+        cursor: pageParam,
+      });
+      assertRouteSpace(
+        spaceId,
+        result.data.space_id,
+        'goal_achievements_space',
+      );
+      return result;
+    },
+    getNextPageParam: (last) => last.data.next_cursor ?? undefined,
+    refetchInterval: 60_000,
+  });
+  const resolvedHistory = useQuery({
+    queryKey: ['goal-proposal-history', spaceId],
+    queryFn: () => loadResolvedGoalProposals(spaceId),
+    refetchInterval: 60_000,
+  });
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['goals', spaceId] });
+    void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
+    void queryClient.invalidateQueries({
+      queryKey: ['goal-proposal-history', spaceId],
+    });
+  };
+  const propose = useMutation({
+    mutationFn: () => {
+      const signature = `${spaceId}:${goalType}:${periodType}:${target}`;
+      return rpc('propose_goal', {
+        space_id: spaceId,
+        goal_type: goalType,
+        period_type: periodType,
+        target_value: target,
+        idempotency_key: proposalIntent.get(signature),
+      });
+    },
+    onSuccess: () => {
+      proposalIntent.clear();
+      setShowForm(false);
+      setFormStep(1);
+      refresh();
+    },
+  });
+  const vote = useMutation({
+    mutationFn: ({
+      proposalId,
+      value,
+    }: {
+      proposalId: string;
+      value: 'accepted' | 'rejected';
+    }) =>
+      rpc<{ proposal: GoalProposal }>('vote_goal_proposal', {
+        proposal_id: proposalId,
+        vote: value,
+        idempotency_key: voteIntent.get(`${proposalId}:${value}`),
+      }),
+    onSuccess: ({ data }: { data: { proposal: GoalProposal } }) => {
+      voteIntent.clear();
+      if (
+        data.proposal.status === 'rejected' ||
+        data.proposal.status === 'expired'
+      )
+        setResolvedProposals((items) => [
+          data.proposal,
+          ...items.filter(
+            (item) => item.proposal_id !== data.proposal.proposal_id,
+          ),
+        ]);
+      setRejectProposal(null);
+      refresh();
+    },
+  });
+  const markSeen = useMutation({
+    mutationFn: (achievementId: string) =>
+      rpc('mark_achievement_seen', {
+        achievement_id: achievementId,
+        idempotency_key: seenIntent.get(achievementId),
+      }),
+    onSuccess: () => {
+      seenIntent.clear();
+      void queryClient.invalidateQueries({
+        queryKey: ['achievements', spaceId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
+    },
+    retry: 2,
+  });
+  const snapshot = goals.data?.data;
+  const achievementItems =
+    achievements.data?.pages.flatMap((page) => page.data.items) ?? [];
+  const unseenAchievementId = achievementItems.find(
+    (item) => !item.seen,
+  )?.achievement_id;
+  useAutoAcknowledge(unseenAchievementId, (achievementId) => {
+    markSeen.mutate(achievementId);
+  });
+  const proposalHistory = [
+    ...resolvedProposals,
+    ...(resolvedHistory.data ?? []),
+    ...(snapshot?.proposal_history ?? []),
+  ].filter(
+    (proposal, index, items) =>
+      items.findIndex((item) => item.proposal_id === proposal.proposal_id) ===
+      index,
+  );
+  return (
+    <div className="page goals-page">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">一起走得更远</p>
+          <h1>共同目标</h1>
+        </div>
+        <button
+          className="button button--secondary button--compact"
+          onClick={() => {
+            setFormStep(1);
+            setShowForm(true);
+          }}
+        >
+          发起提案
+        </button>
+      </header>
+      {goals.isLoading ? (
+        <PageLoader />
+      ) : !snapshot ? (
+        <ErrorState onRetry={() => void goals.refetch()} />
+      ) : (
+        <>
+          {goals.error && (
+            <div className="inline-notice inline-notice--warning" role="status">
+              目标状态暂时没有更新，正在显示上次成功加载的数据。
+              <button type="button" onClick={() => void goals.refetch()}>
+                重新加载
+              </button>
+            </div>
+          )}
+          <section className="section">
+            <div className="section-heading">
+              <h2>进行中</h2>
+              <span>{snapshot.active_goals.length}</span>
+            </div>
+            {snapshot.active_goals.length ? (
+              snapshot.active_goals.map((goal) => (
+                <GoalCard key={goal.goal_id} goal={goal} />
+              ))
+            ) : (
+              <EmptyState icon="target" title="还没有生效目标">
+                <p>共同目标需要所有成员投票同意，并从下一个完整周期开始。</p>
+              </EmptyState>
+            )}
+          </section>
+          {snapshot.scheduled_goals.length > 0 && (
+            <section className="section">
+              <div className="section-heading">
+                <h2>即将开始</h2>
+              </div>
+              {snapshot.scheduled_goals.map((goal) => (
+                <GoalCard key={goal.goal_id} goal={goal} />
+              ))}
+            </section>
+          )}
+          <section className="section">
+            <div className="section-heading">
+              <h2>等待投票</h2>
+              <span>48 小时有效</span>
+            </div>
+            {snapshot.pending_proposals.length ? (
+              <div className="proposal-list">
+                {snapshot.pending_proposals.map((proposal) => (
+                  <article className="proposal-card" key={proposal.proposal_id}>
+                    <p>
+                      <strong>{proposal.proposer.display_name}</strong> 发起
+                    </p>
+                    <h3>
+                      {periodLabels[proposal.period_type]} ·{' '}
+                      {goalTypeLabels[proposal.goal_type]}
+                    </h3>
+                    <p>
+                      目标值 {proposal.target_value}{' '}
+                      {proposal.goal_type === 'shared_checkin_days'
+                        ? '天'
+                        : '分钟'}
+                    </p>
+                    <small>
+                      {proposal.accepted_vote_count} /{' '}
+                      {proposal.required_vote_count} 人已同意 ·{' '}
+                      {Math.max(
+                        0,
+                        Math.ceil(
+                          (Date.parse(proposal.expires_at) -
+                            Date.parse(goals.data?.serverNow ?? '')) /
+                            3_600_000,
+                        ),
+                      )}{' '}
+                      小时后过期 · {formatLocalDateTime(proposal.expires_at)}
+                    </small>
+                    {proposal.my_vote ? (
+                      <span
+                        className={`vote-status vote-status--${proposal.my_vote}`}
+                      >
+                        <Icon name="check" />
+                        你已{proposal.my_vote === 'accepted' ? '同意' : '拒绝'}
+                      </span>
+                    ) : (
+                      <div className="proposal-card__actions">
+                        <button
+                          className="button button--secondary"
+                          disabled={vote.isPending}
+                          onClick={() => setRejectProposal(proposal)}
+                        >
+                          拒绝
+                        </button>
+                        <button
+                          className="button button--primary"
+                          disabled={vote.isPending}
+                          onClick={() =>
+                            vote.mutate({
+                              proposalId: proposal.proposal_id,
+                              value: 'accepted',
+                            })
+                          }
+                        >
+                          同意
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="quiet-copy">没有等待投票的提案。</p>
+            )}
+          </section>
+          {snapshot.history.length > 0 && (
+            <section className="section">
+              <div className="section-heading">
+                <h2>过往目标</h2>
+              </div>
+              {snapshot.history.map((goal) => (
+                <GoalCard key={goal.goal_id} goal={goal} />
+              ))}
+            </section>
+          )}
+          {proposalHistory.length > 0 && (
+            <section className="section">
+              <div className="section-heading">
+                <h2>已结束提案</h2>
+              </div>
+              <div className="proposal-list">
+                {proposalHistory.map((proposal) => (
+                  <article className="proposal-card" key={proposal.proposal_id}>
+                    <span className="pill">
+                      {proposal.status === 'rejected' ? '已拒绝' : '已过期'}
+                    </span>
+                    <h3>
+                      {proposalSentence(
+                        proposal.goal_type,
+                        proposal.period_type,
+                        proposal.target_value,
+                      )}
+                    </h3>
+                    <small>发起人：{proposal.proposer.display_name}</small>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+          {resolvedHistory.error && (
+            <ErrorState
+              title="无法加载已结束提案"
+              message="被拒绝和已过期的提案尚未完整加载。"
+              onRetry={() => void resolvedHistory.refetch()}
+            />
+          )}
+          <section className="section">
+            <div className="section-heading">
+              <h2>共同成就</h2>
+              <span>{achievementItems.length}</span>
+            </div>
+            {achievements.error && achievementItems.length > 0 && (
+              <div
+                className="inline-notice inline-notice--warning"
+                role="status"
+              >
+                新的成就暂时没有加载，当前记录仍可查看。
+                <button
+                  type="button"
+                  onClick={() => void achievements.refetch()}
+                >
+                  重新加载
+                </button>
+              </div>
+            )}
+            {achievementItems.length ? (
+              <>
+                <div className="achievement-grid">
+                  {achievementItems.map((item) => (
+                    <article
+                      className={!item.seen ? 'achievement--new' : ''}
+                      key={item.achievement_id}
+                    >
+                      <span>
+                        <Icon name="sparkle" />
+                      </span>
+                      <h3>{achievementTitle(item.achievement_type)}</h3>
+                      <p>{formatLocalDateTime(item.earned_at)}</p>
+                      {!item.seen && <small>新成就，已自动记录为已读</small>}
+                    </article>
+                  ))}
+                </div>
+                {achievements.hasNextPage && (
+                  <button
+                    className="button button--secondary button--full"
+                    disabled={achievements.isFetchingNextPage}
+                    onClick={() => void achievements.fetchNextPage()}
+                  >
+                    {achievements.isFetchingNextPage
+                      ? '正在加载…'
+                      : '加载更多成就'}
+                  </button>
+                )}
+              </>
+            ) : achievements.error ? (
+              <ErrorState
+                title="无法加载成就记录"
+                message="共同成就尚未完整加载。"
+                onRetry={() => void achievements.refetch()}
+              />
+            ) : (
+              <p className="quiet-copy">
+                一起亮灯、连续相伴和完成目标后，成就会出现在这里。
+              </p>
+            )}
+          </section>
+        </>
+      )}
+      {(propose.error || vote.error || markSeen.error) && (
+        <div className="inline-notice inline-notice--error" role="alert">
+          {(propose.error ?? vote.error ?? markSeen.error)?.message}
+        </div>
+      )}
+      {showForm && (
+        <AccessibleModal
+          titleId="proposal-title"
+          onClose={() => {
+            if (!propose.isPending) {
+              setShowForm(false);
+              setFormStep(1);
+            }
+          }}
+          closeOnBackdrop={!propose.isPending}
+        >
+          <span className="drawer__handle" />
+          <h2 id="proposal-title">发起共同目标 · {formStep}/3</h2>
+          {formStep === 1 && (
+            <label className="field">
+              <span>目标类型</span>
+              <select
+                autoFocus
+                value={goalType}
+                onChange={(e) => {
+                  const type = e.target.value as GoalType;
+                  setGoalType(type);
+                  setTarget(type === 'shared_checkin_days' ? 3 : 1200);
+                }}
+              >
+                {Object.entries(goalTypeLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {formStep === 2 && (
+            <>
+              <label className="field">
+                <span>周期</span>
+                <select
+                  value={periodType}
+                  onChange={(e) => setPeriodType(e.target.value as PeriodType)}
+                >
+                  {Object.entries(periodLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>
+                  目标值（{goalType === 'shared_checkin_days' ? '天' : '分钟'}）
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max={targetMax}
+                  step="1"
+                  value={target}
+                  onChange={(e) => setTarget(Number(e.target.value))}
+                />
+              </label>
+            </>
+          )}
+          {formStep === 3 && home.isLoading ? (
+            <PageLoader />
+          ) : formStep === 3 && (home.error || !home.data) ? (
+            <ErrorState
+              title="无法确认提案生效信息"
+              message="需要先取得房间时区、成员数与服务端时间。"
+              onRetry={() => void home.refetch()}
+            />
+          ) : formStep === 3 && home.data ? (
+            <section className="proposal-preview" aria-label="提案预览">
+              <p className="eyebrow">完整提案</p>
+              <h3>{proposalSentence(goalType, periodType, target)}</h3>
+              <dl className="detail-list">
+                <div>
+                  <dt>生效周期</dt>
+                  <dd>
+                    {nextPeriodStart(
+                      periodType,
+                      home.data.data.space.timezone,
+                      new Date(home.data.serverNow),
+                    )}{' '}
+                    起
+                  </dd>
+                </div>
+                <div>
+                  <dt>需要同意</dt>
+                  <dd>{home.data.data.space.active_member_count} 人</dd>
+                </div>
+                <div>
+                  <dt>投票截止</dt>
+                  <dd>
+                    {formatLocalDateTime(
+                      new Date(
+                        Date.parse(home.data.serverNow) + 48 * 60 * 60 * 1000,
+                      ).toISOString(),
+                      home.data.data.space.timezone,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <p>提交后不可修改；全员同意后从下一完整周期生效。</p>
+            </section>
+          ) : null}
+          <div className="dialog__actions">
+            {formStep > 1 && (
+              <button
+                className="button button--secondary"
+                disabled={propose.isPending}
+                onClick={() => setFormStep((formStep - 1) as 1 | 2)}
+              >
+                上一步
+              </button>
+            )}
+            {formStep < 3 ? (
+              <button
+                className="button button--primary"
+                disabled={
+                  formStep === 2 &&
+                  (target < 1 ||
+                    target > targetMax ||
+                    !Number.isInteger(target))
+                }
+                onClick={() => setFormStep((formStep + 1) as 2 | 3)}
+              >
+                下一步
+              </button>
+            ) : (
+              <button
+                className="button button--primary"
+                disabled={
+                  propose.isPending ||
+                  target < 1 ||
+                  target > targetMax ||
+                  !Number.isInteger(target) ||
+                  !home.data
+                }
+                onClick={() => propose.mutate()}
+              >
+                {propose.isPending ? '正在提交…' : '发起并投同意票'}
+              </button>
+            )}
+          </div>
+          <button
+            className="button button--text button--full"
+            disabled={propose.isPending}
+            onClick={() => {
+              setShowForm(false);
+              setFormStep(1);
+            }}
+          >
+            取消
+          </button>
+        </AccessibleModal>
+      )}
+      {rejectProposal && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="reject-title"
+          onClose={() => {
+            if (!vote.isPending) setRejectProposal(null);
+          }}
+          closeOnBackdrop={!vote.isPending}
+        >
+          <h2 id="reject-title">确认拒绝这个提案？</h2>
+          <p>
+            {proposalSentence(
+              rejectProposal.goal_type,
+              rejectProposal.period_type,
+              rejectProposal.target_value,
+            )}
+          </p>
+          <p>拒绝票提交后不可更改，提案会立即结束。</p>
+          <div className="dialog__actions">
+            <button
+              className="button button--secondary"
+              disabled={vote.isPending}
+              onClick={() => setRejectProposal(null)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--danger"
+              disabled={vote.isPending}
+              onClick={() =>
+                vote.mutate({
+                  proposalId: rejectProposal.proposal_id,
+                  value: 'rejected',
+                })
+              }
+            >
+              {vote.isPending ? '正在提交…' : '确认拒绝'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+    </div>
+  );
+}
+
+function achievementTitle(type: string) {
+  return (
+    (
+      {
+        together_lit: '同日亮灯',
+        three_days_together: '三日相伴',
+        first_goal: '第一个共同目标',
+        focus_milestone: '时光里程碑',
+      } as Record<string, string>
+    )[type] ?? '共同的光'
+  );
+}
