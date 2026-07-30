@@ -42,7 +42,7 @@ jobs:
           npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
           npx supabase db push --linked --include-all --yes
 
-      - name: Configure production origin and build environment
+      - name: Configure production build environment
         shell: python
         run: |
           import json
@@ -57,18 +57,6 @@ jobs:
               'Content-Type': 'application/json',
               'User-Agent': 'youjian-production-release/1.0',
           }
-
-          query_request = urllib.request.Request(
-              f'https://api.supabase.com/v1/projects/{project}/database/query',
-              data=json.dumps({
-                  'query': "alter database postgres set app.settings.app_origin = 'https://jddd-hy.github.io'",
-                  'read_only': False,
-              }).encode(),
-              method='POST',
-              headers=headers,
-          )
-          with urllib.request.urlopen(query_request, timeout=30):
-              pass
 
           keys_request = urllib.request.Request(
               f'https://api.supabase.com/v1/projects/{project}/api-keys?reveal=true',
