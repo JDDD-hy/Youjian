@@ -157,6 +157,18 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     await expect(
       member.getByRole('heading', { name: '成员身份已停用' }),
     ).toBeVisible({ timeout: 30_000 });
+
+    await owner.getByRole('button', { name: '退出当前设备' }).click();
+    await owner.getByRole('button', { name: '确认退出' }).click();
+    await expect(owner).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(
+      owner.getByRole('heading', { name: '一起，把时间留给重要的事' }),
+    ).toBeVisible();
+    expect(
+      await owner.evaluate(() =>
+        Object.keys(localStorage).filter((key) => key.startsWith('youjian:')),
+      ),
+    ).toEqual([]);
   } finally {
     await memberContext.close();
   }

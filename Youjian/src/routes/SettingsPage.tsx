@@ -16,6 +16,7 @@ import {
 } from '../lib/pwaInstall';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { normalizeInviteUrl } from '../lib/inviteUrl';
+import { getSupabaseClient } from '../lib/supabase';
 
 export function SettingsPage() {
   const { spaceId = '' } = useParams();
@@ -25,6 +26,9 @@ export function SettingsPage() {
   const [copyError, setCopyError] = useState(false);
   const [installError, setInstallError] = useState(false);
   const [confirmRotate, setConfirmRotate] = useState(false);
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const [exitError, setExitError] = useState(false);
   const [disableTarget, setDisableTarget] = useState<{
     member_id: string;
     display_name: string;
@@ -130,6 +134,25 @@ export function SettingsPage() {
       setShared(false);
       setCopyError(true);
     }
+  };
+  const exitCurrentDevice = async () => {
+    setExiting(true);
+    setExitError(false);
+    const { error } = await getSupabaseClient().auth.signOut({
+      scope: 'local',
+    });
+    if (error) {
+      setExiting(false);
+      setExitError(true);
+      return;
+    }
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('youjian:')) localStorage.removeItem(key);
+    }
+    sessionStorage.clear();
+    client.clear();
+    window.location.replace('/');
   };
   return (
     <div className="page settings-page">
@@ -324,6 +347,15 @@ export function SettingsPage() {
               <a href="/identity.html">身份与数据说明</a>
               <a href="/privacy.html">隐私说明</a>
             </div>
+            <button
+              className="button button--text-danger button--full"
+              onClick={() => {
+                setExitError(false);
+                setConfirmExit(true);
+              }}
+            >
+              退出当前设备
+            </button>
           </section>
         </>
       )}
@@ -358,6 +390,44 @@ export function SettingsPage() {
               onClick={() => rotate.mutate()}
             >
               {rotate.isPending ? '正在生成…' : '确认轮换'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {confirmExit && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="exit-device-title"
+          onClose={() => {
+            if (!exiting) setConfirmExit(false);
+          }}
+          closeOnBackdrop={!exiting}
+        >
+          <h2 id="exit-device-title">退出当前设备？</h2>
+          <p>
+            这个匿名身份无法再次登录。退出后，本设备上的邀请和身份缓存会被清除；友间中的历史记录仍会保留。
+          </p>
+          <p>若正在专注，请先结束本次专注再退出。</p>
+          {exitError && (
+            <div className="inline-notice inline-notice--error" role="alert">
+              无法清除当前身份，请检查连接后重试。
+            </div>
+          )}
+          <div className="dialog__actions">
+            <button
+              autoFocus
+              className="button button--secondary"
+              disabled={exiting}
+              onClick={() => setConfirmExit(false)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--danger"
+              disabled={exiting}
+              onClick={() => void exitCurrentDevice()}
+            >
+              {exiting ? '正在退出…' : '确认退出'}
             </button>
           </div>
         </AccessibleModal>
