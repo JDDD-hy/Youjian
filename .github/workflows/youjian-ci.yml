@@ -2,6 +2,10 @@ name: Youjian CI
 
 env:
   VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+  VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
+  VITE_SUPABASE_PUBLISHABLE_KEY: ci-publishable-placeholder
+  VITE_APP_ORIGIN: https://ci-placeholder.invalid
+  VITE_CSP_CONNECT_SRC: https://ci-placeholder.supabase.co wss://ci-placeholder.supabase.co
 
 on:
   push:
@@ -39,6 +43,15 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run db:start
       - run: npm run db:reset
+      - name: Build against local Supabase for E2E
+        shell: bash
+        run: |
+          eval "$(npx supabase status -o env)"
+          VITE_SUPABASE_URL="$API_URL" \
+          VITE_SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
+          VITE_APP_ORIGIN="http://127.0.0.1:4173" \
+          VITE_CSP_CONNECT_SRC="http://127.0.0.1:54321 ws://127.0.0.1:54321" \
+          npm run build
       - run: npm run test:e2e
       - run: npm run db:lint
       - run: npm run db:test
