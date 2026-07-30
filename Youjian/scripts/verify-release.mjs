@@ -4,6 +4,7 @@ import { gzipSync } from 'node:zlib';
 
 const required = [
   'dist/index.html',
+  'dist/404.html',
   'dist/manifest.webmanifest',
   'dist/sw.js',
   'dist/pwa-icon.svg',
