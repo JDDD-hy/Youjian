@@ -17,6 +17,7 @@ import {
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { normalizeInviteUrl } from '../lib/inviteUrl';
 import { getSupabaseClient } from '../lib/supabase';
+import { appPath, appBasePath } from '../lib/appBase';
 
 export function SettingsPage() {
   const { spaceId = '' } = useParams();
@@ -33,8 +34,20 @@ export function SettingsPage() {
     member_id: string;
     display_name: string;
   } | null>(null);
+  const [transferTarget, setTransferTarget] = useState<{
+    member_id: string;
+    display_name: string;
+  } | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [confirmDissolve, setConfirmDissolve] = useState(false);
+  const [transferCode, setTransferCode] = useState<{
+    value: string;
+    expiresAt: string;
+  } | null>(null);
+  const [transferCodeCopied, setTransferCodeCopied] = useState(false);
   const rotateIntent = useIntentKey();
   const disableIntent = useIntentKey();
+  const lifecycleIntent = useIntentKey();
   const installState = useSyncExternalStore(
     subscribePwaInstall,
     getPwaInstallSnapshot,
@@ -88,6 +101,59 @@ export function SettingsPage() {
       disableIntent.clear();
       setDisableTarget(null);
       void client.invalidateQueries({ queryKey: ['settings', spaceId] });
+    },
+  });
+  const leave = useMutation({
+    mutationFn: () =>
+      rpc('leave_space', {
+        space_id: spaceId,
+        idempotency_key: lifecycleIntent.get(`leave:${spaceId}`),
+      }),
+    onSuccess: () => {
+      lifecycleIntent.clear();
+      localStorage.removeItem(`youjian:invite:${spaceId}`);
+      client.clear();
+      window.location.assign(appBasePath);
+    },
+  });
+  const transfer = useMutation({
+    mutationFn: (memberId: string) =>
+      rpc('transfer_ownership', {
+        space_id: spaceId,
+        target_member_id: memberId,
+        idempotency_key: lifecycleIntent.get(`transfer:${spaceId}:${memberId}`),
+      }),
+    onSuccess: () => {
+      lifecycleIntent.clear();
+      setTransferTarget(null);
+      void client.invalidateQueries({ queryKey: ['settings', spaceId] });
+      void client.invalidateQueries({ queryKey: ['home', spaceId] });
+    },
+  });
+  const dissolve = useMutation({
+    mutationFn: () =>
+      rpc('dissolve_space', {
+        space_id: spaceId,
+        idempotency_key: lifecycleIntent.get(`dissolve:${spaceId}`),
+      }),
+    onSuccess: () => {
+      lifecycleIntent.clear();
+      localStorage.removeItem(`youjian:invite:${spaceId}`);
+      client.clear();
+      window.location.assign(appBasePath);
+    },
+  });
+  const createTransferCode = useMutation({
+    mutationFn: () =>
+      rpc<{ transfer_code: string; expires_at: string }>(
+        'create_identity_transfer_code',
+      ),
+    onSuccess: ({ data }) => {
+      setTransferCode({
+        value: data.transfer_code,
+        expiresAt: data.expires_at,
+      });
+      setTransferCodeCopied(false);
     },
   });
   const invite = normalizeInviteUrl(
@@ -152,7 +218,7 @@ export function SettingsPage() {
     }
     sessionStorage.clear();
     client.clear();
-    window.location.replace('/');
+    window.location.replace(appBasePath);
   };
   return (
     <div className="page settings-page">
@@ -294,6 +360,19 @@ export function SettingsPage() {
                           停用
                         </button>
                       )}
+                    {data.me.role === 'owner' &&
+                      member.role !== 'owner' &&
+                      member.status === 'active' && (
+                        <button
+                          className="button button--text"
+                          onClick={() => {
+                            transfer.reset();
+                            setTransferTarget(member);
+                          }}
+                        >
+                          转让房主
+                        </button>
+                      )}
                   </div>
                 ))}
               </div>
@@ -344,9 +423,41 @@ export function SettingsPage() {
               数据后无法恢复。
             </p>
             <div className="legal-links">
-              <a href="/identity.html">身份与数据说明</a>
-              <a href="/privacy.html">隐私说明</a>
+              <a href={appPath('identity.html')}>身份与数据说明</a>
+              <a href={appPath('privacy.html')}>隐私说明</a>
             </div>
+            <button
+              className="button button--secondary button--full"
+              disabled={createTransferCode.isPending}
+              onClick={() => createTransferCode.mutate()}
+            >
+              {createTransferCode.isPending ? '正在生成…' : '生成身份迁移码'}
+            </button>
+            {createTransferCode.error && (
+              <div className="inline-notice inline-notice--error" role="alert">
+                {createTransferCode.error.message}
+              </div>
+            )}
+            <button
+              className="button button--text-danger button--full"
+              onClick={() => {
+                leave.reset();
+                setConfirmLeave(true);
+              }}
+            >
+              主动退出友间
+            </button>
+            {data.me.role === 'owner' && (
+              <button
+                className="button button--text-danger button--full"
+                onClick={() => {
+                  dissolve.reset();
+                  setConfirmDissolve(true);
+                }}
+              >
+                解散友间
+              </button>
+            )}
             <button
               className="button button--text-danger button--full"
               onClick={() => {
@@ -394,6 +505,48 @@ export function SettingsPage() {
           </div>
         </AccessibleModal>
       )}
+      {transferCode && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="identity-transfer-title"
+          onClose={() => setTransferCode(null)}
+        >
+          <h2 id="identity-transfer-title">身份迁移码</h2>
+          <p>
+            请在 10
+            分钟内到新设备的“迁移已有身份”页面输入。成功后，本设备会立即失去访问权。
+          </p>
+          <output aria-label="一次性身份迁移码" className="transfer-code">
+            {transferCode.value}
+          </output>
+          <small>
+            有效期至{' '}
+            {formatLocalDateTime(
+              transferCode.expiresAt,
+              data?.space.timezone ?? 'UTC',
+            )}
+          </small>
+          <div className="dialog__actions">
+            <button
+              className="button button--secondary"
+              onClick={() => setTransferCode(null)}
+            >
+              关闭
+            </button>
+            <button
+              autoFocus
+              className="button button--primary"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(transferCode.value)
+                  .then(() => setTransferCodeCopied(true));
+              }}
+            >
+              {transferCodeCopied ? '已复制' : '复制迁移码'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
       {confirmExit && (
         <AccessibleModal
           kind="dialog"
@@ -428,6 +581,118 @@ export function SettingsPage() {
               onClick={() => void exitCurrentDevice()}
             >
               {exiting ? '正在退出…' : '确认退出'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {confirmLeave && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="leave-space-title"
+          onClose={() => {
+            if (!leave.isPending) setConfirmLeave(false);
+          }}
+          closeOnBackdrop={!leave.isPending}
+        >
+          <h2 id="leave-space-title">主动退出友间？</h2>
+          <p>退出后会立即失去访问权，历史记录保留且不能用旧邀请重新加入。</p>
+          {data?.me.role === 'owner' && (
+            <p>房主需要先转让房主，或改为解散友间。</p>
+          )}
+          {leave.error && (
+            <div className="inline-notice inline-notice--error" role="alert">
+              {leave.error.message}
+            </div>
+          )}
+          <div className="dialog__actions">
+            <button
+              autoFocus
+              className="button button--secondary"
+              disabled={leave.isPending}
+              onClick={() => setConfirmLeave(false)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--danger"
+              disabled={leave.isPending || data?.me.role === 'owner'}
+              onClick={() => leave.mutate()}
+            >
+              {leave.isPending ? '正在退出…' : '确认退出友间'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {transferTarget && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="transfer-owner-title"
+          onClose={() => {
+            if (!transfer.isPending) setTransferTarget(null);
+          }}
+          closeOnBackdrop={!transfer.isPending}
+        >
+          <h2 id="transfer-owner-title">
+            转让房主给 {transferTarget.display_name}？
+          </h2>
+          <p>转让后对方成为房主，你将成为普通成员。此操作不能自动撤销。</p>
+          {transfer.error && (
+            <div className="inline-notice inline-notice--error" role="alert">
+              {transfer.error.message}
+            </div>
+          )}
+          <div className="dialog__actions">
+            <button
+              autoFocus
+              className="button button--secondary"
+              disabled={transfer.isPending}
+              onClick={() => setTransferTarget(null)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--danger"
+              disabled={transfer.isPending}
+              onClick={() => transfer.mutate(transferTarget.member_id)}
+            >
+              {transfer.isPending ? '正在转让…' : '确认转让'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {confirmDissolve && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="dissolve-space-title"
+          onClose={() => {
+            if (!dissolve.isPending) setConfirmDissolve(false);
+          }}
+          closeOnBackdrop={!dissolve.isPending}
+        >
+          <h2 id="dissolve-space-title">永久解散友间？</h2>
+          <p>
+            所有成员会立即失去访问权，活动专注先由服务端结算，历史记录仅保留用于审计。
+          </p>
+          {dissolve.error && (
+            <div className="inline-notice inline-notice--error" role="alert">
+              {dissolve.error.message}
+            </div>
+          )}
+          <div className="dialog__actions">
+            <button
+              autoFocus
+              className="button button--secondary"
+              disabled={dissolve.isPending}
+              onClick={() => setConfirmDissolve(false)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--danger"
+              disabled={dissolve.isPending}
+              onClick={() => dissolve.mutate()}
+            >
+              {dissolve.isPending ? '正在解散…' : '确认永久解散'}
             </button>
           </div>
         </AccessibleModal>

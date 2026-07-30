@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { reportSafeError } from '../lib/safeError';
+import { appBasePath } from '../lib/appBase';
 
 export class AppErrorBoundary extends Component<
   { children: ReactNode },
@@ -40,7 +41,7 @@ export class AppErrorBoundary extends Component<
             <p>你的输入内容没有被记录。请重新打开应用后再试。</p>
             <button
               className="button button--primary"
-              onClick={() => window.location.assign('/')}
+              onClick={() => window.location.assign(appBasePath)}
             >
               返回欢迎页
             </button>

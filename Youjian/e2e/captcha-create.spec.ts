@@ -6,7 +6,7 @@ test('Turnstile validates anonymous auth before creating a room', async ({
 }) => {
   const suffix = randomUUID().slice(0, 8);
   const spaceName = `验证友间-${suffix}`;
-  await page.goto('/create');
+  await page.goto('./create');
   await expect(page.locator('[name="cf-turnstile-response"]')).toHaveValue(
     /.+/,
     { timeout: 30_000 },

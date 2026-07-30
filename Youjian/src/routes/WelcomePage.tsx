@@ -46,6 +46,9 @@ export function WelcomePage() {
             <Link className="button button--secondary button--full" to="/join">
               等待加入
             </Link>
+            <Link className="button button--text button--full" to="/transfer">
+              迁移已有身份
+            </Link>
           </div>
         )}
         <p className="identity-note">

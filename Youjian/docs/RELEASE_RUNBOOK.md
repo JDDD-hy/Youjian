@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|
 | Local | 本地 CLI | `127.0.0.1` | Cloudflare 官方测试密钥，服务端强制 | 允许虚构 seed | 是 |
 | Staging | 待配置 | 待配置 | 按部署模式选择 | 仅虚构数据 | 否 |
-| Production | `izshepocrpzrwoxtwibr` | `https://jddd-hy.github.io/` | 已按小范围可信成员模式关闭 | 禁止测试 seed；线上 E2E 数据已清理 | 是（自动化与在线检查） |
+| Production | `izshepocrpzrwoxtwibr` | `https://jddd-hy.github.io/Youjian/` | 已按小范围可信成员模式关闭 | 禁止测试 seed；线上 E2E 数据已清理 | 是（自动化与在线检查） |
 
 生产环境不得复用 local/staging 密钥、数据库或 Auth 用户。不得启用匿名用户自动清理。
 
@@ -111,7 +111,7 @@ npm run db:test
 
 ## 9. 2026-07-30 生产发布证据
 
-- 公开入口：`https://jddd-hy.github.io/`，GitHub Pages 强制 HTTPS；Pages 已切换为 GitHub Actions 发布，PWA manifest、Service Worker 与邀请深链接回退均已在线检查。生产发布运行 `30542171817` 成功。
+- 公开入口：`https://jddd-hy.github.io/Youjian/`，GitHub Pages 强制 HTTPS；Pages 已切换为 GitHub Actions 发布，PWA manifest、Service Worker 与邀请深链接回退均需在线检查。旧根路径邀请由 `JDDD-hy.github.io` 根站的兼容桥跳转。
 - 源码：本地提交 `fc8320d`；公开 `source` 分支提交 `704e0fd31fdf49b7a4dd8e456f316b175381de4b`；Pages 由经过验证的 Actions artifact 发布，不再维护独立 `gh-pages` 产物提交。
 - Supabase：27 个迁移全部应用；14/14 个 public 表启用 RLS；Realtime publication 5 个表；`anon` 对 public 表的直接写权限为 0；Anonymous Auth 开启，Auth CAPTCHA 按小范围好友模式关闭。邀请 RPC 缺省返回相对路径，前端统一绑定当前站点 origin，旧设备缓存的 localhost 邀请也会自动纠正。
 - Cron：`youjian-minute-maintenance` 精确 1 个、启用、每分钟运行；发布检查时最近一次 scheduler 与 maintenance audit 均为 `succeeded`。

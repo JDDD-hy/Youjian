@@ -20,6 +20,13 @@ describe('safe error reporting', () => {
     expect(JSON.stringify(report)).not.toContain('secret');
   });
 
+  it('redacts a project-pages invite token', async () => {
+    const { safeRoute } = await import('./safeError');
+    expect(safeRoute('/Youjian/invite/very-secret-token')).toBe(
+      '/invite/:token',
+    );
+  });
+
   it('keeps only stable ApiError codes', async () => {
     const { buildSafeErrorReport } = await import('./safeError');
     expect(

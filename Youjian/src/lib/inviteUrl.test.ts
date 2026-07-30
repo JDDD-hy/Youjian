@@ -21,6 +21,23 @@ describe('normalizeInviteUrl', () => {
       normalizeInviteUrl(`/settings/${token}`, 'https://example.com'),
     ).toBe(null);
   });
+
+  it('upgrades legacy root links to the configured project base', () => {
+    expect(
+      normalizeInviteUrl(
+        `https://jddd-hy.github.io/invite/${token}`,
+        'https://jddd-hy.github.io',
+        '/Youjian/',
+      ),
+    ).toBe(`https://jddd-hy.github.io/Youjian/invite/${token}`);
+    expect(
+      normalizeInviteUrl(
+        `https://jddd-hy.github.io/Youjian/invite/${token}`,
+        'https://jddd-hy.github.io',
+        '/Youjian/',
+      ),
+    ).toBe(`https://jddd-hy.github.io/Youjian/invite/${token}`);
+  });
 });
 
 describe('inviteInputToUrl', () => {

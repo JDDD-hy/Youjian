@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      SITE_URL: https://jddd-hy.github.io/
+      SITE_URL: https://jddd-hy.github.io/Youjian/
       SUPABASE_PROJECT_REF: izshepocrpzrwoxtwibr
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:

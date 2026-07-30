@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function prepareServiceWorker(page: Page) {
-  await page.goto('/');
+  await page.goto('./');
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -36,13 +36,14 @@ test('offline shell is cached while API requests stay network-only', async ({
   await prepareServiceWorker(page);
 
   const cachedShell = await page.evaluate(async () => {
+    const shellPath = new URL('./index.html', window.location.href).pathname;
     const keys = await caches.keys();
     const matches = await Promise.all(
       keys.map(async (key) =>
         Boolean(
           await (
             await caches.open(key)
-          ).match('/index.html', {
+          ).match(shellPath, {
             ignoreSearch: true,
           }),
         ),
@@ -55,7 +56,7 @@ test('offline shell is cached while API requests stay network-only', async ({
   await context.setOffline(true);
   try {
     const result = await page.evaluate(async () => {
-      const shell = await fetch('/index.html').then((response) => response.ok);
+      const shell = await fetch('./index.html').then((response) => response.ok);
       const apiFailed = await fetch('/rest/v1/offline-probe').then(
         () => false,
         () => true,

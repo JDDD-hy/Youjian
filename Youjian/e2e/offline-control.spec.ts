@@ -116,7 +116,7 @@ test('offline focus controls remain visible and never claim success', async ({
     }),
   );
 
-  await page.goto(`/space/${spaceId}`);
+  await page.goto(`./space/${spaceId}`);
   const pause = page.getByRole('button', { name: '暂停' });
   await expect(pause).toBeVisible();
   await context.setOffline(true);

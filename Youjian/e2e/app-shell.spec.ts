@@ -83,7 +83,7 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
     });
   });
 
-  await page.goto(`/space/${spaceId}`);
+  await page.goto(`./space/${spaceId}`);
   await expect(page.getByRole('heading', { name: '我们的友间' })).toBeVisible();
   await expect(page.getByRole('button', { name: '开始专注' })).toBeVisible();
   await page.getByRole('button', { name: '开始专注' }).click();

@@ -898,6 +898,20 @@ a:focus-visible {
   gap: 10px;
   margin-top: 22px;
 }
+.transfer-code {
+  display: block;
+  margin: 18px 0 8px;
+  padding: 14px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
 .segmented {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

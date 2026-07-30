@@ -42,6 +42,14 @@ const messages: Record<string, string> = {
   NOT_SPACE_OWNER: '只有房主可以执行这个操作。',
   CANNOT_DISABLE_OWNER: '不能停用房主。',
   MEMBER_ALREADY_DISABLED: '这位成员已经停用。',
+  OWNER_MUST_TRANSFER_OR_DISSOLVE: '房主需要先转让房主，或解散友间。',
+  CANNOT_TRANSFER_TO_SELF: '不能把房主转让给自己。',
+  MEMBER_NOT_FOUND: '没有找到这位成员。',
+  INVALID_TRANSFER_CODE: '迁移码无效，请检查后重试。',
+  TRANSFER_CODE_USED: '这个迁移码已经使用过，请在原设备重新生成。',
+  TRANSFER_CODE_EXPIRED: '迁移码已过期，请在原设备重新生成。',
+  TARGET_IDENTITY_NOT_EMPTY:
+    '当前设备已有使用记录，不能覆盖；请先退出当前设备后重试。',
   NETWORK_UNCONFIRMED: '连接状态不可确认，这次操作尚未生效。',
   IDEMPOTENCY_KEY_REUSED: '请求标识已用于其他操作，请重新提交。',
 };

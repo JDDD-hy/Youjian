@@ -1,6 +1,6 @@
 # 友间真实设备验收单
 
-目标地址：<https://jddd-hy.github.io/>
+目标地址：<https://jddd-hy.github.io/Youjian/>
 
 本验收必须由两台实体手机完成。浏览器设备模拟、桌面缩放和 Playwright mobile preset 只能作为预检查，不能替代签字。
 

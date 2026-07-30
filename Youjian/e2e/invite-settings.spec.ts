@@ -20,7 +20,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     });
   });
 
-  await owner.goto('/create');
+  await owner.goto('./create');
   if (process.env.E2E_EXPECT_CAPTCHA !== '0')
     await expect(owner.locator('[name="cf-turnstile-response"]')).toHaveValue(
       /.+/,
@@ -60,7 +60,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       timeout: 30_000,
     });
 
-    await member.goto(`/space/${spaceId}/settings`);
+    await member.goto(`./space/${spaceId}/settings`);
     await expect(member.getByRole('heading', { name: '设置' })).toBeVisible();
     await expect(
       member.getByRole('heading', { level: 2, name: spaceName }),
@@ -73,7 +73,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     ).toHaveCount(0);
     await expect(member.getByRole('button', { name: '停用' })).toHaveCount(0);
 
-    await owner.goto(`/space/${spaceId}/goals`);
+    await owner.goto(`./space/${spaceId}/goals`);
     await owner.getByRole('button', { name: '发起提案' }).click();
     await owner.getByRole('button', { name: '下一步' }).click();
     await owner.getByLabel('目标值（分钟）').fill('30');
@@ -86,7 +86,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       owner.getByText('1 / 2 人已同意', { exact: false }),
     ).toBeVisible();
 
-    await member.goto(`/space/${spaceId}/goals`);
+    await member.goto(`./space/${spaceId}/goals`);
     await expect(
       member.getByText('1 / 2 人已同意', { exact: false }),
     ).toBeVisible();
@@ -95,7 +95,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       { timeout: 30_000 },
     );
 
-    await owner.goto(`/space/${spaceId}/settings`);
+    await owner.goto(`./space/${spaceId}/settings`);
     await expect(
       owner.getByRole('button', { name: '分享邀请链接' }),
     ).toBeVisible();
@@ -146,7 +146,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       await newInviteContext.close();
     }
 
-    await owner.goto(`/space/${spaceId}/settings`);
+    await owner.goto(`./space/${spaceId}/settings`);
     await owner.getByRole('button', { name: '停用' }).click();
     await owner.getByRole('button', { name: '确认停用' }).click();
     await expect(owner.getByText('已停用', { exact: true })).toBeVisible({

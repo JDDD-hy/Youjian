@@ -11,7 +11,7 @@ test('two devices create, join, synchronize focus, and restore identity', async 
   const taskName = `同步任务-${suffix}`;
   const memberName = `成员-${suffix}`;
 
-  await owner.goto('/create');
+  await owner.goto('./create');
   if (process.env.E2E_EXPECT_CAPTCHA !== '0')
     await expect(owner.locator('[name="cf-turnstile-response"]')).toHaveValue(
       /.+/,
@@ -37,7 +37,7 @@ test('two devices create, join, synchronize focus, and restore identity', async 
   const memberContext = await browser.newContext();
   const member = await memberContext.newPage();
   try {
-    await member.goto('/join');
+    await member.goto('./join');
     await member.getByLabel('你的昵称').fill(memberName);
     await member.getByRole('button', { name: '保存并等待' }).click();
     await expect(

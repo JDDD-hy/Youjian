@@ -28,7 +28,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: izshepocrpzrwoxtwibr
-      PRODUCTION_ORIGIN: https://jddd-hy.github.io
+      PRODUCTION_ORIGIN: https://jddd-hy.github.io/Youjian
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -72,6 +72,7 @@ jobs:
               env.write(f'VITE_SUPABASE_URL=https://{project}.supabase.co\n')
               env.write(f'VITE_SUPABASE_PUBLISHABLE_KEY={publishable}\n')
               env.write(f'VITE_APP_ORIGIN={origin}\n')
+              env.write('VITE_BASE_PATH=/Youjian/\n')
               env.write(
                   f'VITE_CSP_CONNECT_SRC=https://{project}.supabase.co '
                   f'wss://{project}.supabase.co\n'

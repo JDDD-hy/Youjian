@@ -65,7 +65,7 @@ function sql(statement) {
     'docker',
     [
       'exec',
-      'supabase_db_Youjian',
+      'supabase_db_youjian',
       'psql',
       '-U',
       'postgres',

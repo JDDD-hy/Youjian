@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('welcome page fits the viewport and exposes the primary action', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
 
   await expect(page.getByRole('heading', { name: '友间' })).toBeVisible();
   await expect(page.getByRole('link', { name: '创建友间' })).toBeVisible();
@@ -35,7 +35,7 @@ test('welcome page fits the viewport and exposes the primary action', async ({
 });
 
 test('welcome page remains usable at 200% text size', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.evaluate(() => {
     document.documentElement.style.fontSize = '200%';
   });
@@ -79,7 +79,7 @@ test('primary action stays reachable with a compact keyboard-height viewport', a
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 360 });
-  await page.goto('/');
+  await page.goto('./');
   const create = page.getByRole('link', { name: '创建友间' });
   await create.scrollIntoViewIfNeeded();
   await expect(create).toBeVisible();

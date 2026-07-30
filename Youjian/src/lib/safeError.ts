@@ -12,7 +12,8 @@ const allowedClasses = new Set([
 ]);
 
 export function safeRoute(pathname = window.location.pathname) {
-  if (pathname.startsWith('/invite/')) return '/invite/:token';
+  if (/\/(?:[^/]+\/)*invite\/[^/]+$/.test(pathname))
+    return `${import.meta.env.BASE_URL}invite/:token`;
   return pathname.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, ':id').slice(0, 200);
 }
 

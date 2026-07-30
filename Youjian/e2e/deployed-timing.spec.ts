@@ -16,7 +16,7 @@ test('deployed timer advances, excludes pauses, and settles authoritatively', as
   const suffix = randomUUID().slice(0, 8);
   const taskName = `线上计时-${suffix}`;
 
-  await page.goto('/create');
+  await page.goto('./create');
   if (process.env.E2E_EXPECT_CAPTCHA !== '0')
     await expect(page.locator('[name="cf-turnstile-response"]')).toHaveValue(
       /.+/,
