@@ -83,12 +83,11 @@ jobs:
         run: |
           npm run build
           npm run release:verify
-          npm run sites:verify
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist/client
+          path: dist
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

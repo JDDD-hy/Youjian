@@ -10,9 +10,6 @@ const required = [
   'dist/pwa-192.png',
   'dist/pwa-512.png',
   'dist/_headers',
-  'dist/client/index.html',
-  'dist/server/index.js',
-  '.openai/hosting.json',
 ];
 const errors = [];
 

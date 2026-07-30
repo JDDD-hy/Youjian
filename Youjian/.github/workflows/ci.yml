@@ -29,7 +29,6 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run release:verify
-      - run: npm run sites:verify
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run db:start
       - run: npm run db:reset

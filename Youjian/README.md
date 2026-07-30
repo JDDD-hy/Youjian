@@ -1,105 +1,44 @@
-# 友间（Youjian）
+# 友间 Youjian
 
-友间是面向固定好友的小型共享专注空间。成员继续使用各自的任务管理工具，友间只记录专注任务、实时状态、累计时长、连续打卡和共同目标。
+友间是一个给固定好友使用的共享专注空间。它不管理任务清单，只帮助彼此看见专注状态、累计时间和共同进度。
 
-> 在友间，自有间。
+在线使用：<https://jddd-hy.github.io/Youjian/>
 
-## 当前阶段
+## 如何开始
 
-项目已完成 MVP 产品与技术设计冻结，正在进行视觉设计。首版移动端视觉方向稿已生成，尚未开始业务代码实现。
+1. 一个人创建友间并设置昵称。
+2. 将生成的邀请链接发给好友。
+3. 好友打开链接、输入昵称后加入。
+4. 点击“开始专注”，填写当前任务；暂停期间不会累计专注时间。
 
-## 文档地图
+匿名身份会保存在当前浏览器或已安装的 PWA 中。更换设备前，请在“设置”中生成一次性身份迁移码，并在 10 分钟内到新设备兑换。
 
-按以下顺序阅读：
+## 主要功能
 
-1. [MVP_SPEC.md](./MVP_SPEC.md)：产品范围、业务规则与验收标准；
-2. [UI_STATE_SPEC.md](./UI_STATE_SPEC.md)：页面状态、交互、异常和文案；
-3. [WIREFRAME_SPEC.md](./WIREFRAME_SPEC.md)：移动端／桌面端布局和组件；
-4. [TECHNICAL_DESIGN.md](./TECHNICAL_DESIGN.md)：数据库、状态机、权限、统计和 PWA；
-5. [API_CONTRACT.md](./API_CONTRACT.md)：前后端 RPC 输入、输出和错误语义；
-6. [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)：开发里程碑、测试门槛和发布检查。
-7. [VISUAL_DESIGN.md](./VISUAL_DESIGN.md)：视觉方向、色彩、字体和组件外观。
+- 好友实时专注状态与连接状态
+- 开始、暂停、继续、手动结束和自动结算
+- 日、周、月统计及连续打卡
+- 共同目标、投票和成就
+- 邀请链接轮换与成员管理
+- 成员主动退出
+- 房主转让或解散友间
+- 一次性身份迁移码
+- PWA 安装与离线应用外壳
 
-视觉预览：[design/youjian-visual-direction-v1.png](./design/youjian-visual-direction-v1.png)
+## 计时规则
 
-## 已确定的核心规则
+- 暂停时间不计入专注时长。
+- 暂停达到 15 分钟会自动结算。
+- 实际专注达到 6 小时会自动结算。
+- 少于 5 分钟的记录会保留，但不计入统计。
+- 服务端时间是最终依据；关闭页面或网络延迟不会额外增加时长。
 
-- 长期存在的友间与单次专注记录分开；
-- 只填昵称，底层使用 Supabase Anonymous Auth；
-- 匿名身份绑定当前设备，清除数据或换设备后无法恢复；
-- 开始后任务内容不可修改；
-- 暂停不累计时长，暂停满 15 分钟自动结算；
-- 单次实际专注满 6 小时自动结算；
-- 单次少于 5 分钟保留记录但不计入统计；
-- 关闭网页、锁屏或断网时计时继续；
-- 无法确定断线原因时统一标记“连接状态不可确认”；
-- 历史记录不可修改或删除；
-- 个人统计按个人时区，共同统计按房间时区；
-- 共同目标需要提案成员一致接受后才生效；
-- 不接入 TickTick／滴答清单私有接口。
+## 身份与隐私
 
-## 已冻结决策
+- 使用 Supabase 匿名身份，无需注册邮箱或密码。
+- 友间只面向受邀请的固定成员。
+- 历史专注记录不可修改。
+- 身份迁移成功后，旧设备会立即失去访问权。
+- 退出当前设备仅清除该设备的身份；主动退出友间会终止成员资格。
 
-1. 每日累计 60 分钟完成个人打卡；
-2. MVP 一个匿名身份只能加入一个友间。
-
-所有设计、数据库规则、接口和实施计划均已同步。数据库保留未来扩展能力，但 MVP 必须执行以上规则。
-
-## 推荐技术栈
-
-- React + TypeScript + Vite；
-- Supabase Anonymous Auth；
-- PostgreSQL + RLS + RPC；
-- Supabase Realtime；
-- Supabase Cron；
-- PWA。
-
-## 非 MVP
-
-任务清单、聊天、视频、排行榜、推送、多设备恢复、手动补录、历史修改、原生 App 和 TickTick 私有接口均不属于首版。
-
-## 本地开发
-
-### 独立环境
-
-项目使用独立 Conda 环境 `youjian`，不复用其他 Python/Conda 环境：
-
-```powershell
-conda env create --file environment.yml --solver classic
-conda activate youjian
-npm ci
-```
-
-环境已经存在时跳过第一条命令。当前机器上的环境位于 `D:\Anaconda\envs\youjian`。
-
-Node.js 依赖全部安装在项目目录。Supabase CLI 也是项目级开发依赖，通过 npm script 调用。
-
-### 启动
-
-Docker Desktop 运行后启动本地 Supabase，再启动前端：
-
-```powershell
-npm run db:start
-npm run dev
-```
-
-复制 `.env.example` 为 `.env.local`，并填入 `npm run db:start` 输出的本地 URL 与 publishable key。真实密钥不得提交。
-
-Turnstile 是可选部署能力。小范围可信成员部署可以让 `VITE_TURNSTILE_SITE_KEY` 保持为空，并在对应 Supabase 项目的 Auth CAPTCHA 设置中关闭 CAPTCHA；此时邀请限速、RLS、单身份单友间和成员上限仍然必须启用。若开启 Turnstile，前端 site key 与 Supabase Auth secret 必须来自同一环境。
-
-### 验证
-
-```powershell
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run db:reset
-npm run db:lint
-```
-
-本地浏览器 smoke test 使用已安装的 Google Chrome，运行 `npm run test:e2e`。CI 使用 Playwright 管理的 Chromium。
-
-### 发布验收
-
-发布、监控、备份与恢复门禁见 [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)。自动化不能替代的 iOS/Android 双实体手机签字使用 [`docs/REAL_DEVICE_ACCEPTANCE.md`](docs/REAL_DEVICE_ACCEPTANCE.md)。
+本项目适合小范围好友使用，不是公开社区或任务管理服务。

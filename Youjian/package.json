@@ -6,7 +6,7 @@
   "description": "友间——面向固定好友的小型共享专注空间。",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prepare-sites-build.mjs",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
@@ -17,7 +17,6 @@
     "ops:monitor-check": "node scripts/monitor-health.mjs",
     "ops:monitor-alert-drill": "node scripts/integration/monitor-alert-delivery.mjs",
     "release:verify": "node scripts/verify-release.mjs",
-    "sites:verify": "node scripts/verify-sites-worker.mjs",
     "ops:restore-drill": "node scripts/run-restore-drill.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
