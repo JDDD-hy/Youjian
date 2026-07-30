@@ -31,12 +31,12 @@ test('two devices create, join, synchronize focus, and restore identity', async 
     spaceId,
   );
   expect(inviteUrl).toMatch(/\/invite\//);
+  expect(new URL(inviteUrl!).origin).toBe(new URL(owner.url()).origin);
 
   const memberContext = await browser.newContext();
   const member = await memberContext.newPage();
   try {
-    const invitePath = new URL(inviteUrl!).pathname;
-    await member.goto(new URL(invitePath, owner.url()).href);
+    await member.goto(inviteUrl!);
     await expect(
       member.getByRole('heading', { name: `加入「${spaceName}」` }),
     ).toBeVisible();

@@ -1,0 +1,139 @@
+name: Youjian production release
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type release to deploy the database and public site
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: youjian-production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: inputs.confirmation == 'release'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: izshepocrpzrwoxtwibr
+      PRODUCTION_ORIGIN: https://jddd-hy.github.io
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Apply pending Supabase migrations
+        run: |
+          npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
+          npx supabase db push --linked --include-all --yes
+
+      - name: Configure production origin and build environment
+        shell: python
+        run: |
+          import json
+          import os
+          import urllib.request
+
+          token = os.environ['SUPABASE_ACCESS_TOKEN']
+          project = os.environ['SUPABASE_PROJECT_REF']
+          origin = os.environ['PRODUCTION_ORIGIN']
+          headers = {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+              'User-Agent': 'youjian-production-release/1.0',
+          }
+
+          query_request = urllib.request.Request(
+              f'https://api.supabase.com/v1/projects/{project}/database/query',
+              data=json.dumps({
+                  'query': "alter database postgres set app.settings.app_origin = 'https://jddd-hy.github.io'",
+                  'read_only': False,
+              }).encode(),
+              method='POST',
+              headers=headers,
+          )
+          with urllib.request.urlopen(query_request, timeout=30):
+              pass
+
+          keys_request = urllib.request.Request(
+              f'https://api.supabase.com/v1/projects/{project}/api-keys?reveal=true',
+              headers=headers,
+          )
+          with urllib.request.urlopen(keys_request, timeout=30) as response:
+              keys = json.load(response)
+          publishable = next(
+              item['api_key'] for item in keys if item.get('type') == 'publishable'
+          )
+          print('::add-mask::' + publishable)
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
+              env.write(f'VITE_SUPABASE_URL=https://{project}.supabase.co\n')
+              env.write(f'VITE_SUPABASE_PUBLISHABLE_KEY={publishable}\n')
+              env.write(f'VITE_APP_ORIGIN={origin}\n')
+              env.write(
+                  f'VITE_CSP_CONNECT_SRC=https://{project}.supabase.co '
+                  f'wss://{project}.supabase.co\n'
+              )
+              env.write('VITE_TURNSTILE_SITE_KEY=\n')
+
+      - name: Build and verify release
+        run: |
+          npm run build
+          npm run release:verify
+          npm run sites:verify
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/client
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify published shell and invite fallback
+        shell: python
+        run: |
+          import time
+          import urllib.error
+          import urllib.request
+
+          origin = '${{ steps.deployment.outputs.page_url }}'.rstrip('/')
+          paths = ['/', '/manifest.webmanifest', '/sw.js', '/invite/' + 'A' * 43]
+          deadline = time.time() + 120
+          last_error = None
+          while time.time() < deadline:
+              try:
+                  bodies = []
+                  for path in paths:
+                      try:
+                          response = urllib.request.urlopen(origin + path, timeout=20)
+                          bodies.append(response.read().decode('utf-8', errors='replace'))
+                      except urllib.error.HTTPError as error:
+                          if path.startswith('/invite/') and error.code == 404:
+                              bodies.append(error.read().decode('utf-8', errors='replace'))
+                          else:
+                              raise
+                  if 'Content-Security-Policy' not in bodies[0]:
+                      raise RuntimeError('published HTML CSP is missing')
+                  if 'id="root"' not in bodies[3]:
+                      raise RuntimeError('invite fallback does not contain the SPA shell')
+                  break
+              except Exception as error:
+                  last_error = error
+                  time.sleep(5)
+          else:
+              raise RuntimeError(f'published release did not become healthy: {last_error}')

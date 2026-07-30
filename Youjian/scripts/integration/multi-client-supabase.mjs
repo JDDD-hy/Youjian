@@ -109,7 +109,10 @@ function errorCode(result, expected, message) {
 }
 
 function tokenFromUrl(url) {
-  const token = new URL(url).pathname.split('/').filter(Boolean).at(-1);
+  const token = new URL(url, 'http://localhost').pathname
+    .split('/')
+    .filter(Boolean)
+    .at(-1);
   assert.ok(token && token.length >= 40);
   return token;
 }

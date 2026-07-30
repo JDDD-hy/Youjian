@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 
 const dist = path.resolve('dist');
@@ -10,6 +10,7 @@ await rm(client, { recursive: true, force: true });
 await rm(server, { recursive: true, force: true });
 await mkdir(client, { recursive: true });
 await mkdir(server, { recursive: true });
+await copyFile(path.join(dist, 'index.html'), path.join(dist, '404.html'));
 
 for (const entry of await readdir(dist, { withFileTypes: true })) {
   if (ignored.has(entry.name)) continue;

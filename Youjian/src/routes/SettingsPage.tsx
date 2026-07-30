@@ -15,6 +15,7 @@ import {
   subscribePwaInstall,
 } from '../lib/pwaInstall';
 import { assertRouteSpace } from '../lib/spaceBoundary';
+import { normalizeInviteUrl } from '../lib/inviteUrl';
 
 export function SettingsPage() {
   const { spaceId = '' } = useParams();
@@ -53,10 +54,15 @@ export function SettingsPage() {
       }),
     onSuccess: async ({ data }) => {
       rotateIntent.clear();
-      localStorage.setItem(`youjian:invite:${spaceId}`, data.invite_url);
+      const inviteUrl = normalizeInviteUrl(data.invite_url);
+      if (!inviteUrl) {
+        setCopyError(true);
+        return;
+      }
+      localStorage.setItem(`youjian:invite:${spaceId}`, inviteUrl);
       setConfirmRotate(false);
       try {
-        await navigator.clipboard.writeText(data.invite_url);
+        await navigator.clipboard.writeText(inviteUrl);
         setCopied(true);
         setCopyError(false);
         window.setTimeout(() => setCopied(false), 3000);
@@ -79,7 +85,9 @@ export function SettingsPage() {
       void client.invalidateQueries({ queryKey: ['settings', spaceId] });
     },
   });
-  const invite = localStorage.getItem(`youjian:invite:${spaceId}`);
+  const invite = normalizeInviteUrl(
+    localStorage.getItem(`youjian:invite:${spaceId}`),
+  );
   const copy = async () => {
     if (!invite) {
       rotate.reset();

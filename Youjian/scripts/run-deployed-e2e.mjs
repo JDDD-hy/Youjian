@@ -18,6 +18,7 @@ const child = spawn(
     'node_modules/@playwright/test/cli.js',
     'test',
     'e2e/two-device-flow.spec.ts',
+    'e2e/invite-settings.spec.ts',
     'e2e/deployed-timing.spec.ts',
     '--project=desktop-chromium',
   ],
