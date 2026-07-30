@@ -59,6 +59,28 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     ).toHaveCount(0);
     await expect(member.getByRole('button', { name: '停用' })).toHaveCount(0);
 
+    await owner.goto(`/space/${spaceId}/goals`);
+    await owner.getByRole('button', { name: '发起提案' }).click();
+    await owner.getByRole('button', { name: '下一步' }).click();
+    await owner.getByLabel('目标值（分钟）').fill('30');
+    await owner.getByRole('button', { name: '下一步' }).click();
+    await owner.getByRole('button', { name: '发起并投同意票' }).click();
+    await expect(
+      owner.getByRole('heading', { name: '等待投票' }),
+    ).toBeVisible();
+    await expect(
+      owner.getByText('1 / 2 人已同意', { exact: false }),
+    ).toBeVisible();
+
+    await member.goto(`/space/${spaceId}/goals`);
+    await expect(
+      member.getByText('1 / 2 人已同意', { exact: false }),
+    ).toBeVisible();
+    await member.getByRole('button', { name: '同意' }).click();
+    await expect(member.getByRole('heading', { name: '即将开始' })).toBeVisible(
+      { timeout: 30_000 },
+    );
+
     await owner.goto(`/space/${spaceId}/settings`);
     await owner.getByRole('button', { name: '轮换邀请链接' }).click();
     await owner.getByRole('button', { name: '确认轮换' }).click();
@@ -97,6 +119,18 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     } finally {
       await newInviteContext.close();
     }
+
+    await owner.goto(`/space/${spaceId}/settings`);
+    await owner.getByRole('button', { name: '停用' }).click();
+    await owner.getByRole('button', { name: '确认停用' }).click();
+    await expect(owner.getByText('已停用', { exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await member.reload();
+    await expect(
+      member.getByRole('heading', { name: '成员身份已停用' }),
+    ).toBeVisible({ timeout: 30_000 });
   } finally {
     await memberContext.close();
   }
