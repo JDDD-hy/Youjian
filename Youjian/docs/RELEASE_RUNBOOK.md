@@ -111,14 +111,14 @@ npm run db:test
 
 ## 9. 2026-07-30 生产发布证据
 
-- 公开入口：`https://jddd-hy.github.io/`，GitHub Pages 强制 HTTPS；PWA manifest、Service Worker 与邀请深链接回退均已在线检查。
-- 源码：本地提交 `3b32820`；公开 `source` 分支提交 `1311730ec2f88101aaff9a03ec2fab3e267425a2`；已部署 Pages 产物提交 `9cee75e163da279908d4844d7c05e8d413d7007b`。
-- Supabase：26 个迁移全部应用；14/14 个 public 表启用 RLS；Realtime publication 5 个表；`anon` 对 public 表的直接写权限为 0；Anonymous Auth 开启，Auth CAPTCHA 按小范围好友模式关闭。
+- 公开入口：`https://jddd-hy.github.io/`，GitHub Pages 强制 HTTPS；Pages 已切换为 GitHub Actions 发布，PWA manifest、Service Worker 与邀请深链接回退均已在线检查。生产发布运行 `30542171817` 成功。
+- 源码：本地提交 `fc8320d`；公开 `source` 分支提交 `704e0fd31fdf49b7a4dd8e456f316b175381de4b`；Pages 由经过验证的 Actions artifact 发布，不再维护独立 `gh-pages` 产物提交。
+- Supabase：27 个迁移全部应用；14/14 个 public 表启用 RLS；Realtime publication 5 个表；`anon` 对 public 表的直接写权限为 0；Anonymous Auth 开启，Auth CAPTCHA 按小范围好友模式关闭。邀请 RPC 缺省返回相对路径，前端统一绑定当前站点 origin，旧设备缓存的 localhost 邀请也会自动纠正。
 - Cron：`youjian-minute-maintenance` 精确 1 个、启用、每分钟运行；发布检查时最近一次 scheduler 与 maintenance audit 均为 `succeeded`。
-- 线上 E2E：快速双设备/计时 2 项通过；完整真实计时运行 5.3 分钟，双设备创建、邀请点击、加入、同步、暂停、恢复、少于 5 分钟丢弃及满 5 分钟记账共 2 项通过。
-- 生产数据：E2E 产生的 6 个匿名身份、4 个测试友间和 4 条会话已在备份后清理；清理后 Auth 用户为 0。
+- 线上 E2E：2026-07-30 最新公网回归 3/3 通过；两个独立浏览器上下文直接打开完整邀请 URL，验证正式域名、创建、加入、身份恢复、实时专注同步、暂停、恢复、权威结算、房主轮换、旧链接失效、新链接有效及成员无房主管理权限。此前另有完整 5.3 分钟真实计时回归通过，覆盖少于 5 分钟丢弃及满 5 分钟记账。
+- 生产数据：此前 E2E 产生的 6 个匿名身份、4 个测试友间和 4 条会话已在备份后清理；最新公网回归使用带随机后缀且明显虚构的测试昵称、友间和任务，后续清理必须按这些测试标识精确执行，禁止影响真实用户数据。
 - 备份：schema 175,812 bytes，SHA-256 `AEAE9F663FF8E0658053F457835C61506403825B09F2B3C20D675C2CB870770C`；data 56,280 bytes，SHA-256 `78683C34F32533FD159C7EBA9B02E228F8DFAA6565F498CD150C800A9741D473`。文件仅保存在本地忽略目录；既有隔离恢复演练结果见第 3 节。
 - 监控：GitHub Actions 每 15 分钟检查站点、Cron、维护审计、待结算积压、RPC 内部错误与客户端错误阈值；首次手动运行 `30500049232` 成功。监控使用的 30 天 Supabase PAT 仅存于 GitHub Secret，须在 2026-08-29 前轮换。
-- 安全门禁：源码密钥扫描、生产依赖审计、CSP 静态托管校验、lint、类型检查、31 个单元测试与发布验证均通过。GitHub Pages 不支持项目自定义响应头，CSP 由 HTML meta 执行；平台响应包含 HSTS。
+- 安全门禁：源码密钥扫描、生产依赖审计、CSP 静态托管校验、lint、类型检查、33 个单元测试与发布验证均通过。GitHub Pages 不支持项目自定义响应头，CSP 由 HTML meta 执行；平台响应包含 HSTS。
 - 视觉：按参考图对 390×844 稳定态逐屏检查空闲、专注和暂停页面；主题 token 与参考色板一致：暖象牙 `#F7F3EA`、暖黄 `#F5C96A`、蓝灰暂停 `#82909D`、成功绿 `#4CAF7B`。三态均保留灯光语义、计时主层级、主要操作和固定底部导航。
 - 未完成的人工门禁：真实 iPhone Safari、真实 Android Chrome、锁屏恢复、PWA 独立模式安装和两台实体手机完整流程仍需在设备矩阵中签字；自动化 iPhone/Pixel 仿真不替代该项。
