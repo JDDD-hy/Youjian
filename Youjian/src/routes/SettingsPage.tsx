@@ -21,6 +21,7 @@ export function SettingsPage() {
   const { spaceId = '' } = useParams();
   const client = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const [installError, setInstallError] = useState(false);
   const [confirmRotate, setConfirmRotate] = useState(false);
@@ -105,6 +106,31 @@ export function SettingsPage() {
     }
   };
   const data = settings.data?.data;
+  const share = async () => {
+    if (!invite) {
+      rotate.reset();
+      setConfirmRotate(true);
+      return;
+    }
+    if (!navigator.share) {
+      await copy();
+      return;
+    }
+    try {
+      await navigator.share({
+        title: data ? `加入「${data.space.name}」` : '加入友间',
+        text: '和我一起在友间专注。',
+        url: invite,
+      });
+      setShared(true);
+      setCopyError(false);
+      window.setTimeout(() => setShared(false), 3000);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setShared(false);
+      setCopyError(true);
+    }
+  };
   return (
     <div className="page settings-page">
       <header className="page-header">
@@ -179,6 +205,14 @@ export function SettingsPage() {
               >
                 {copied ? '已复制' : invite ? '复制邀请链接' : '生成新邀请链接'}
               </button>
+              {invite && (
+                <button
+                  className="button button--secondary button--full"
+                  onClick={() => void share()}
+                >
+                  {shared ? '已打开分享' : '分享邀请链接'}
+                </button>
+              )}
               {copyError && (
                 <div
                   className="inline-notice inline-notice--error"
