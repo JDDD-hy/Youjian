@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.local
+supabase/.branches/
+supabase/.temp/
+.artifacts/

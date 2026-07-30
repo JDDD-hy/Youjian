@@ -1,0 +1,29 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(14);
+insert into auth.users(id) values('00000000-0000-0000-0000-000000000051'),('00000000-0000-0000-0000-000000000052');
+insert into public.profiles(id,timezone) values('00000000-0000-0000-0000-000000000051','UTC'),('00000000-0000-0000-0000-000000000052','UTC');
+insert into public.spaces(id,name,owner_id,timezone,invite_token_hash) values('10000000-0000-0000-0000-000000000051','Home','00000000-0000-0000-0000-000000000051','UTC','home');
+insert into public.space_members(id,space_id,user_id,display_name,role) values
+ ('20000000-0000-0000-0000-000000000051','10000000-0000-0000-0000-000000000051','00000000-0000-0000-0000-000000000051','Owner','owner'),
+ ('20000000-0000-0000-0000-000000000052','10000000-0000-0000-0000-000000000051','00000000-0000-0000-0000-000000000052','Friend','member');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000051',true);
+select is(public.start_focus('10000000-0000-0000-0000-000000000051','Deep work','work','30000000-0000-0000-0000-000000000051')#>>'{data,session,status}','focusing','owner starts focus');
+update public.focus_sessions set last_seen_at=now()-interval '130 seconds' where task_name='Deep work';
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000052',true);
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,space,active_member_count}','2','home returns active member count');
+select is(jsonb_array_length(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>'{data,focusing_members}'),1,'friend sees focusing owner');
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,focusing_members,0,connection,status}','unconfirmed','stale heartbeat is unconfirmed');
+select is((select count(*)::int from public.focus_connection_intervals where ended_at is null and session_id=(select id from public.focus_sessions where task_name='Deep work' and space_id='10000000-0000-0000-0000-000000000051')),1,'snapshot maintenance opens one unconfirmed interval');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000051',true);
+select is(public.heartbeat_focus((select id from public.focus_sessions where task_name='Deep work'))#>>'{data,connection_reconfirmed}','true','heartbeat reconfirms connection');
+select is((select count(*)::int from public.focus_connection_intervals where ended_at is null and session_id=(select id from public.focus_sessions where task_name='Deep work' and space_id='10000000-0000-0000-0000-000000000051')),0,'heartbeat closes interval');
+select ok((select unconfirmed_connection_seconds between 9 and 11 from public.focus_sessions where task_name='Deep work'),'unconfirmed duration is accumulated');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000052',true);
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,focusing_members,0,connection,status}','connected','friend sees reconnection');
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,my_session}',null,'friend has no session');
+select ok((public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>'{data,today}') ? 'current_streak_days','home includes streak state');
+select is((select version from public.focus_sessions where task_name='Deep work'),3::bigint,'focus entity version advances monotonically');
+select ok((select count(*)=1 from pg_publication_tables where pubname='supabase_realtime' and tablename='focus_sessions'),'focus sessions published to realtime');
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000999')#>>'{error,code}','SPACE_ACCESS_DENIED','unknown space is not enumerable');
+select * from finish(); rollback;

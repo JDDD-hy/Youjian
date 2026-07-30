@@ -1,0 +1,91 @@
+name: Youjian production monitor
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: youjian-production-monitor
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_URL: https://jddd-hy.github.io/Youjian/
+      SUPABASE_PROJECT_REF: izshepocrpzrwoxtwibr
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Check site and database health
+        shell: python
+        run: |
+          import json
+          import os
+          import urllib.request
+
+          site_request = urllib.request.Request(
+              os.environ['SITE_URL'],
+              headers={'User-Agent': 'youjian-production-monitor/1.0'},
+          )
+          with urllib.request.urlopen(site_request, timeout=20) as response:
+              if response.status != 200:
+                  raise RuntimeError(f'site returned HTTP {response.status}')
+              html = response.read().decode('utf-8')
+          if 'Content-Security-Policy' not in html or 'id="root"' not in html:
+              raise RuntimeError('site shell or CSP is missing')
+
+          query = """
+          select json_build_object(
+            'cron_job_count',(select count(*) from cron.job where jobname='youjian-minute-maintenance'),
+            'cron_job_active',(select coalesce(bool_and(active),false) from cron.job where jobname='youjian-minute-maintenance'),
+            'cron_last_status',(select status from cron.job_run_details where jobid=(select jobid from cron.job where jobname='youjian-minute-maintenance' limit 1) order by start_time desc limit 1),
+            'cron_last_age_seconds',(select extract(epoch from now()-start_time)::int from cron.job_run_details where jobid=(select jobid from cron.job where jobname='youjian-minute-maintenance' limit 1) order by start_time desc limit 1),
+            'cron_failures_1h',(select count(*) from cron.job_run_details where jobid=(select jobid from cron.job where jobname='youjian-minute-maintenance' limit 1) and start_time>=now()-interval '1 hour' and status<>'succeeded'),
+            'maintenance_last_status',(select status from private.maintenance_runs where source='cron' order by started_at desc,id desc limit 1),
+            'maintenance_last_age_seconds',(select extract(epoch from now()-started_at)::int from private.maintenance_runs where source='cron' order by started_at desc,id desc limit 1),
+            'rpc_internal_errors_15m',(select count(*) from private.rpc_internal_errors where occurred_at>=now()-interval '15 minutes'),
+            'client_errors_15m',(select count(*) from private.client_error_reports where occurred_at>=now()-interval '15 minutes'),
+            'overdue_sessions',(select count(*) from public.focus_sessions where (status='paused' and paused_at+interval '15 minutes'<=now()) or (status='focusing' and active_segment_started_at+make_interval(secs=>21600-accumulated_focus_seconds)<=now()))
+          ) as health
+          """
+          body = json.dumps({'query': query, 'read_only': True}).encode('utf-8')
+          endpoint = (
+              'https://api.supabase.com/v1/projects/'
+              + os.environ['SUPABASE_PROJECT_REF']
+              + '/database/query'
+          )
+          request = urllib.request.Request(
+              endpoint,
+              data=body,
+              method='POST',
+              headers={
+                  'Authorization': 'Bearer ' + os.environ['SUPABASE_ACCESS_TOKEN'],
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'youjian-production-monitor/1.0',
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              result = json.load(response)
+          row = result[0] if isinstance(result, list) else result
+          health = row['health']
+          checks = {
+              'cron job count': health['cron_job_count'] == 1,
+              'cron active': health['cron_job_active'] is True,
+              'cron succeeded': health['cron_last_status'] == 'succeeded',
+              'cron fresh': health['cron_last_age_seconds'] is not None and health['cron_last_age_seconds'] < 180,
+              'cron failures': health['cron_failures_1h'] == 0,
+              'maintenance succeeded': health['maintenance_last_status'] == 'succeeded',
+              'maintenance fresh': health['maintenance_last_age_seconds'] is not None and health['maintenance_last_age_seconds'] < 180,
+              'RPC internal errors': health['rpc_internal_errors_15m'] == 0,
+              'client error threshold': health['client_errors_15m'] <= 5,
+              'settlement backlog': health['overdue_sessions'] == 0,
+          }
+          failed = [name for name, passed in checks.items() if not passed]
+          print(json.dumps({'health': health, 'failed_checks': failed}, sort_keys=True))
+          if failed:
+              raise RuntimeError('production health checks failed: ' + ', '.join(failed))
