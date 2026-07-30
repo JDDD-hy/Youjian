@@ -51,5 +51,10 @@ export const router = createBrowserRouter(
     },
     { path: '*', element: <PlaceholderPage title="没有找到这个页面" /> },
   ],
-  { basename: import.meta.env.BASE_URL },
+  {
+    basename:
+      import.meta.env.BASE_URL === '/'
+        ? '/'
+        : import.meta.env.BASE_URL.replace(/\/$/, ''),
+  },
 );
