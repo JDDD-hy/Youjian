@@ -5,6 +5,7 @@ import { CreateSpacePage } from '../routes/CreateSpacePage';
 import { InvitePage } from '../routes/InvitePage';
 import { PlaceholderPage } from '../routes/PlaceholderPage';
 import { WelcomePage } from '../routes/WelcomePage';
+import { JoinWaitingPage } from '../routes/JoinWaitingPage';
 
 // These are route components; keeping them lazy avoids loading authenticated screens on invite previews.
 // eslint-disable-next-line react-refresh/only-export-components
@@ -33,6 +34,7 @@ const SettingsPage = lazy(() =>
 export const router = createBrowserRouter([
   { path: '/', element: <WelcomePage /> },
   { path: '/create', element: <CreateSpacePage /> },
+  { path: '/join', element: <JoinWaitingPage /> },
   { path: '/invite/:token', element: <InvitePage /> },
   {
     path: '/space/:spaceId',

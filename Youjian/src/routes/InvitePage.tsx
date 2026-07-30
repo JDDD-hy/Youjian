@@ -10,6 +10,7 @@ import { Icon } from '../components/Icons';
 import { TurnstileField } from '../components/TurnstileField';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { pendingDisplayNameKey } from './JoinWaitingPage';
 
 interface InvitePreview {
   status: 'valid' | 'full';
@@ -24,7 +25,9 @@ export function InvitePage() {
   const { token = '' } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState(
+    () => localStorage.getItem(pendingDisplayNameKey) ?? '',
+  );
   const [fieldError, setFieldError] = useState('');
   const [terminalError, setTerminalError] = useState<{
     code: string;
@@ -57,6 +60,7 @@ export function InvitePage() {
     },
     onSuccess: ({ data }) => {
       intent.clear();
+      localStorage.removeItem(pendingDisplayNameKey);
       cacheActiveMembership(queryClient, {
         ...data.membership,
         space_id: data.space.id,

@@ -206,6 +206,10 @@ a:focus-visible {
   font-size: 0.9rem;
   line-height: 1.75;
 }
+.welcome-actions {
+  display: grid;
+  gap: 10px;
+}
 .identity-note,
 .identity-explainer {
   margin: 14px 0 0;

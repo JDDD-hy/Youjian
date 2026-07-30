@@ -39,9 +39,14 @@ export function WelcomePage() {
             回到友间
           </Link>
         ) : (
-          <Link className="button button--primary button--full" to="/create">
-            创建友间
-          </Link>
+          <div className="welcome-actions">
+            <Link className="button button--primary button--full" to="/create">
+              创建友间
+            </Link>
+            <Link className="button button--secondary button--full" to="/join">
+              等待加入
+            </Link>
+          </div>
         )}
         <p className="identity-note">
           无需注册账号。匿名身份只保存在当前设备中。

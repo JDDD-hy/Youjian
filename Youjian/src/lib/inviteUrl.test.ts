@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeInviteUrl } from './inviteUrl';
+import { inviteInputToUrl, normalizeInviteUrl } from './inviteUrl';
 
 const token = 'A'.repeat(43);
 
@@ -20,5 +20,18 @@ describe('normalizeInviteUrl', () => {
     expect(
       normalizeInviteUrl(`/settings/${token}`, 'https://example.com'),
     ).toBe(null);
+  });
+});
+
+describe('inviteInputToUrl', () => {
+  it('accepts a raw invite token', () => {
+    const token = 'B'.repeat(43);
+    expect(inviteInputToUrl(token, 'https://youjian.example')).toBe(
+      `https://youjian.example/invite/${token}`,
+    );
+  });
+
+  it('rejects text that is neither a token nor an invite URL', () => {
+    expect(inviteInputToUrl('hello', 'https://youjian.example')).toBeNull();
   });
 });

@@ -25,6 +25,10 @@ describe('WelcomePage', () => {
     expect(
       await screen.findByRole('link', { name: '创建友间' }),
     ).toHaveAttribute('href', '/create');
+    expect(screen.getByRole('link', { name: '等待加入' })).toHaveAttribute(
+      'href',
+      '/join',
+    );
     expect(screen.getByText(/匿名身份只保存在当前设备中/)).toBeInTheDocument();
   });
 });
