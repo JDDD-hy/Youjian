@@ -21,12 +21,16 @@ export function normalizeInviteUrl(
     const parsed = new URL(value, origin);
     const parts = parsed.pathname.split('/').filter(Boolean);
     const baseParts = normalizedBase(basePath).split('/').filter(Boolean);
-    const legacy = parts.length === 2 && parts[0] === 'invite';
+    // A deployment may move between a project sub-path and a root/custom
+    // domain. The token is portable, so accept invite paths from either the
+    // current base or a previous base and always re-home them to this app.
+    const inviteIndex = parts.length - 2;
+    const portable = inviteIndex >= 0 && parts[inviteIndex] === 'invite';
     const scoped =
       parts.length === baseParts.length + 2 &&
       baseParts.every((part, index) => parts[index] === part) &&
       parts.at(-2) === 'invite';
-    if (!legacy && !scoped) return null;
+    if (!portable && !scoped) return null;
     const token = parts.at(-1);
     if (!token || !inviteTokenPattern.test(token)) return null;
     return `${new URL(origin).origin}${normalizedBase(basePath)}invite/${token}`;

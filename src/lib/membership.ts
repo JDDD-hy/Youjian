@@ -1,7 +1,8 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { Membership } from '../domain/types';
-import { rpc, withRequestTimeout } from './api';
+import { isApiError, rpc, withRequestTimeout } from './api';
 import { getSupabaseClient } from './supabase';
+import { clearDeviceIdentity } from './deviceIdentity';
 
 export interface MembershipState {
   membership: Membership | null;
@@ -55,7 +56,16 @@ export async function loadMembership(): Promise<MembershipState | null> {
     persistMembership(null);
     return null;
   }
-  const state = (await rpc<MembershipState>('get_my_membership')).data;
+  let state: MembershipState;
+  try {
+    state = (await rpc<MembershipState>('get_my_membership')).data;
+  } catch (error) {
+    if (isApiError(error) && error.code === 'AUTH_REQUIRED') {
+      await clearDeviceIdentity();
+      return null;
+    }
+    throw error;
+  }
   persistMembership(state);
   return state;
 }

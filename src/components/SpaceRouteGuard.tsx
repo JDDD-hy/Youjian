@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { loadMembership, readCachedMembership } from '../lib/membership';
 import { AppShell } from './AppShell';
 import { ErrorState, PageLoader } from './AsyncState';
@@ -32,20 +32,7 @@ export function SpaceRouteGuard() {
         </section>
       </main>
     );
-  if (!membership.data)
-    return (
-      <main className="form-page">
-        <section className="form-card">
-          <ErrorState
-            title="这台设备没有可用身份"
-            message="匿名身份可能已被清除。"
-          />
-          <Link className="button button--secondary button--full" to="/">
-            返回欢迎页
-          </Link>
-        </section>
-      </main>
-    );
+  if (!membership.data) return <Navigate to="/" replace />;
   if (!membership.data.membership) {
     const disabled = membership.data.latest_disabled_membership;
     return (
