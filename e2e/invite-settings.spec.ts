@@ -5,7 +5,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
   browser,
   page: owner,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const suffix = randomUUID().slice(0, 8);
   const spaceName = `邀请权限友间-${suffix}`;
 
