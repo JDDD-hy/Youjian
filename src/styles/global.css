@@ -194,6 +194,12 @@ a:focus-visible {
   box-shadow: var(--shadow);
   text-align: center;
 }
+.welcome-logo {
+  display: block;
+  width: min(52vw, 188px);
+  height: auto;
+  margin: 0 auto 14px;
+}
 .tagline {
   margin: 8px 0 0;
   font-size: 1.14rem;
@@ -1291,12 +1297,10 @@ a:focus-visible {
     font-size: 1.25rem;
     font-weight: 800;
   }
-  .brand-dot {
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 0 0 8px var(--primary-soft);
+  .side-nav__logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
   }
   .side-nav nav {
     display: grid;
