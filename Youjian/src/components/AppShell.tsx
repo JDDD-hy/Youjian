@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { PageLoader } from './AsyncState';
 import { Icon } from './Icons';
+import { BrandLogo } from './BrandLogo';
 
 const items = [
   { suffix: '', label: '首页', icon: 'home' as const, end: true },
@@ -17,7 +18,7 @@ export function AppShell() {
     <div className="app-layout">
       <aside className="side-nav" aria-label="主导航">
         <div className="side-nav__brand">
-          <span className="brand-dot" />
+          <BrandLogo className="side-nav__logo" />
           友间
         </div>
         <nav>

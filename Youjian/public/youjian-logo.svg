@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#F7F3EA"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">友间</title>
+  <desc id="desc">一盏灯照亮并肩专注的两个人</desc>
   <path d="M244 111 197 286 256 397 315 286 268 111Z" fill="#F5C96A" opacity=".42"/>
   <ellipse cx="256" cy="397" rx="64" ry="17" fill="#F5C96A"/>
   <g fill="none" stroke="#2C2A25" stroke-linecap="round" stroke-linejoin="round">

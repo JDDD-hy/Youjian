@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Lamp } from '../components/Lamp';
+import { BrandLogo } from '../components/BrandLogo';
 import { loadMembership } from '../lib/membership';
 import { ErrorState } from '../components/AsyncState';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -16,7 +16,7 @@ export function WelcomePage() {
   return (
     <main className="welcome-shell">
       <section className="welcome-card" aria-labelledby="welcome-title">
-        <Lamp />
+        <BrandLogo className="welcome-logo" />
         <p className="eyebrow">共享专注空间</p>
         <h1 id="welcome-title">友间</h1>
         <p className="tagline">在友间，自有间。</p>
