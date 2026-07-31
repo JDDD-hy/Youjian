@@ -112,10 +112,17 @@ test('one-time code moves identity and revokes the old device', async ({
     });
 
     await oldDevice.reload();
-    await expect(oldDevice).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(oldDevice).toHaveURL(/\/(?:Youjian)?\/?$/, {
+      timeout: 30_000,
+    });
     await expect(
       oldDevice.getByRole('link', { name: '创建友间' }),
     ).toBeVisible();
+    expect(
+      await oldDevice.evaluate(() =>
+        Object.keys(localStorage).filter((key) => key.startsWith('youjian:')),
+      ),
+    ).toEqual([]);
     await oldDevice.goto('./create');
     await expect(oldDevice.getByRole('heading', { name: '创建友间' })).toBeVisible();
 
