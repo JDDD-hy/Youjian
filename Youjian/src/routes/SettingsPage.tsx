@@ -16,8 +16,8 @@ import {
 } from '../lib/pwaInstall';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { normalizeInviteUrl } from '../lib/inviteUrl';
-import { getSupabaseClient } from '../lib/supabase';
 import { appPath, appBasePath } from '../lib/appBase';
+import { clearDeviceIdentity } from '../lib/deviceIdentity';
 
 export function SettingsPage() {
   const { spaceId = '' } = useParams();
@@ -204,20 +204,7 @@ export function SettingsPage() {
   const exitCurrentDevice = async () => {
     setExiting(true);
     setExitError(false);
-    const { error } = await getSupabaseClient().auth.signOut({
-      scope: 'local',
-    });
-    if (error) {
-      setExiting(false);
-      setExitError(true);
-      return;
-    }
-    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-      const key = localStorage.key(index);
-      if (key?.startsWith('youjian:')) localStorage.removeItem(key);
-    }
-    sessionStorage.clear();
-    client.clear();
+    await clearDeviceIdentity(client);
     window.location.replace(appBasePath);
   };
   return (

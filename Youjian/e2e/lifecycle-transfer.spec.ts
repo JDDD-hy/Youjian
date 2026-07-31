@@ -112,9 +112,12 @@ test('one-time code moves identity and revokes the old device', async ({
     });
 
     await oldDevice.reload();
+    await expect(oldDevice).toHaveURL(/\/$/, { timeout: 30_000 });
     await expect(
-      oldDevice.getByRole('heading', { name: '无法确认当前身份' }),
-    ).toBeVisible({ timeout: 30_000 });
+      oldDevice.getByRole('link', { name: '创建友间' }),
+    ).toBeVisible();
+    await oldDevice.goto('./create');
+    await expect(oldDevice.getByRole('heading', { name: '创建友间' })).toBeVisible();
 
     const replayContext = await browser.newContext();
     try {
