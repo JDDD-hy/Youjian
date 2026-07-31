@@ -38,6 +38,23 @@ describe('normalizeInviteUrl', () => {
       ),
     ).toBe(`https://jddd-hy.github.io/Youjian/invite/${token}`);
   });
+
+  it('re-homes links from a previous project path after a domain migration', () => {
+    expect(
+      normalizeInviteUrl(
+        `https://old.example/Youjian/invite/${token}`,
+        'https://new.example',
+        '/',
+      ),
+    ).toBe(`https://new.example/invite/${token}`);
+    expect(
+      normalizeInviteUrl(
+        `https://old.example/old/project/invite/${token}`,
+        'https://new.example',
+        '/app/',
+      ),
+    ).toBe(`https://new.example/app/invite/${token}`);
+  });
 });
 
 describe('inviteInputToUrl', () => {

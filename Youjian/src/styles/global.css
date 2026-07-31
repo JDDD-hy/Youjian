@@ -330,7 +330,7 @@ a:focus-visible {
 }
 .app-content {
   min-height: 100vh;
-  padding-bottom: 88px;
+  padding-bottom: calc(140px + env(safe-area-inset-bottom));
 }
 .side-nav {
   display: none;
