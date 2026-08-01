@@ -7,7 +7,7 @@ describe('Lamp', () => {
     const { container } = render(<Lamp state="focusing" compact />);
     const image = container.querySelector('img');
 
-    expect(image).toHaveAttribute('src', '/lamp-focusing.svg');
+    expect(image?.getAttribute('src')).toMatch(/^data:image\/svg\+xml,/);
     expect(image).toHaveClass('lamp--focusing', 'lamp--compact');
     expect(container.querySelectorAll('span')).toHaveLength(0);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
