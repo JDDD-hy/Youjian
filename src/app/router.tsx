@@ -7,6 +7,9 @@ import { PlaceholderPage } from '../routes/PlaceholderPage';
 import { WelcomePage } from '../routes/WelcomePage';
 import { JoinWaitingPage } from '../routes/JoinWaitingPage';
 import { IdentityTransferPage } from '../routes/IdentityTransferPage';
+import { repairCurrentAppPath } from '../lib/canonicalPath';
+
+repairCurrentAppPath();
 
 // These are route components; keeping them lazy avoids loading authenticated screens on invite previews.
 // eslint-disable-next-line react-refresh/only-export-components
