@@ -160,7 +160,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
 
     await owner.getByRole('button', { name: '退出当前设备' }).click();
     await owner.getByRole('button', { name: '确认退出' }).click();
-    await expect(owner).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(owner).toHaveURL(/\/Youjian\/?$/, { timeout: 30_000 });
     await expect(owner.getByRole('heading', { name: '友间' })).toBeVisible();
     expect(
       await owner.evaluate(() =>
