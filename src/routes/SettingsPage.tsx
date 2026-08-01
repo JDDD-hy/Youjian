@@ -579,7 +579,7 @@ export function SettingsPage() {
           closeOnBackdrop={!leave.isPending}
         >
           <h2 id="leave-space-title">主动退出友间？</h2>
-          <p>退出后会立即失去访问权，历史记录保留且不能用旧邀请重新加入。</p>
+          <p>退出后会立即失去访问权并保留历史记录；之后可凭当前有效邀请重新加入。</p>
           {data?.me.role === 'owner' && (
             <p>房主需要先转让房主，或改为解散友间。</p>
           )}

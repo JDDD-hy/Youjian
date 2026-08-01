@@ -10,6 +10,7 @@ export interface MembershipState {
     space_name: string;
     display_name: string;
     disabled_at: string;
+    end_reason?: 'disabled' | 'left' | 'dissolved';
   } | null;
 }
 

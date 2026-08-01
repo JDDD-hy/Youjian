@@ -24,7 +24,7 @@ test('owner transfers ownership, former owner leaves, and new owner dissolves', 
   browser,
   page: owner,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const suffix = randomUUID().slice(0, 8);
   await createSpace(owner, suffix);
   const spaceId = new URL(owner.url()).pathname.split('/').at(-1)!;
@@ -56,7 +56,19 @@ test('owner transfers ownership, former owner leaves, and new owner dissolves', 
 
     await owner.getByRole('button', { name: '主动退出友间' }).click();
     await owner.getByRole('button', { name: '确认退出友间' }).click();
-    await expect(owner).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(owner).toHaveURL(/\/(?:Youjian)?\/?$/, { timeout: 30_000 });
+    await expect(owner.getByText('可凭当前有效邀请重新加入')).toBeVisible();
+
+    await owner.goto(inviteUrl!);
+    if (process.env.E2E_EXPECT_CAPTCHA !== '0')
+      await expect(
+        owner.locator('[name="cf-turnstile-response"]'),
+      ).toHaveValue(/.+/, { timeout: 30_000 });
+    await owner.getByLabel('你在这里使用的昵称').fill(`重新加入-${suffix}`);
+    await owner.getByRole('button', { name: '加入友间' }).click();
+    await expect(owner).toHaveURL(new RegExp(`/space/${spaceId}$`), {
+      timeout: 30_000,
+    });
 
     await member.goto(`./space/${spaceId}/settings`);
     await expect(
@@ -64,7 +76,7 @@ test('owner transfers ownership, former owner leaves, and new owner dissolves', 
     ).toBeVisible();
     await member.getByRole('button', { name: '解散友间' }).click();
     await member.getByRole('button', { name: '确认永久解散' }).click();
-    await expect(member).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(member).toHaveURL(/\/(?:Youjian)?\/?$/, { timeout: 30_000 });
 
     const freshContext = await browser.newContext();
     try {
@@ -124,9 +136,7 @@ test('one-time code moves identity and revokes the old device', async ({
       ),
     ).toEqual([]);
     await oldDevice.goto('./create');
-    await expect(
-      oldDevice.getByRole('heading', { name: '创建友间' }),
-    ).toBeVisible();
+    await expect(oldDevice.getByRole('heading', { name: '创建友间' })).toBeVisible();
 
     const replayContext = await browser.newContext();
     try {

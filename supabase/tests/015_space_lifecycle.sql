@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(27);
 
 insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000151'),
@@ -34,6 +34,16 @@ select is((select end_reason from public.space_members where id='20000000-0000-0
 select is((select status::text from public.goal_proposals where space_id='10000000-0000-0000-0000-000000000151'),'rejected','leave cancels a pending unanimous proposal');
 select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000151')#>>'{error,code}','SPACE_ACCESS_DENIED','departed member immediately loses access');
 select is(public.leave_space('10000000-0000-0000-0000-000000000151','30000000-0000-0000-0000-000000000153'),(select result from leave_result),'leave retry is idempotent');
+select is(public.get_my_membership()#>>'{data,latest_disabled_membership,end_reason}','left','membership reports a voluntary departure separately');
+create temporary table rejoin_result as select public.join_space(repeat('L',43),'Returned','UTC','30000000-0000-0000-0000-000000000159') result;
+select is((select result#>>'{data,membership,status}' from rejoin_result),'active','a voluntary leaver can rejoin with a valid invite');
+select is((select result#>>'{data,membership,member_id}' from rejoin_result),'20000000-0000-0000-0000-000000000152','rejoin reuses the historical member identity');
+select is((select display_name from public.space_members where id='20000000-0000-0000-0000-000000000152'),'Returned','rejoin can choose a current display name');
+select is((select end_reason from public.space_members where id='20000000-0000-0000-0000-000000000152'),null,'rejoin clears the voluntary end marker');
+insert into public.space_members(id,space_id,user_id,display_name,role,status,disabled_at,disabled_by,end_reason) values
+ ('20000000-0000-0000-0000-000000000154','10000000-0000-0000-0000-000000000151','00000000-0000-0000-0000-000000000154','Removed','member','disabled',now(),'00000000-0000-0000-0000-000000000151','disabled');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000154',true);
+select is(public.join_space(repeat('L',43),'Removed','UTC','30000000-0000-0000-0000-000000000160')#>>'{error,code}','MEMBER_DISABLED','a member removed by the owner still cannot rejoin');
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000151',true);
 select is(public.leave_space('10000000-0000-0000-0000-000000000151','30000000-0000-0000-0000-000000000154')#>>'{error,code}','OWNER_MUST_TRANSFER_OR_DISSOLVE','owner cannot leave without succession');

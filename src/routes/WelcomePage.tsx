@@ -56,8 +56,12 @@ export function WelcomePage() {
         </p>
         {membership.data?.latest_disabled_membership && !active && (
           <div className="inline-notice inline-notice--warning" role="status">
-            你在「{membership.data.latest_disabled_membership.space_name}
-            」的成员身份已被停用。
+            {membership.data.latest_disabled_membership.end_reason === 'left'
+              ? `你已退出「${membership.data.latest_disabled_membership.space_name}」，可凭当前有效邀请重新加入。`
+              : membership.data.latest_disabled_membership.end_reason ===
+                  'dissolved'
+                ? `「${membership.data.latest_disabled_membership.space_name}」已解散。`
+                : `你在「${membership.data.latest_disabled_membership.space_name}」的成员身份已被停用。`}
           </div>
         )}
         {!online && (

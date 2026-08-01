@@ -35,14 +35,28 @@ export function SpaceRouteGuard() {
   if (!membership.data) return <Navigate to="/" replace />;
   if (!membership.data.membership) {
     const disabled = membership.data.latest_disabled_membership;
+    const voluntarilyLeft = disabled?.end_reason === 'left';
+    const dissolved = disabled?.end_reason === 'dissolved';
     return (
       <main className="form-page">
         <section className="form-card">
           <ErrorState
-            title={disabled ? '成员身份已停用' : '尚未加入友间'}
+            title={
+              voluntarilyLeft
+                ? '你已退出这个友间'
+                : dissolved
+                  ? '这个友间已解散'
+                  : disabled
+                    ? '成员身份已停用'
+                    : '尚未加入友间'
+            }
             message={
-              disabled
-                ? `你已不能进入「${disabled.space_name}」，历史记录仍会保留。`
+              voluntarilyLeft
+                ? `你可凭「${disabled.space_name}」当前有效的邀请链接重新加入，历史记录仍会保留。`
+                : dissolved
+                  ? `「${disabled.space_name}」已结束，历史记录仍会保留。`
+                  : disabled
+                    ? `你已不能进入「${disabled.space_name}」，历史记录仍会保留。`
                 : '当前身份没有活动的友间成员关系。'
             }
           />
