@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { inviteInputToUrl, normalizeInviteUrl } from './inviteUrl';
+import {
+  inviteInputToUrl,
+  loadInviteUrl,
+  normalizeInviteUrl,
+  saveInviteUrl,
+} from './inviteUrl';
 
 const token = 'A'.repeat(43);
 
@@ -67,5 +72,25 @@ describe('inviteInputToUrl', () => {
 
   it('rejects text that is neither a token nor an invite URL', () => {
     expect(inviteInputToUrl('hello', 'https://youjian.example')).toBeNull();
+  });
+});
+
+describe('stored invite URLs', () => {
+  it('rewrites a malformed migrated URL before its first copy', () => {
+    const malformed = `https://jddd-hy.github.io/youjian/Youjian/invite/${token}`;
+    localStorage.setItem('youjian:invite:space-1', malformed);
+
+    expect(loadInviteUrl('space-1')).toBe(
+      `http://localhost:3000/invite/${token}`,
+    );
+    expect(localStorage.getItem('youjian:invite:space-1')).toBe(
+      `http://localhost:3000/invite/${token}`,
+    );
+  });
+
+  it('normalizes server responses before storing them', () => {
+    expect(saveInviteUrl('space-2', `/old/invite/${token}`)).toBe(
+      `http://localhost:3000/invite/${token}`,
+    );
   });
 });

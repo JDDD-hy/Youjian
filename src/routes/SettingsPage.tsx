@@ -15,7 +15,7 @@ import {
   subscribePwaInstall,
 } from '../lib/pwaInstall';
 import { assertRouteSpace } from '../lib/spaceBoundary';
-import { normalizeInviteUrl } from '../lib/inviteUrl';
+import { loadInviteUrl, saveInviteUrl } from '../lib/inviteUrl';
 import { appPath, appBasePath } from '../lib/appBase';
 import { clearDeviceIdentity } from '../lib/deviceIdentity';
 
@@ -72,12 +72,11 @@ export function SettingsPage() {
       }),
     onSuccess: async ({ data }) => {
       rotateIntent.clear();
-      const inviteUrl = normalizeInviteUrl(data.invite_url);
+      const inviteUrl = saveInviteUrl(spaceId, data.invite_url);
       if (!inviteUrl) {
         setCopyError(true);
         return;
       }
-      localStorage.setItem(`youjian:invite:${spaceId}`, inviteUrl);
       setConfirmRotate(false);
       try {
         await navigator.clipboard.writeText(inviteUrl);
@@ -156,9 +155,7 @@ export function SettingsPage() {
       setTransferCodeCopied(false);
     },
   });
-  const invite = normalizeInviteUrl(
-    localStorage.getItem(`youjian:invite:${spaceId}`),
-  );
+  const invite = loadInviteUrl(spaceId);
   const copy = async () => {
     if (!invite) {
       rotate.reset();
@@ -166,7 +163,7 @@ export function SettingsPage() {
       return;
     }
     try {
-      await navigator.clipboard.writeText(invite);
+      await navigator.clipboard.writeText(loadInviteUrl(spaceId) ?? invite);
       setCopyError(false);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 3000);
@@ -190,7 +187,7 @@ export function SettingsPage() {
       await navigator.share({
         title: data ? `加入「${data.space.name}」` : '加入友间',
         text: '和我一起在友间专注。',
-        url: invite,
+        url: loadInviteUrl(spaceId) ?? invite,
       });
       setShared(true);
       setCopyError(false);

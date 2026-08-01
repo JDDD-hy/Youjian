@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { Membership, SpaceSummary } from '../domain/types';
 import { ensureAnonymousSession, rpc } from '../lib/api';
 import { getDeviceTimezone } from '../lib/format';
-import { normalizeInviteUrl } from '../lib/inviteUrl';
+import { saveInviteUrl } from '../lib/inviteUrl';
 import { cacheActiveMembership } from '../lib/membership';
 import { Icon } from '../components/Icons';
 import { TurnstileField } from '../components/TurnstileField';
@@ -72,9 +72,7 @@ export function CreateSpacePage() {
         ...data.membership,
         space_id: data.space.id,
       });
-      const inviteUrl = normalizeInviteUrl(data.invite.invite_url);
-      if (inviteUrl)
-        localStorage.setItem(`youjian:invite:${data.space.id}`, inviteUrl);
+      saveInviteUrl(data.space.id, data.invite.invite_url);
       void navigate(`/space/${data.space.id}`, {
         replace: true,
         state: { justCreated: true },

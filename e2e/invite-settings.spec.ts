@@ -42,6 +42,9 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
   );
   expect(oldInviteUrl).toBeTruthy();
   expect(new URL(oldInviteUrl!).origin).toBe(new URL(owner.url()).origin);
+  expect(new URL(oldInviteUrl!).pathname).toMatch(
+    new RegExp(`/Youjian/invite/[A-Za-z0-9_-]{40,128}$`),
+  );
 
   const memberContext = await browser.newContext();
   const member = await memberContext.newPage();
@@ -123,6 +126,9 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     );
     expect(newInviteUrl).toBeTruthy();
     expect(new URL(newInviteUrl!).origin).toBe(new URL(owner.url()).origin);
+    expect(new URL(newInviteUrl!).pathname).toMatch(
+      new RegExp(`/Youjian/invite/[A-Za-z0-9_-]{40,128}$`),
+    );
 
     const oldInviteContext = await browser.newContext();
     const oldInvite = await oldInviteContext.newPage();

@@ -39,6 +39,24 @@ export function normalizeInviteUrl(
   }
 }
 
+export function saveInviteUrl(
+  spaceId: string,
+  value: string | null | undefined,
+): string | null {
+  const normalized = normalizeInviteUrl(value);
+  const key = `youjian:invite:${spaceId}`;
+  if (normalized) localStorage.setItem(key, normalized);
+  else localStorage.removeItem(key);
+  return normalized;
+}
+
+export function loadInviteUrl(spaceId: string): string | null {
+  return saveInviteUrl(
+    spaceId,
+    localStorage.getItem(`youjian:invite:${spaceId}`),
+  );
+}
+
 function normalizedBase(value: string) {
   const trimmed = value.replace(/^\/+|\/+$/g, '');
   return trimmed ? `/${trimmed}/` : '/';
