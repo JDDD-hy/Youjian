@@ -504,6 +504,67 @@ a:focus-visible {
   color: var(--warning) !important;
   font-size: 0.78rem;
 }
+.task-edit-button {
+  min-height: 36px;
+  margin: 0 auto 4px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+.task-history {
+  width: min(100%, 430px);
+  margin: 8px auto 4px;
+}
+.task-history__toggle {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid #e3c779;
+  border-radius: 999px;
+  background: #fff8dc;
+  color: #775d1c;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.task-history__list {
+  display: grid;
+  gap: 7px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.task-history__list li {
+  position: relative;
+  padding: 10px 12px;
+  border: 1px solid #eadcae;
+  border-radius: 8px;
+  background: #fff9df;
+  box-shadow: 2px 3px 0 rgb(116 93 39/8%);
+}
+.task-history__list span,
+.task-history__list small {
+  display: block;
+}
+.task-history__list span {
+  color: #575047;
+  font-size: 0.82rem;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.task-history__list small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+.pause-stage .task-history__toggle {
+  border-color: rgb(255 255 255/50%);
+  background: rgb(255 255 255/16%);
+  color: #fff;
+}
+.pause-stage .task-history__list li {
+  border-color: rgb(255 255 255/28%);
+  background: rgb(255 255 255/94%);
+}
 .result-card {
   margin-top: 18px;
   padding: 34px 20px;
@@ -565,6 +626,14 @@ a:focus-visible {
   display: block;
   margin-top: 5px;
   color: var(--muted);
+}
+.member-card .task-history {
+  margin: 7px 0 0;
+}
+.member-card .task-history__toggle {
+  min-height: 30px;
+  padding-block: 3px;
+  font-size: 0.66rem;
 }
 .member-card__uncertain {
   display: block;

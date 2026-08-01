@@ -8,6 +8,7 @@ const base: FocusSession = {
   member_id: 'member',
   task_name: '阅读',
   category: 'reading',
+  task_history: [],
   status: 'focusing',
   started_at: '2026-07-27T06:00:00.000Z',
   accumulated_focus_seconds: 300,

@@ -9,6 +9,7 @@ test('two devices create, join, synchronize focus, and restore identity', async 
   const suffix = randomUUID().slice(0, 8);
   const spaceName = `双设备友间-${suffix}`;
   const taskName = `同步任务-${suffix}`;
+  const revisedTaskName = `修改后的任务-${suffix}`;
   const memberName = `成员-${suffix}`;
 
   await owner.goto('./create');
@@ -70,22 +71,41 @@ test('two devices create, join, synchronize focus, and restore identity', async 
       timeout: 15_000,
     });
 
+    await owner.getByRole('button', { name: '修改任务' }).click();
+    const editDialog = owner.getByRole('dialog', { name: '修改当前任务' });
+    await editDialog
+      .getByRole('textbox', { name: /任务名称/ })
+      .fill(revisedTaskName);
+    await editDialog.getByRole('radio', { name: '阅读' }).check();
+    await editDialog.getByRole('button', { name: '保存修改' }).click();
+    await expect(
+      owner.getByRole('heading', { name: revisedTaskName }),
+    ).toBeVisible();
+    await expect(
+      member.getByText(revisedTaskName, { exact: true }),
+    ).toBeVisible({ timeout: 15_000 });
+    const memberHistory = member.getByRole('button', { name: /查看旧任务/ });
+    await memberHistory.click();
+    await expect(member.getByText(taskName, { exact: true })).toBeVisible();
+    await expect(member.getByText(/学习.*修改于/)).toBeVisible();
+    await member.getByRole('button', { name: /收起旧任务/ }).click();
+
     await owner.getByRole('button', { name: '暂停' }).click();
     await expect(owner.getByRole('button', { name: '继续专注' })).toBeVisible();
-    await expect(member.getByText(taskName, { exact: true })).toBeHidden({
-      timeout: 15_000,
-    });
+    await expect(member.getByText(revisedTaskName, { exact: true })).toBeHidden(
+      { timeout: 15_000 },
+    );
 
     await owner.getByRole('button', { name: '继续专注' }).click();
-    await expect(member.getByText(taskName, { exact: true })).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(
+      member.getByText(revisedTaskName, { exact: true }),
+    ).toBeVisible({ timeout: 15_000 });
 
     await owner.getByRole('button', { name: '结束本次' }).click();
     await owner.getByRole('button', { name: '确认结束' }).click();
-    await expect(member.getByText(taskName, { exact: true })).toBeHidden({
-      timeout: 15_000,
-    });
+    await expect(member.getByText(revisedTaskName, { exact: true })).toBeHidden(
+      { timeout: 15_000 },
+    );
 
     await owner.reload();
     await member.reload();

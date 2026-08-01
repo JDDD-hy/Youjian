@@ -5,6 +5,7 @@ import type {
   FocusCategory,
   FocusSession,
   HomeSnapshot,
+  TaskRevision,
 } from '../domain/types';
 import { ApiError, rpc } from '../lib/api';
 import {
@@ -174,6 +175,112 @@ function StartDrawer({
   );
 }
 
+export function EditTaskDrawer({
+  session,
+  onClose,
+  onSave,
+  pending,
+}: {
+  session: FocusSession;
+  onClose: () => void;
+  onSave: (task: string, category: FocusCategory) => void;
+  pending: boolean;
+}) {
+  const [task, setTask] = useState(session.task_name);
+  const [category, setCategory] = useState<FocusCategory>(session.category);
+  const trimmed = task.trim();
+  const unchanged =
+    trimmed === session.task_name && category === session.category;
+  return (
+    <AccessibleModal
+      titleId="edit-task-title"
+      onClose={onClose}
+      closeOnBackdrop={!pending}
+    >
+      <span className="drawer__handle" />
+      <h2 id="edit-task-title">修改当前任务</h2>
+      <p>修改后，友间成员会看到最新版和可展开的旧版本。</p>
+      <label className="field">
+        <span>任务名称</span>
+        <textarea
+          data-autofocus
+          maxLength={80}
+          rows={3}
+          value={task}
+          onChange={(event) => setTask(event.target.value)}
+        />
+        <small className="field-hint">{80 - task.length} 字可用</small>
+      </label>
+      <fieldset className="category-picker">
+        <legend>分类</legend>
+        {(Object.entries(categoryLabels) as Array<[FocusCategory, string]>).map(
+          ([value, label]) => (
+            <label key={value}>
+              <input
+                type="radio"
+                name="edit-category"
+                value={value}
+                checked={category === value}
+                onChange={() => setCategory(value)}
+              />
+              <span>{label}</span>
+            </label>
+          ),
+        )}
+      </fieldset>
+      {!trimmed && task.length > 0 && (
+        <p className="field-error">写下这次要做的事情。</p>
+      )}
+      <button
+        className="button button--primary button--full"
+        type="button"
+        disabled={!trimmed || unchanged || pending}
+        onClick={() => onSave(trimmed, category)}
+      >
+        {pending ? '正在同步…' : '保存修改'}
+      </button>
+      <button
+        className="button button--text button--full"
+        type="button"
+        disabled={pending}
+        onClick={onClose}
+      >
+        取消
+      </button>
+    </AccessibleModal>
+  );
+}
+
+export function TaskHistory({ history }: { history: TaskRevision[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!history.length) return null;
+  return (
+    <div className="task-history">
+      <button
+        className="task-history__toggle"
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((value) => !value)}
+      >
+        已修改 · {expanded ? '收起旧任务' : `查看旧任务 (${history.length})`}
+      </button>
+      {expanded && (
+        <ol className="task-history__list">
+          {history.map((revision, index) => (
+            <li key={`${revision.changed_at}:${index}`}>
+              <span>{revision.task_name}</span>
+              <small>
+                {categoryLabels[revision.category]} · 修改于{' '}
+                {formatLocalDateTime(revision.changed_at)}
+              </small>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 function SettledNotice({
   session,
   onDismiss,
@@ -215,6 +322,7 @@ function FocusPanel({
   onPause,
   onResume,
   onEnd,
+  onEdit,
   onDismiss,
   pending,
 }: {
@@ -224,6 +332,7 @@ function FocusPanel({
   onPause: () => void;
   onResume: () => void;
   onEnd: () => void;
+  onEdit: () => void;
   onDismiss: () => void;
   pending: boolean;
 }) {
@@ -268,6 +377,15 @@ function FocusPanel({
           <p className="eyebrow">暂时离开</p>
           <h2>{session.task_name}</h2>
           <p>{categoryLabels[session.category]}</p>
+          <TaskHistory history={session.task_history ?? []} />
+          <button
+            className="button button--text task-edit-button"
+            type="button"
+            disabled={pending || authorityPending || countdown === 0}
+            onClick={onEdit}
+          >
+            修改任务
+          </button>
           <strong className="timer">{formatDuration(seconds, true)}</strong>
           <hr />
           <p
@@ -303,6 +421,15 @@ function FocusPanel({
       <p className="eyebrow">灯已点亮</p>
       <h2>{session.task_name}</h2>
       <p>{categoryLabels[session.category]}</p>
+      <TaskHistory history={session.task_history ?? []} />
+      <button
+        className="button button--text task-edit-button"
+        type="button"
+        disabled={pending || authorityPending}
+        onClick={onEdit}
+      >
+        修改任务
+      </button>
       <strong className="timer">{formatDuration(seconds, true)}</strong>
       {session.auto_settle_at &&
         Date.parse(session.auto_settle_at) - now <= 30 * 60 * 1000 && (
@@ -345,6 +472,9 @@ export function HomePage() {
   );
   const [localSettled, setLocalSettled] = useState<FocusSession | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [editingSession, setEditingSession] = useState<FocusSession | null>(
+    null,
+  );
   const [heartbeatFailed, setHeartbeatFailed] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [offlineAction, setOfflineAction] = useState(false);
@@ -538,6 +668,27 @@ export function HomePage() {
       { onSuccess: () => setDrawer(false) },
     );
   };
+  const updateTask = (task: string, category: FocusCategory) => {
+    if (!editingSession) return;
+    if (connection === 'offline' || navigator.onLine === false) {
+      setOfflineAction(true);
+      return;
+    }
+    command.mutate(
+      {
+        name: 'update_focus_task',
+        params: {
+          session_id: editingSession.session_id,
+          task_name: task,
+          category,
+        },
+        key: commandIntent.get(
+          `update_focus_task:${editingSession.session_id}:${task}:${category}`,
+        ),
+      },
+      { onSuccess: () => setEditingSession(null) },
+    );
+  };
   const end = () => {
     if (!session) return;
     const seconds = calculateFocusSeconds(session, now);
@@ -599,6 +750,7 @@ export function HomePage() {
             runCommand('resume_focus', { session_id: session.session_id })
           }
           onEnd={end}
+          onEdit={() => setEditingSession(session)}
           onDismiss={() => {
             setLocalSettled(null);
             void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
@@ -616,6 +768,14 @@ export function HomePage() {
             开始专注
           </button>
         </section>
+      )}
+      {editingSession && (
+        <EditTaskDrawer
+          session={editingSession}
+          pending={command.isPending}
+          onClose={() => setEditingSession(null)}
+          onSave={updateTask}
+        />
       )}
       {command.error && (
         <div className="inline-notice inline-notice--error" role="alert">
@@ -644,6 +804,7 @@ export function HomePage() {
                   <div>
                     <h3>{member.display_name}</h3>
                     <p>{member.task_name}</p>
+                    <TaskHistory history={member.task_history ?? []} />
                     <small>
                       {categoryLabels[member.category]} ·{' '}
                       {formatDuration(

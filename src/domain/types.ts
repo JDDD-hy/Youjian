@@ -4,6 +4,12 @@ export type FocusStatus = 'focusing' | 'paused' | 'completed' | 'discarded';
 export type CompletionReason =
   'manual_end' | 'pause_timeout' | 'focus_limit' | 'member_disabled';
 
+export interface TaskRevision {
+  task_name: string;
+  category: FocusCategory;
+  changed_at: string;
+}
+
 export interface Membership {
   member_id: string;
   space_id: string;
@@ -29,6 +35,7 @@ export interface FocusSession {
   member_id: string;
   task_name: string;
   category: FocusCategory;
+  task_history: TaskRevision[];
   status: FocusStatus;
   started_at: string;
   accumulated_focus_seconds: number;
@@ -52,6 +59,7 @@ export interface FocusingMember {
   session_id: string;
   task_name: string;
   category: FocusCategory;
+  task_history: TaskRevision[];
   status: 'focusing';
   accumulated_focus_seconds: number;
   active_segment_started_at: string;
