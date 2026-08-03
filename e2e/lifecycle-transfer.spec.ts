@@ -23,7 +23,11 @@ async function createSpace(
 test('owner transfers ownership, former owner leaves, and new owner dissolves', async ({
   browser,
   page: owner,
-}) => {
+}, testInfo) => {
+  test.skip(
+    !['desktop-chromium', 'iphone-webkit'].includes(testInfo.project.name),
+    'The full lifecycle is covered once per browser engine to stay below the invite-preview IP limit.',
+  );
   test.setTimeout(180_000);
   const suffix = randomUUID().slice(0, 8);
   await createSpace(owner, suffix);
