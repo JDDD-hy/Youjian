@@ -5,6 +5,7 @@ const spaceId = '11111111-1111-4111-8111-111111111111';
 test('idle room renders the authoritative snapshot without viewport overflow', async ({
   page,
 }) => {
+  let savedGoal: Record<string, unknown> | null = null;
   await page.addInitScript(() => {
     localStorage.setItem(
       'sb-127-auth-token',
@@ -71,13 +72,34 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
           my_session: null,
           focusing_members: [],
           today: {
+            local_date: '2026-07-27',
             credited_focus_seconds: 2280,
             checkin_target_seconds: 3600,
             checkin_completed: false,
             current_streak_days: 6,
+            goal_target_minutes: 60,
+            goal_source: 'space_default',
+            goal_locked: false,
+            future_default_target_minutes: 60,
           },
           active_goal_summary: null,
           unseen_achievement: null,
+        },
+      }),
+    });
+  });
+  await page.route('**/rest/v1/rpc/set_personal_daily_goal', async (route) => {
+    savedGoal = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ok: true,
+        request_id: '66666666-6666-4666-8666-666666666666',
+        server_now: '2026-07-27T12:00:00.000Z',
+        data: {
+          scope: 'today',
+          target_minutes: 45,
+          effective_date: '2026-07-27',
         },
       }),
     });
@@ -86,6 +108,13 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
   await page.goto(`./space/${spaceId}`);
   await expect(page.getByRole('heading', { name: '我们的友间' })).toBeVisible();
   await expect(page.getByRole('button', { name: '开始专注' })).toBeVisible();
+  await page.getByRole('button', { name: '修改目标 · 60 分钟' }).click();
+  const goalDialog = page.getByRole('dialog', { name: '修改每日专注目标' });
+  await expect(goalDialog).toBeVisible();
+  await goalDialog.getByLabel('目标时长（分钟）').fill('45');
+  await goalDialog.getByRole('button', { name: '保存目标' }).click();
+  await expect(goalDialog).toBeHidden();
+  expect(savedGoal).toMatchObject({ p_scope: 'today', p_target_minutes: 45 });
   await page.getByRole('button', { name: '开始专注' }).click();
   await expect(
     page.getByRole('dialog', { name: '这次想专注什么？' }),

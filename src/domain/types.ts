@@ -77,10 +77,15 @@ export interface HomeSnapshot {
   my_session: FocusSession | null;
   focusing_members: FocusingMember[];
   today: {
+    local_date: string;
     credited_focus_seconds: number;
     checkin_target_seconds: number;
     checkin_completed: boolean;
     current_streak_days: number;
+    goal_target_minutes: number;
+    goal_source: 'space_default' | 'personal_default' | 'today_override';
+    goal_locked: boolean;
+    future_default_target_minutes: number;
   };
   active_goal_summary: Goal | null;
   unseen_achievement: Achievement | null;

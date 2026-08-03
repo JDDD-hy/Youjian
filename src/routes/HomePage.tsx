@@ -60,40 +60,146 @@ async function getSnapshot(spaceId: string): Promise<SnapshotResult> {
   };
 }
 
-function Summary({ data }: { data: HomeSnapshot['today'] }) {
+function Summary({
+  data,
+  onEdit,
+}: {
+  data: HomeSnapshot['today'];
+  onEdit: () => void;
+}) {
   const remaining = Math.max(
     0,
     data.checkin_target_seconds - data.credited_focus_seconds,
   );
   return (
-    <section
-      className={`summary-card${data.checkin_completed ? ' summary-card--complete' : ''}`}
-      aria-label="今日专注摘要"
+    <div className="summary-card-wrap">
+      <section
+        className={`summary-card${data.checkin_completed ? ' summary-card--complete' : ''}`}
+        aria-label="今日专注摘要"
+      >
+        <div>
+          <small>今天</small>
+          <strong>{formatDuration(data.credited_focus_seconds)}</strong>
+        </div>
+        <div>
+          <small>{data.checkin_completed ? '已打卡' : '距打卡'}</small>
+          <strong>
+            {data.checkin_completed ? '完成' : formatDuration(remaining)}
+          </strong>
+        </div>
+        <div>
+          <small>连续</small>
+          <strong>{data.current_streak_days} 天</strong>
+        </div>
+        <progress
+          className="summary-card__progress"
+          max={data.checkin_target_seconds}
+          value={Math.min(
+            data.checkin_target_seconds,
+            data.credited_focus_seconds,
+          )}
+          aria-label="今日打卡进度"
+        />
+      </section>
+      <button className="summary-card__edit" type="button" onClick={onEdit}>
+        修改目标 · {data.goal_target_minutes} 分钟
+      </button>
+    </div>
+  );
+}
+
+export function DailyGoalDrawer({
+  today,
+  onClose,
+  onSave,
+  pending,
+  error,
+}: {
+  today: HomeSnapshot['today'];
+  onClose: () => void;
+  onSave: (scope: 'today' | 'future_default', targetMinutes: number) => void;
+  pending: boolean;
+  error?: string;
+}) {
+  const [scope, setScope] = useState<'today' | 'future_default'>(
+    today.goal_locked ? 'future_default' : 'today',
+  );
+  const [target, setTarget] = useState(
+    today.goal_locked
+      ? today.future_default_target_minutes
+      : today.goal_target_minutes,
+  );
+  const valid = Number.isInteger(target) && target >= 30 && target <= 720;
+  return (
+    <AccessibleModal
+      titleId="daily-goal-title"
+      onClose={onClose}
+      closeOnBackdrop={!pending}
     >
-      <div>
-        <small>今天</small>
-        <strong>{formatDuration(data.credited_focus_seconds)}</strong>
-      </div>
-      <div>
-        <small>{data.checkin_completed ? '已打卡' : '距打卡'}</small>
-        <strong>
-          {data.checkin_completed ? '完成' : formatDuration(remaining)}
-        </strong>
-      </div>
-      <div>
-        <small>连续</small>
-        <strong>{data.current_streak_days} 天</strong>
-      </div>
-      <progress
-        className="summary-card__progress"
-        max={data.checkin_target_seconds}
-        value={Math.min(
-          data.checkin_target_seconds,
-          data.credited_focus_seconds,
-        )}
-        aria-label="今日打卡进度"
-      />
-    </section>
+      <h2 id="daily-goal-title">修改每日专注目标</h2>
+      <p>目标至少为30分钟。今天开始专注后，今日目标会锁定。</p>
+      <label className="field">
+        <span>目标时长（分钟）</span>
+        <input
+          data-autofocus
+          type="number"
+          min={30}
+          max={720}
+          step={5}
+          value={target}
+          onChange={(event) => setTarget(Number(event.target.value))}
+        />
+      </label>
+      <fieldset className="goal-scope-picker">
+        <legend>应用范围</legend>
+        <label>
+          <input
+            type="radio"
+            name="daily-goal-scope"
+            checked={scope === 'today'}
+            disabled={today.goal_locked}
+            onChange={() => setScope('today')}
+          />
+          <span>仅修改今天</span>
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="daily-goal-scope"
+            checked={scope === 'future_default'}
+            onChange={() => setScope('future_default')}
+          />
+          <span>从明天起每天重复</span>
+        </label>
+      </fieldset>
+      {today.goal_locked && (
+        <p className="field-hint">
+          今天已经开始过专注，只能修改明天起的默认目标。
+        </p>
+      )}
+      {!valid && <p className="field-error">请输入30–720之间的整数分钟。</p>}
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        className="button button--primary button--full"
+        type="button"
+        disabled={!valid || pending}
+        onClick={() => onSave(scope, target)}
+      >
+        {pending ? '正在保存…' : '保存目标'}
+      </button>
+      <button
+        className="button button--text button--full"
+        type="button"
+        disabled={pending}
+        onClick={onClose}
+      >
+        取消
+      </button>
+    </AccessibleModal>
   );
 }
 
@@ -479,6 +585,7 @@ export function HomePage() {
   const [conflict, setConflict] = useState(false);
   const [offlineAction, setOfflineAction] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(false);
   const reconciledDeadline = useRef<string | undefined>(undefined);
   const heartbeatSession = query.data?.snapshot.my_session;
   const heartbeatSessionId =
@@ -488,6 +595,7 @@ export function HomePage() {
       : undefined;
   const commandIntent = useIntentKey();
   const seenIntent = useIntentKey();
+  const goalIntent = useIntentKey();
   const updateSession = (session: FocusSession) => {
     if (session.status === 'completed' || session.status === 'discarded')
       setLocalSettled(session);
@@ -553,6 +661,26 @@ export function HomePage() {
       });
     },
     retry: 2,
+  });
+  const updateDailyGoal = useMutation({
+    mutationFn: ({
+      scope,
+      targetMinutes,
+    }: {
+      scope: 'today' | 'future_default';
+      targetMinutes: number;
+    }) =>
+      rpc('set_personal_daily_goal', {
+        space_id: spaceId,
+        scope,
+        target_minutes: targetMinutes,
+        idempotency_key: goalIntent.get(`${scope}:${targetMinutes}`),
+      }),
+    onSuccess: () => {
+      goalIntent.clear();
+      setEditingGoal(false);
+      void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
+    },
   });
   const unseenAchievementId =
     query.data?.snapshot.unseen_achievement?.achievement_id;
@@ -736,7 +864,7 @@ export function HomePage() {
           </button>
         </div>
       )}
-      <Summary data={data.today} />
+      <Summary data={data.today} onEdit={() => setEditingGoal(true)} />
       {session ? (
         <FocusPanel
           session={session}
@@ -768,6 +896,21 @@ export function HomePage() {
             开始专注
           </button>
         </section>
+      )}
+      {editingGoal && (
+        <DailyGoalDrawer
+          today={data.today}
+          pending={updateDailyGoal.isPending}
+          error={
+            updateDailyGoal.error instanceof Error
+              ? updateDailyGoal.error.message
+              : undefined
+          }
+          onClose={() => setEditingGoal(false)}
+          onSave={(scope, targetMinutes) =>
+            updateDailyGoal.mutate({ scope, targetMinutes })
+          }
+        />
       )}
       {editingSession && (
         <EditTaskDrawer

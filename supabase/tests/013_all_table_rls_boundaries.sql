@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(32);
 
 insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000151'),
@@ -46,6 +46,8 @@ select is((select count(*)::int from public.goals where id='60000000-0000-0000-0
 select is((select count(*)::int from public.goal_participants where goal_id='60000000-0000-0000-0000-000000000151'),0,'cross-room user cannot read goal participants');
 select is((select count(*)::int from public.achievements where id='70000000-0000-0000-0000-000000000151'),0,'cross-room user cannot read achievements');
 select is((select count(*)::int from public.achievement_reads where achievement_id='70000000-0000-0000-0000-000000000151'),0,'cross-room user cannot read achievement reads');
+select throws_ok($$select * from public.personal_focus_goal_defaults$$,'42501',null,'cross-room user cannot read personal goal defaults');
+select throws_ok($$select * from public.personal_focus_goal_overrides$$,'42501',null,'cross-room user cannot read personal goal overrides');
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000152',true);
 select is((select count(*)::int from public.profiles where id='00000000-0000-0000-0000-000000000151'),0,'disabled member cannot read another profile');
@@ -62,6 +64,8 @@ select is((select count(*)::int from public.goals where id='60000000-0000-0000-0
 select is((select count(*)::int from public.goal_participants where goal_id='60000000-0000-0000-0000-000000000151'),0,'disabled member cannot read former goal participants');
 select is((select count(*)::int from public.achievements where id='70000000-0000-0000-0000-000000000151'),0,'disabled member cannot read former achievements');
 select is((select count(*)::int from public.achievement_reads where achievement_id='70000000-0000-0000-0000-000000000151'),0,'disabled member cannot read former achievement reads');
+select throws_ok($$select * from public.personal_focus_goal_defaults$$,'42501',null,'disabled member cannot read personal goal defaults');
+select throws_ok($$select * from public.personal_focus_goal_overrides$$,'42501',null,'disabled member cannot read personal goal overrides');
 
 select * from finish();
 rollback;

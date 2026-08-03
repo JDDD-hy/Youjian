@@ -2,7 +2,7 @@
 
 > 依赖：[UI_STATE_SPEC.md](./UI_STATE_SPEC.md)、[API_CONTRACT.md](./API_CONTRACT.md)
 > 技术栈：React + TypeScript + Vite PWA + Supabase Auth/PostgreSQL/Realtime/Cron  
-> 已冻结规则：每日打卡 60 分钟；一个匿名身份只加入一个友间。两项均通过配置和服务端规则实现，不写死在 UI。
+> 已冻结规则：空间共同打卡默认值为 60 分钟；个人每日目标最低 30 分钟，可设置今日覆盖或从明天生效的默认值；一个匿名身份只加入一个友间。规则均由服务端实现，不写死在 UI。
 
 ## 1. 架构目标
 
@@ -928,7 +928,11 @@ NETWORK_UNCONFIRMED
 
 ### 每日打卡门槛
 
-存储于 `spaces.daily_checkin_target_minutes`，MVP 值为 60。前端从服务端响应读取，不维护另一份常量。
+`spaces.daily_checkin_target_minutes` 保留为空间共同规则的默认值，MVP 值为 60。个人目标使用两张不可由客户端直读的历史表：`personal_focus_goal_defaults(user_id, effective_from, target_minutes)` 保存按日期生效的默认值，`personal_focus_goal_overrides(user_id, goal_date, target_minutes)` 保存今日覆盖。
+
+`personal_goal_minutes` 按“今日覆盖 → 已生效个人默认值 → 空间默认值”解析目标。`set_personal_daily_goal` 以用户档案时区确定本地日期，使用用户级 advisory lock 串行化目标写入与专注开始竞争；今日存在任何 `focus_sessions.started_at` 事实后拒绝修改。个人首页、个人连续天数和个人统计使用解析后的目标，空间共同成就继续使用空间规则。
+
+迁移、RPC、前端和测试必须同步更新。新增 RPC 后，内部错误包装器数量审计和所有表 RLS 边界测试也必须同步调整。
 
 ### 单身份友间数量
 

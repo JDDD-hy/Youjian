@@ -418,6 +418,31 @@ a:focus-visible {
   background: var(--surface);
   box-shadow: 0 4px 14px rgb(66 57 39/5%);
 }
+.summary-card-wrap {
+  display: grid;
+  gap: 6px;
+}
+.summary-card__edit {
+  justify-self: end;
+  border: 0;
+  background: transparent;
+  color: var(--primary-deep);
+  font-size: 0.76rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.goal-scope-picker {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 0;
+  border: 0;
+}
+.goal-scope-picker label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .summary-card > div {
   display: grid;
   gap: 4px;

@@ -1063,7 +1063,27 @@ period = daily | weekly | monthly
 
 ### 每日打卡门槛
 
-MVP 所有示例和服务端配置使用 60 分钟。最终值来自 `spaces.daily_checkin_target_minutes`，不是前端常量。
+空间共同规则的默认打卡门槛仍来自 `spaces.daily_checkin_target_minutes`，不是前端常量。个人首页、连续天数和个人统计通过 `personal_goal_minutes(space_id, user_id, local_date)` 解析当天有效目标：今日覆盖优先，其次是当日已生效的个人默认值，最后回退到空间门槛。个人目标不得低于 30 分钟。
+
+### `set_personal_daily_goal`
+
+认证成员修改自己的每日专注目标。写入通过 RPC 完成，客户端不能直接访问目标历史表。
+
+```json
+{
+  "space_id": "uuid",
+  "scope": "today | future_default",
+  "target_minutes": 45,
+  "idempotency_key": "uuid"
+}
+```
+
+- `today`：只修改用户本地日期的今天；当天任何专注开始后返回 `DAILY_GOAL_LOCKED`。
+- `future_default`：从用户本地日期的明天开始生效，即使今天已经开始专注仍可修改。
+- `target_minutes` 必须为 30–720 的整数，否则返回 `INVALID_DAILY_GOAL_TARGET`。
+- 历史日期没有写接口；默认值按生效日期保留版本。
+
+`get_home_snapshot.today` 额外返回 `local_date`、`goal_target_minutes`、`goal_source`、`goal_locked` 和 `future_default_target_minutes`。锁定状态以服务端保存的专注开始事实为准。
 
 ### 单身份友间数量
 
