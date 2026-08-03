@@ -2,7 +2,6 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type {
-  Achievement,
   FocusSessionDetail,
   HistoryItem,
   HomeSnapshot,
@@ -19,7 +18,6 @@ import {
 } from '../lib/format';
 import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
-import { Icon } from '../components/Icons';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 
 type View = 'mine' | 'space';
@@ -107,18 +105,6 @@ export function StatsPage() {
         result.data.session.space_id,
         'focus_detail_space',
       );
-      return result;
-    },
-  });
-  const achievements = useQuery({
-    queryKey: ['achievements', spaceId, 'stats'],
-    queryFn: async () => {
-      const result = await rpc<{
-        space_id: string;
-        items: Achievement[];
-        next_cursor: string | null;
-      }>('list_achievements', { space_id: spaceId, limit: 30, cursor: null });
-      assertRouteSpace(spaceId, result.data.space_id, 'achievements_space');
       return result;
     },
   });
@@ -318,73 +304,6 @@ export function StatsPage() {
               </EmptyState>
             )}
           </section>
-          <section className="section">
-            <div className="section-heading">
-              <h2>共同成就</h2>
-              <span>{achievements.data?.data.items.length ?? 0}</span>
-            </div>
-            {achievements.error &&
-              (achievements.data?.data.items.length ?? 0) > 0 && (
-                <div
-                  className="inline-notice inline-notice--warning"
-                  role="status"
-                >
-                  新的成就暂时没有加载，当前记录仍可查看。
-                  <button
-                    type="button"
-                    onClick={() => void achievements.refetch()}
-                  >
-                    重新加载
-                  </button>
-                </div>
-              )}
-            {achievements.isLoading ? (
-              <PageLoader />
-            ) : achievements.data?.data.items.length ? (
-              <div className="achievement-grid">
-                {achievements.data.data.items.map((item) => (
-                  <article
-                    className={`achievement-card achievement-card--${item.tier ?? 'bronze'}`}
-                    key={item.achievement_id}
-                  >
-                    <span
-                      className={`achievement-card__icon achievement-card__icon--${item.tier ?? 'bronze'}`}
-                    >
-                      <Icon name="sparkle" />
-                    </span>
-                    <strong>{achievementTitle(item)}</strong>
-                    <p>{formatLocalDateTime(item.earned_at, range.timezone)}</p>
-                    <button
-                      type="button"
-                      className="achievement-participants"
-                      aria-label="查看参与成员"
-                    >
-                      <Icon name="people" /> {item.participants?.length || '—'}
-                      <span role="tooltip">
-                        {item.participants_recorded
-                          ? item.participants
-                              ?.map((participant) =>
-                                participant.participation_days > 1
-                                  ? `${participant.display_name}（${participant.participation_days} 天）`
-                                  : participant.display_name,
-                              )
-                              .join('、')
-                          : '早期成就的参与成员记录暂缺'}
-                      </span>
-                    </button>
-                  </article>
-                ))}
-              </div>
-            ) : achievements.error ? (
-              <ErrorState
-                title="无法加载成就记录"
-                message="共同成就尚未完整加载。"
-                onRetry={() => void achievements.refetch()}
-              />
-            ) : (
-              <p className="quiet-copy">还没有共同成就。</p>
-            )}
-          </section>
         </>
       )}
       {detail && (
@@ -537,18 +456,5 @@ export function StatsPage() {
         </AccessibleModal>
       )}
     </div>
-  );
-}
-
-function achievementTitle(item: Achievement) {
-  const type = item.achievement_type;
-  return (
-    (
-      {
-        together_streak: `${item.metadata?.days ?? 1} 日相伴`,
-        goal_milestone: `完成 ${item.metadata?.completed_goal_count ?? 1} 个共同目标`,
-        focus_milestone: `累计专注 ${Number(item.metadata?.threshold_minutes ?? 0) / 60} 小时`,
-      } as Record<string, string>
-    )[type] ?? '共同的光'
   );
 }

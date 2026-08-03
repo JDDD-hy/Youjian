@@ -70,10 +70,6 @@ describe('StatsPage session detail', () => {
             next_cursor: null,
           },
         });
-      if (name === 'list_achievements')
-        return Promise.resolve({
-          data: { space_id: 'space', items: [], next_cursor: null },
-        });
       if (name === 'get_focus_session_detail')
         return Promise.resolve({
           data: {
