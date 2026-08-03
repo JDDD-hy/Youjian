@@ -162,9 +162,13 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       });
     });
     await owner.goto(`./space/${spaceId}/goals`);
-    await expect(owner.getByText('金级', { exact: true })).toBeVisible();
+    const achievementHeading = owner.getByRole('heading', {
+      name: '7 日相伴',
+    });
+    await expect(achievementHeading).toBeVisible();
+    await expect(owner.getByText('金级', { exact: true })).toHaveCount(0);
     await expect(
-      owner.getByRole('heading', { name: '7 日相伴' }),
+      achievementHeading.locator('..').locator('.achievement-card__icon--gold'),
     ).toBeVisible();
     const participantButton = owner.getByRole('button', {
       name: `查看参与成员：房主-${suffix}（7 天）、成员-${suffix}（7 天）`,
