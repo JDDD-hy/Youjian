@@ -25,6 +25,10 @@ import { AccessibleModal } from '../components/AccessibleModal';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
+import {
+  applyPersonalDailyGoal,
+  type PersonalDailyGoalResult,
+} from '../lib/personalDailyGoal';
 
 const connectionCopy: Partial<Record<ConnectionState, string>> = {
   realtime_degraded: '实时更新暂时中断，正在重连',
@@ -82,7 +86,9 @@ function Summary({
           <strong>{formatDuration(data.credited_focus_seconds)}</strong>
         </div>
         <div>
-          <small>{data.checkin_completed ? '已打卡' : '距打卡'}</small>
+          <small>
+            {data.checkin_completed ? '个人目标已完成' : '距我的目标'}
+          </small>
           <strong>
             {data.checkin_completed ? '完成' : formatDuration(remaining)}
           </strong>
@@ -98,11 +104,11 @@ function Summary({
             data.checkin_target_seconds,
             data.credited_focus_seconds,
           )}
-          aria-label="今日打卡进度"
+          aria-label="今日个人目标进度"
         />
       </section>
       <button className="summary-card__edit" type="button" onClick={onEdit}>
-        修改目标 · {data.goal_target_minutes} 分钟
+        修改我的目标 · {data.goal_target_minutes} 分钟
       </button>
     </div>
   );
@@ -136,7 +142,7 @@ export function DailyGoalDrawer({
       onClose={onClose}
       closeOnBackdrop={!pending}
     >
-      <h2 id="daily-goal-title">修改每日专注目标</h2>
+      <h2 id="daily-goal-title">修改我的每日专注目标</h2>
       <p>目标至少为30分钟。今天开始专注后，今日目标会锁定。</p>
       <label className="field">
         <span>目标时长（分钟）</span>
@@ -670,14 +676,22 @@ export function HomePage() {
       scope: 'today' | 'future_default';
       targetMinutes: number;
     }) =>
-      rpc('set_personal_daily_goal', {
+      rpc<PersonalDailyGoalResult>('set_personal_daily_goal', {
         space_id: spaceId,
         scope,
         target_minutes: targetMinutes,
         idempotency_key: goalIntent.get(`${scope}:${targetMinutes}`),
       }),
-    onSuccess: () => {
+    onSuccess: ({ data: result }) => {
       goalIntent.clear();
+      queryClient.setQueryData<SnapshotResult>(
+        ['home', spaceId],
+        (current) =>
+          current && {
+            ...current,
+            snapshot: applyPersonalDailyGoal(current.snapshot, result),
+          },
+      );
       setEditingGoal(false);
       void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
     },

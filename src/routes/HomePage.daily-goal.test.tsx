@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { applyPersonalDailyGoal } from '../lib/personalDailyGoal';
 import { DailyGoalDrawer } from './HomePage';
 
 const today = {
@@ -69,5 +70,36 @@ describe('DailyGoalDrawer', () => {
     expect(screen.getByLabelText('从明天起每天重复')).toBeChecked();
     await user.click(screen.getByRole('button', { name: '保存目标' }));
     expect(onSave).toHaveBeenCalledWith('future_default', 60);
+  });
+});
+
+describe('applyPersonalDailyGoal', () => {
+  const snapshot = { today } as Parameters<typeof applyPersonalDailyGoal>[0];
+
+  it('synchronizes a today-only target with the visible summary immediately', () => {
+    const result = applyPersonalDailyGoal(snapshot, {
+      scope: 'today',
+      target_minutes: 45,
+      effective_date: '2026-08-04',
+    });
+    expect(result.today).toMatchObject({
+      goal_target_minutes: 45,
+      goal_source: 'today_override',
+      checkin_target_seconds: 2700,
+      future_default_target_minutes: 60,
+    });
+  });
+
+  it('synchronizes a next-day repeating target without changing today', () => {
+    const result = applyPersonalDailyGoal(snapshot, {
+      scope: 'future_default',
+      target_minutes: 90,
+      effective_date: '2026-08-05',
+    });
+    expect(result.today).toMatchObject({
+      goal_target_minutes: 60,
+      checkin_target_seconds: 3600,
+      future_default_target_minutes: 90,
+    });
   });
 });

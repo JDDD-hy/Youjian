@@ -290,7 +290,7 @@ export function SettingsPage() {
                 <dd>{data.space.timezone}</dd>
               </div>
               <div>
-                <dt>每日打卡</dt>
+                <dt>友间共享打卡目标</dt>
                 <dd>{data.space.daily_checkin_target_minutes} 分钟</dd>
               </div>
               <div>
