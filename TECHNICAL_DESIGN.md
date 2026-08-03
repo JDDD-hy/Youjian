@@ -1,6 +1,6 @@
 # 友间（Youjian）MVP 技术设计
 
-> 依赖：[MVP_SPEC.md](./MVP_SPEC.md)、[UI_STATE_SPEC.md](./UI_STATE_SPEC.md)、[WIREFRAME_SPEC.md](./WIREFRAME_SPEC.md)  
+> 依赖：[UI_STATE_SPEC.md](./UI_STATE_SPEC.md)、[API_CONTRACT.md](./API_CONTRACT.md)
 > 技术栈：React + TypeScript + Vite PWA + Supabase Auth/PostgreSQL/Realtime/Cron  
 > 已冻结规则：每日打卡 60 分钟；一个匿名身份只加入一个友间。两项均通过配置和服务端规则实现，不写死在 UI。
 
@@ -141,6 +141,7 @@ created_at timestamptz NOT NULL DEFAULT now()
 
 - 名称去除首尾空格后 1～30 字；
 - `member_limit BETWEEN 2 AND 12`；
+- 名称可由房主通过幂等 RPC 修改；成员上限只允许提高，不允许降低；两者均不轮换邀请 token；
 - `daily_checkin_target_minutes BETWEEN 5 AND 720`；
 - 房间时区创建后不可修改；
 - `owner_id` 必须存在对应活动成员且角色为 `owner`。
@@ -326,6 +327,8 @@ PRIMARY KEY(proposal_id, member_id)
 
 成员在提案 pending 时被停用：从必需投票集合中移除，再判断剩余成员是否已经全员接受。新加入成员不追加到已经创建的提案。
 
+同一友间只能存在一个 pending 提案或 scheduled／active 目标。全员通过时，以通过时刻和友间时区计算范围：次日 00:00 开始；daily 持续 1 天、weekly 持续 7 天、monthly 持续至下月同日。提案阶段的预览日期仅供说明，最终日期在最后一票事务中重新计算。
+
 #### `goals`
 
 ```text
@@ -365,10 +368,26 @@ achievement_type achievement_type NOT NULL
 dedupe_key text NOT NULL
 earned_at timestamptz NOT NULL
 metadata jsonb NOT NULL DEFAULT '{}'
+tier text NOT NULL DEFAULT 'bronze'
+participants_recorded boolean NOT NULL DEFAULT false
 UNIQUE(space_id, dedupe_key)
 ```
 
 `dedupe_key` 保证同一业务事件不会重复授予。
+
+`tier = bronze | silver | gold`。等级是服务端事实；前端使用对应的铜、银、金星星底色和边框，不显示等级文字。
+
+#### `achievement_participants`
+
+```text
+achievement_id uuid
+member_id uuid
+display_name_snapshot text NOT NULL
+participation_days integer NOT NULL DEFAULT 1
+PRIMARY KEY(achievement_id, member_id)
+```
+
+姓名和参与天数在授予时冻结。目标成就从 `goal_participants` 复制；共同连续成就聚合对应日期的每日参与快照；旧数据只有在事实足够可靠时回填，并用 `participants_recorded` 区分。
 
 #### `achievement_reads`
 
@@ -735,16 +754,18 @@ MVP 数据量小，优先使用 SQL 函数实时聚合。为以下字段建立�
 
 成就只从已结算有效 session、已完成目标和房间时区事实派生。
 
-建议 `dedupe_key`：
+当前 `dedupe_key`：
 
 ```text
 together-lit:{local_date}
-three-days:{period_end_date}
-first-goal:{goal_id}
+together-streak:{1|3|7}
+goal-count:{1|3|10}
 milestone:{threshold_minutes}
 ```
 
-首版里程碑建议为友间累计 10、50、100 小时。成就规则配置在服务端，不由客户端上报。
+共同连续 1／3／7 天分别为铜／银／金；完成共同目标 1／3／10 个分别为铜／银／金；累计专注 600／3000／6000 分钟分别为铜／银／金。成就规则配置在服务端，不由客户端上报。
+
+迁移 `0034` 只修复仍处于 `scheduled` 的旧日历边界目标，将其按提案 `resolved_at` 重算为次日开始；active、completed、failed 的历史统计窗口保持不变。
 
 ## 15. PWA 与缓存
 

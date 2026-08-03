@@ -1,6 +1,6 @@
 # 友间（Youjian）MVP RPC / API 契约
 
-> 依赖：[MVP_SPEC.md](./MVP_SPEC.md)、[UI_STATE_SPEC.md](./UI_STATE_SPEC.md)、[TECHNICAL_DESIGN.md](./TECHNICAL_DESIGN.md)  
+> 依赖：[UI_STATE_SPEC.md](./UI_STATE_SPEC.md)、[TECHNICAL_DESIGN.md](./TECHNICAL_DESIGN.md)
 > 目的：固定前端与 Supabase PostgreSQL 函数之间的输入、输出、幂等、权限和错误语义。  
 > 约定：示例使用 JSON 表达，实际由 Supabase `rpc()` 调用 PostgreSQL 函数。
 
@@ -764,8 +764,10 @@ period = daily | weekly | monthly
 - 分钟类目标的值使用整数分钟；
 - 共同出勤使用整数天；
 - 服务端计算过期时间和下一完整周期；
+- 全员通过后，从友间时区的次日 00:00 开始；每日持续 1 天、每周持续 7 天、每月持续至下月同日；
 - 发起人自动投接受票；
 - 只有一个活动成员时拒绝创建共同目标；
+- 同一友间同时只能存在一个 pending 提案或 scheduled／active 目标；
 - 提交后不可修改。
 
 错误：
@@ -774,6 +776,7 @@ period = daily | weekly | monthly
 - `INVALID_PERIOD_TYPE`；
 - `INVALID_TARGET_VALUE`；
 - `NOT_ENOUGH_MEMBERS`；
+- `GOAL_ALREADY_OPEN`；
 - `MEMBER_DISABLED`。
 
 ### 10.3 `vote_goal_proposal`
@@ -804,7 +807,28 @@ period = daily | weekly | monthly
 
 输入：space_id、limit、cursor。
 
-返回成就类型、获得时间和展示所需 metadata，不返回内部去重键。
+返回成就类型、获得时间和展示所需 metadata，不返回内部去重键。每个 item 还包含：
+
+```json
+{
+  "achievement_id": "...",
+  "achievement_type": "together_streak",
+  "tier": "gold",
+  "earned_at": "...",
+  "metadata": { "days": 7 },
+  "participants_recorded": true,
+  "participants": [
+    {
+      "member_id": "...",
+      "display_name": "陈宇",
+      "participation_days": 7
+    }
+  ],
+  "seen": true
+}
+```
+
+`tier = bronze | silver | gold`，前端只使用对应的铜、银、金星星底色和边框，不显示等级文字。`display_name` 是获得成就时的姓名快照；无法可靠回填的旧成就使用 `participants_recorded=false` 和空数组。
 
 ### 11.2 `mark_achievement_seen`
 
@@ -847,15 +871,29 @@ period = daily | weekly | monthly
     "owner_actions": {
       "can_copy_invite": true,
       "can_rotate_invite": true,
-      "can_disable_members": true
+      "can_disable_members": true,
+      "can_update_space_name": true,
+      "can_increase_member_limit": true
     }
   }
 }
 ```
 
-普通成员的三个 owner action 均为 false。
+普通成员的 owner action 均为 false。成员上限达到 12 后，房主的 `can_increase_member_limit=false`。
 
-### 12.2 邀请链接本地生命周期（不提供 `get_current_invite`）
+### 12.2 `update_space_name`
+
+仅房主。输入：space_id、去除首尾空格后 1～30 字的 name、幂等键。成功返回更新后的友间 id 和 name；不会轮换邀请链接，也不会改变历史记录。
+
+错误：`INVALID_SPACE_NAME`、`NOT_SPACE_OWNER`。
+
+### 12.3 `increase_member_limit`
+
+仅房主。输入：space_id、2～12 的 member_limit、幂等键。新值必须严格高于当前上限；成功返回新上限和 `previous_member_limit`，已有邀请链接继续有效。
+
+错误：`INVALID_MEMBER_LIMIT`、`MEMBER_LIMIT_NOT_INCREASED`、`NOT_SPACE_OWNER`。
+
+### 12.4 邀请链接本地生命周期（不提供 `get_current_invite`）
 
 仅房主。由于数据库不保存明文 token，系统不能重新取回旧邀请链接。
 
@@ -868,7 +906,7 @@ period = daily | weekly | monthly
 
 不提供一个声称能从服务端“读取当前明文邀请”的 RPC。
 
-### 12.3 `rotate_invite`
+### 12.5 `rotate_invite`
 
 仅房主。
 
@@ -890,7 +928,7 @@ period = daily | weekly | monthly
 - `NOT_SPACE_OWNER`；
 - `MEMBER_DISABLED`。
 
-### 12.4 `disable_member`
+### 12.6 `disable_member`
 
 仅房主。
 
@@ -963,7 +1001,11 @@ period = daily | weekly | monthly
 | `SESSION_NOT_FOCUSING` | 专注状态已经变化。 | 使用权威状态 |
 | `SESSION_NOT_PAUSED` | 暂停状态已经变化。 | 使用权威状态 |
 | `VOTE_ALREADY_FINAL` | 你已经完成选择，不能修改。 | 刷新提案 |
+| `GOAL_ALREADY_OPEN` | 当前已有待投票、待开始或进行中的共同目标。 | 保留当前目标，不创建第二份 |
 | `NOT_SPACE_OWNER` | 只有房主可以进行这项操作。 | 关闭管理入口 |
+| `INVALID_SPACE_NAME` | 友间名称需要包含 1～30 个字符。 | 名称行内错误 |
+| `INVALID_MEMBER_LIMIT` | 成员上限需要在 2～12 人之间。 | 上限行内错误 |
+| `MEMBER_LIMIT_NOT_INCREASED` | 新上限必须高于当前成员上限。 | 保留当前上限 |
 | `INTERNAL_ERROR` | 暂时无法完成操作，请重新加载。 | 保留当前安全状态 |
 
 网络失败不使用业务错误码。统一文案必须包含“操作是否生效”和“计时是否继续”。
