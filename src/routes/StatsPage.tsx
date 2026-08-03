@@ -348,13 +348,9 @@ export function StatsPage() {
                     key={item.achievement_id}
                   >
                     <span
-                      className={`achievement-tier achievement-tier--${item.tier ?? 'bronze'}`}
+                      className={`achievement-card__icon achievement-card__icon--${item.tier ?? 'bronze'}`}
                     >
-                      {
-                        { bronze: '铜级', silver: '银级', gold: '金级' }[
-                          item.tier ?? 'bronze'
-                        ]
-                      }
+                      <Icon name="sparkle" />
                     </span>
                     <strong>{achievementTitle(item)}</strong>
                     <p>{formatLocalDateTime(item.earned_at, range.timezone)}</p>

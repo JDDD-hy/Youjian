@@ -102,8 +102,6 @@ function GoalCard({ goal }: { goal: Goal }) {
   );
 }
 
-const tierLabels = { bronze: '铜级', silver: '银级', gold: '金级' } as const;
-
 function AchievementCard({ item }: { item: Achievement }) {
   const tier = item.tier ?? 'bronze';
   const participants = item.participants ?? [];
@@ -120,11 +118,10 @@ function AchievementCard({ item }: { item: Achievement }) {
     <article
       className={`achievement-card achievement-card--${tier}${!item.seen ? ' achievement--new' : ''}`}
     >
-      <span className="achievement-card__icon">
+      <span
+        className={`achievement-card__icon achievement-card__icon--${tier}`}
+      >
         <Icon name="sparkle" />
-      </span>
-      <span className={`achievement-tier achievement-tier--${tier}`}>
-        {tierLabels[tier]}
       </span>
       <h3>{achievementTitle(item)}</h3>
       <p>{formatLocalDateTime(item.earned_at)}</p>
