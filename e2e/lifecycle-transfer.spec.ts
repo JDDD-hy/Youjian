@@ -61,9 +61,10 @@ test('owner transfers ownership, former owner leaves, and new owner dissolves', 
 
     await owner.goto(inviteUrl!);
     if (process.env.E2E_EXPECT_CAPTCHA !== '0')
-      await expect(
-        owner.locator('[name="cf-turnstile-response"]'),
-      ).toHaveValue(/.+/, { timeout: 30_000 });
+      await expect(owner.locator('[name="cf-turnstile-response"]')).toHaveValue(
+        /.+/,
+        { timeout: 30_000 },
+      );
     await owner.getByLabel('你在这里使用的昵称').fill(`重新加入-${suffix}`);
     await owner.getByRole('button', { name: '加入友间' }).click();
     await expect(owner).toHaveURL(new RegExp(`/space/${spaceId}$`), {
@@ -136,7 +137,9 @@ test('one-time code moves identity and revokes the old device', async ({
       ),
     ).toEqual([]);
     await oldDevice.goto('./create');
-    await expect(oldDevice.getByRole('heading', { name: '创建友间' })).toBeVisible();
+    await expect(
+      oldDevice.getByRole('heading', { name: '创建友间' }),
+    ).toBeVisible();
 
     const replayContext = await browser.newContext();
     try {

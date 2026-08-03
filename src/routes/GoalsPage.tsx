@@ -25,7 +25,7 @@ import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
 import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { Icon } from '../components/Icons';
-import { nextPeriodStart, proposalSentence } from '../lib/goalPreview';
+import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { loadResolvedGoalProposals } from '../lib/goalHistory';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 
@@ -98,6 +98,45 @@ function GoalCard({ goal }: { goal: Goal }) {
         {formatLocalDateTime(goal.starts_at)} —{' '}
         {formatLocalDateTime(goal.ends_at)}
       </small>
+    </article>
+  );
+}
+
+const tierLabels = { bronze: '铜级', silver: '银级', gold: '金级' } as const;
+
+function AchievementCard({ item }: { item: Achievement }) {
+  const tier = item.tier ?? 'bronze';
+  const participants = item.participants ?? [];
+  const participantText = item.participants_recorded
+    ? participants
+        .map((participant) =>
+          participant.participation_days > 1
+            ? `${participant.display_name}（${participant.participation_days} 天）`
+            : participant.display_name,
+        )
+        .join('、')
+    : '早期成就的参与成员记录暂缺';
+  return (
+    <article
+      className={`achievement-card achievement-card--${tier}${!item.seen ? ' achievement--new' : ''}`}
+    >
+      <span className="achievement-card__icon">
+        <Icon name="sparkle" />
+      </span>
+      <span className={`achievement-tier achievement-tier--${tier}`}>
+        {tierLabels[tier]}
+      </span>
+      <h3>{achievementTitle(item)}</h3>
+      <p>{formatLocalDateTime(item.earned_at)}</p>
+      <button
+        type="button"
+        className="achievement-participants"
+        aria-label={`查看参与成员：${participantText}`}
+      >
+        <Icon name="people" /> {participants.length || '—'}
+        <span role="tooltip">{participantText}</span>
+      </button>
+      {!item.seen && <small>新成就，已自动记录为已读</small>}
     </article>
   );
 }
@@ -246,6 +285,11 @@ export function GoalsPage() {
     retry: 2,
   });
   const snapshot = goals.data?.data;
+  const hasOpenGoal = Boolean(
+    snapshot?.pending_proposals.length ||
+    snapshot?.scheduled_goals.length ||
+    snapshot?.active_goals.length,
+  );
   const achievementItems =
     achievements.data?.pages.flatMap((page) => page.data.items) ?? [];
   const unseenAchievementId = achievementItems.find(
@@ -272,6 +316,7 @@ export function GoalsPage() {
         </div>
         <button
           className="button button--secondary button--compact"
+          disabled={hasOpenGoal}
           onClick={() => {
             setFormStep(1);
             setShowForm(true);
@@ -455,17 +500,7 @@ export function GoalsPage() {
               <>
                 <div className="achievement-grid">
                   {achievementItems.map((item) => (
-                    <article
-                      className={!item.seen ? 'achievement--new' : ''}
-                      key={item.achievement_id}
-                    >
-                      <span>
-                        <Icon name="sparkle" />
-                      </span>
-                      <h3>{achievementTitle(item.achievement_type)}</h3>
-                      <p>{formatLocalDateTime(item.earned_at)}</p>
-                      {!item.seen && <small>新成就，已自动记录为已读</small>}
-                    </article>
+                    <AchievementCard item={item} key={item.achievement_id} />
                   ))}
                 </div>
                 {achievements.hasNextPage && (
@@ -578,12 +613,11 @@ export function GoalsPage() {
                 <div>
                   <dt>生效周期</dt>
                   <dd>
-                    {nextPeriodStart(
+                    {proposedPeriodLabel(
                       periodType,
                       home.data.data.space.timezone,
                       new Date(home.data.serverNow),
-                    )}{' '}
-                    起
+                    )}
                   </dd>
                 </div>
                 <div>
@@ -602,7 +636,7 @@ export function GoalsPage() {
                   </dd>
                 </div>
               </dl>
-              <p>提交后不可修改；全员同意后从下一完整周期生效。</p>
+              <p>提交后不可修改；全员同意后的次日 00:00 生效。</p>
             </section>
           ) : null}
           <div className="dialog__actions">
@@ -701,14 +735,14 @@ export function GoalsPage() {
   );
 }
 
-function achievementTitle(type: string) {
+function achievementTitle(item: Achievement) {
+  const type = item.achievement_type;
   return (
     (
       {
-        together_lit: '同日亮灯',
-        three_days_together: '三日相伴',
-        first_goal: '第一个共同目标',
-        focus_milestone: '时光里程碑',
+        together_streak: `${item.metadata?.days ?? 1} 日相伴`,
+        goal_milestone: `完成 ${item.metadata?.completed_goal_count ?? 1} 个共同目标`,
+        focus_milestone: `累计专注 ${Number(item.metadata?.threshold_minutes ?? 0) / 60} 小时`,
       } as Record<string, string>
     )[type] ?? '共同的光'
   );

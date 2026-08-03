@@ -36,7 +36,7 @@ select is((
  select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
  where n.nspname='private' and p.proname like 'rpc_impl_%'
  and not has_function_privilege('anon',p.oid,'execute') and not has_function_privilege('authenticated',p.oid,'execute')
-),23,'all private RPC implementations are inaccessible to clients');
+),25,'all private RPC implementations are inaccessible to clients');
 
 -- Test the same public wrapper against a representative permission failure.
 -- Ownership is changed only inside this rolled-back test transaction.
@@ -63,7 +63,7 @@ select is((
  where n.nspname='public' and p.prorettype='jsonb'::regtype
  and(has_function_privilege('anon',p.oid,'execute') or has_function_privilege('authenticated',p.oid,'execute'))
  and p.prosrc like '%rpc_internal_error_envelope%'
-),23,'all 23 client-executable JSONB RPCs use the shared internal-error envelope');
+),25,'all 25 client-executable JSONB RPCs use the shared internal-error envelope');
 select is((
  select array_agg(column_name::text order by ordinal_position) from information_schema.columns
  where table_schema='private' and table_name='rpc_internal_errors'

@@ -6,6 +6,10 @@ const chromiumChannel =
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // Invite previews are intentionally rate-limited by client IP. The local
+  // matrix shares one Supabase instance and one loopback IP, so serialize the
+  // projects instead of weakening the production security rule for tests.
+  workers: 1,
   retries: process.env.CI ? 2 : 0,
   reporter: 'html',
   use: {

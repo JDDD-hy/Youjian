@@ -57,7 +57,7 @@ export function SpaceRouteGuard() {
                   ? `「${disabled.space_name}」已结束，历史记录仍会保留。`
                   : disabled
                     ? `你已不能进入「${disabled.space_name}」，历史记录仍会保留。`
-                : '当前身份没有活动的友间成员关系。'
+                    : '当前身份没有活动的友间成员关系。'
             }
           />
           <Link className="button button--secondary button--full" to="/">

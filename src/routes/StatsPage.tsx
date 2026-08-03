@@ -19,6 +19,7 @@ import {
 } from '../lib/format';
 import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
+import { Icon } from '../components/Icons';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 
 type View = 'mine' | 'space';
@@ -342,9 +343,39 @@ export function StatsPage() {
             ) : achievements.data?.data.items.length ? (
               <div className="achievement-grid">
                 {achievements.data.data.items.map((item) => (
-                  <article key={item.achievement_id}>
-                    <strong>{achievementTitle(item.achievement_type)}</strong>
+                  <article
+                    className={`achievement-card achievement-card--${item.tier ?? 'bronze'}`}
+                    key={item.achievement_id}
+                  >
+                    <span
+                      className={`achievement-tier achievement-tier--${item.tier ?? 'bronze'}`}
+                    >
+                      {
+                        { bronze: '铜级', silver: '银级', gold: '金级' }[
+                          item.tier ?? 'bronze'
+                        ]
+                      }
+                    </span>
+                    <strong>{achievementTitle(item)}</strong>
                     <p>{formatLocalDateTime(item.earned_at, range.timezone)}</p>
+                    <button
+                      type="button"
+                      className="achievement-participants"
+                      aria-label="查看参与成员"
+                    >
+                      <Icon name="people" /> {item.participants?.length || '—'}
+                      <span role="tooltip">
+                        {item.participants_recorded
+                          ? item.participants
+                              ?.map((participant) =>
+                                participant.participation_days > 1
+                                  ? `${participant.display_name}（${participant.participation_days} 天）`
+                                  : participant.display_name,
+                              )
+                              .join('、')
+                          : '早期成就的参与成员记录暂缺'}
+                      </span>
+                    </button>
                   </article>
                 ))}
               </div>
@@ -513,14 +544,14 @@ export function StatsPage() {
   );
 }
 
-function achievementTitle(type: string) {
+function achievementTitle(item: Achievement) {
+  const type = item.achievement_type;
   return (
     (
       {
-        together_lit: '同日亮灯',
-        three_days_together: '三日相伴',
-        first_goal: '第一个共同目标',
-        focus_milestone: '时光里程碑',
+        together_streak: `${item.metadata?.days ?? 1} 日相伴`,
+        goal_milestone: `完成 ${item.metadata?.completed_goal_count ?? 1} 个共同目标`,
+        focus_milestone: `累计专注 ${Number(item.metadata?.threshold_minutes ?? 0) / 60} 小时`,
       } as Record<string, string>
     )[type] ?? '共同的光'
   );

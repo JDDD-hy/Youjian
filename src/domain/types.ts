@@ -173,8 +173,15 @@ export interface Goal {
 export interface Achievement {
   achievement_id: string;
   achievement_type: string;
+  tier?: 'bronze' | 'silver' | 'gold';
   earned_at: string;
   metadata?: Record<string, string | number | boolean>;
+  participants_recorded?: boolean;
+  participants?: Array<{
+    member_id: string;
+    display_name: string;
+    participation_days: number;
+  }>;
   seen?: boolean;
 }
 
@@ -191,5 +198,7 @@ export interface SpaceSettings {
     can_copy_invite: boolean;
     can_rotate_invite: boolean;
     can_disable_members: boolean;
+    can_update_space_name: boolean;
+    can_increase_member_limit: boolean;
   };
 }

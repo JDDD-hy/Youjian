@@ -27,6 +27,11 @@ export function SettingsPage() {
   const [copyError, setCopyError] = useState(false);
   const [installError, setInstallError] = useState(false);
   const [confirmRotate, setConfirmRotate] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [spaceName, setSpaceName] = useState('');
+  const [memberLimitTarget, setMemberLimitTarget] = useState<number | null>(
+    null,
+  );
   const [confirmExit, setConfirmExit] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [exitError, setExitError] = useState(false);
@@ -48,6 +53,7 @@ export function SettingsPage() {
   const rotateIntent = useIntentKey();
   const disableIntent = useIntentKey();
   const lifecycleIntent = useIntentKey();
+  const settingsIntent = useIntentKey();
   const installState = useSyncExternalStore(
     subscribePwaInstall,
     getPwaInstallSnapshot,
@@ -87,6 +93,36 @@ export function SettingsPage() {
         setCopied(false);
         setCopyError(true);
       }
+    },
+  });
+  const renameSpace = useMutation({
+    mutationFn: (name: string) =>
+      rpc('update_space_name', {
+        space_id: spaceId,
+        name,
+        idempotency_key: settingsIntent.get(`name:${spaceId}:${name.trim()}`),
+      }),
+    onSuccess: () => {
+      settingsIntent.clear();
+      setEditingName(false);
+      void client.invalidateQueries({ queryKey: ['settings', spaceId] });
+      void client.invalidateQueries({ queryKey: ['home', spaceId] });
+      void client.invalidateQueries({ queryKey: ['invite'] });
+    },
+  });
+  const increaseLimit = useMutation({
+    mutationFn: (memberLimit: number) =>
+      rpc('increase_member_limit', {
+        space_id: spaceId,
+        member_limit: memberLimit,
+        idempotency_key: settingsIntent.get(`limit:${spaceId}:${memberLimit}`),
+      }),
+    onSuccess: () => {
+      settingsIntent.clear();
+      setMemberLimitTarget(null);
+      void client.invalidateQueries({ queryKey: ['settings', spaceId] });
+      void client.invalidateQueries({ queryKey: ['home', spaceId] });
+      void client.invalidateQueries({ queryKey: ['invite'] });
     },
   });
   const disable = useMutation({
@@ -229,7 +265,20 @@ export function SettingsPage() {
           <section className="settings-card">
             <div className="section-heading">
               <h2>{data.space.name}</h2>
-              <span>{data.me.role === 'owner' ? '房主' : '成员'}</span>
+              {data.owner_actions.can_update_space_name ? (
+                <button
+                  className="button button--text button--compact"
+                  onClick={() => {
+                    renameSpace.reset();
+                    setSpaceName(data.space.name);
+                    setEditingName(true);
+                  }}
+                >
+                  修改名称
+                </button>
+              ) : (
+                <span>成员</span>
+              )}
             </div>
             <dl className="detail-list">
               <div>
@@ -246,7 +295,20 @@ export function SettingsPage() {
               </div>
               <div>
                 <dt>成员上限</dt>
-                <dd>{data.space.member_limit} 人</dd>
+                <dd>
+                  {data.space.member_limit} 人{' '}
+                  {data.owner_actions.can_increase_member_limit && (
+                    <button
+                      className="button button--text button--compact"
+                      onClick={() => {
+                        increaseLimit.reset();
+                        setMemberLimitTarget(data.space.member_limit + 1);
+                      }}
+                    >
+                      提高上限
+                    </button>
+                  )}
+                </dd>
               </div>
               {data.space.created_at && (
                 <div>
@@ -454,6 +516,108 @@ export function SettingsPage() {
           </section>
         </>
       )}
+      {editingName && data && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="rename-space-title"
+          onClose={() => {
+            if (!renameSpace.isPending) setEditingName(false);
+          }}
+          closeOnBackdrop={!renameSpace.isPending}
+        >
+          <h2 id="rename-space-title">修改友间名称</h2>
+          <label className="field">
+            <span>新名称</span>
+            <input
+              autoFocus
+              maxLength={30}
+              value={spaceName}
+              onChange={(event) => setSpaceName(event.target.value)}
+            />
+          </label>
+          {renameSpace.error && (
+            <div className="inline-notice inline-notice--error" role="alert">
+              {renameSpace.error.message}
+            </div>
+          )}
+          <div className="dialog__actions">
+            <button
+              className="button button--secondary"
+              disabled={renameSpace.isPending}
+              onClick={() => setEditingName(false)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--primary"
+              disabled={
+                renameSpace.isPending ||
+                !spaceName.trim() ||
+                spaceName.trim() === data.space.name
+              }
+              onClick={() => renameSpace.mutate(spaceName)}
+            >
+              {renameSpace.isPending ? '正在保存…' : '保存名称'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {memberLimitTarget !== null && data && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="member-limit-title"
+          onClose={() => {
+            if (!increaseLimit.isPending) setMemberLimitTarget(null);
+          }}
+          closeOnBackdrop={!increaseLimit.isPending}
+        >
+          <h2 id="member-limit-title">提高成员上限</h2>
+          <label className="field">
+            <span>新上限</span>
+            <select
+              autoFocus
+              value={memberLimitTarget}
+              onChange={(event) =>
+                setMemberLimitTarget(Number(event.target.value))
+              }
+            >
+              {Array.from(
+                { length: 12 - data.space.member_limit },
+                (_, index) => data.space.member_limit + index + 1,
+              ).map((limit) => (
+                <option value={limit} key={limit}>
+                  {limit} 人
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>
+            将从 {data.space.member_limit} 人提高到 {memberLimitTarget}{' '}
+            人。保存后不能调低，现有邀请链接继续有效。
+          </p>
+          {increaseLimit.error && (
+            <div className="inline-notice inline-notice--error" role="alert">
+              {increaseLimit.error.message}
+            </div>
+          )}
+          <div className="dialog__actions">
+            <button
+              className="button button--secondary"
+              disabled={increaseLimit.isPending}
+              onClick={() => setMemberLimitTarget(null)}
+            >
+              取消
+            </button>
+            <button
+              className="button button--primary"
+              disabled={increaseLimit.isPending}
+              onClick={() => increaseLimit.mutate(memberLimitTarget)}
+            >
+              {increaseLimit.isPending ? '正在保存…' : '确认提高'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
       {confirmRotate && (
         <AccessibleModal
           kind="dialog"
@@ -579,7 +743,9 @@ export function SettingsPage() {
           closeOnBackdrop={!leave.isPending}
         >
           <h2 id="leave-space-title">主动退出友间？</h2>
-          <p>退出后会立即失去访问权并保留历史记录；之后可凭当前有效邀请重新加入。</p>
+          <p>
+            退出后会立即失去访问权并保留历史记录；之后可凭当前有效邀请重新加入。
+          </p>
           {data?.me.role === 'owner' && (
             <p>房主需要先转让房主，或改为解散友间。</p>
           )}

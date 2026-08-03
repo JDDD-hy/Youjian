@@ -3,15 +3,15 @@ import { canonicalAppPath } from './canonicalPath';
 
 describe('canonicalAppPath', () => {
   it('repairs a legacy lowercase project path', () => {
-    expect(
-      canonicalAppPath('/youjian/invite/token', '/Youjian/'),
-    ).toBe('/Youjian/invite/token');
+    expect(canonicalAppPath('/youjian/invite/token', '/Youjian/')).toBe(
+      '/Youjian/invite/token',
+    );
   });
 
   it('removes duplicated project paths while preserving the route', () => {
-    expect(
-      canonicalAppPath('/youjian/Youjian/invite/token', '/Youjian/'),
-    ).toBe('/Youjian/invite/token');
+    expect(canonicalAppPath('/youjian/Youjian/invite/token', '/Youjian/')).toBe(
+      '/Youjian/invite/token',
+    );
     expect(
       canonicalAppPath('/old/Youjian/space/id/settings', '/Youjian/'),
     ).toBe('/Youjian/space/id/settings');

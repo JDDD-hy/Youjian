@@ -1138,6 +1138,65 @@ a:focus-visible {
   border-radius: 14px;
   background: var(--surface);
 }
+.achievement-card--bronze {
+  border-color: #b77942 !important;
+}
+.achievement-card--silver {
+  border-color: #9aa5b1 !important;
+}
+.achievement-card--gold {
+  border-color: #d5a514 !important;
+}
+.achievement-tier {
+  display: inline-flex !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 3px 8px;
+  border-radius: 999px !important;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.achievement-tier--bronze {
+  background: #f2dfcf !important;
+  color: #86502c !important;
+}
+.achievement-tier--silver {
+  background: #e5e9ee !important;
+  color: #56616d !important;
+}
+.achievement-tier--gold {
+  background: #fff0b8 !important;
+  color: #775b00 !important;
+}
+.achievement-participants {
+  position: relative;
+  margin-top: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.achievement-participants > span[role='tooltip'] {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  bottom: calc(100% + 6px);
+  width: max-content;
+  max-width: min(260px, 70vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #263238;
+  color: white;
+  text-align: left;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.achievement-participants:hover > span[role='tooltip'],
+.achievement-participants:focus-visible > span[role='tooltip'],
+.achievement-participants:focus > span[role='tooltip'] {
+  display: block;
+}
 .achievement-grid article > span {
   width: 40px;
   height: 40px;

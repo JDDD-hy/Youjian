@@ -52,9 +52,9 @@ insert into public.goals(id,source_proposal_id,space_id,goal_type,period_type,ta
 set local role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000091',true);
 select is(public.vote_goal_proposal('50000000-0000-0000-0000-000000000094',null,'30000000-0000-0000-0000-000000000098')#>>'{error,code}','INVALID_VOTE','null vote has stable error');
 select is(public.propose_goal('10000000-0000-0000-0000-000000000091','group_total_minutes','weekly',2147483647,'30000000-0000-0000-0000-000000000099')#>>'{error,code}','INVALID_TARGET_VALUE','oversized target is rejected before arithmetic');
-select is(public.propose_goal('10000000-0000-0000-0000-000000000091','group_total_minutes','weekly',10,'30000000-0000-0000-0000-000000000101')#>>'{data,proposal,goal_type}','group_total_minutes','group-total goal proposal works');
-select is(public.propose_goal('10000000-0000-0000-0000-000000000091','per_member_minutes','monthly',10,'30000000-0000-0000-0000-000000000102')#>>'{data,proposal,goal_type}','per_member_minutes','per-member goal proposal works');
-select is(public.propose_goal('10000000-0000-0000-0000-000000000091','shared_checkin_days','weekly',3,'30000000-0000-0000-0000-000000000103')#>>'{data,proposal,goal_type}','shared_checkin_days','shared-checkin goal proposal works');
+select is(public.propose_goal('10000000-0000-0000-0000-000000000091','group_total_minutes','weekly',10,'30000000-0000-0000-0000-000000000101')#>>'{error,code}','GOAL_ALREADY_OPEN','group-total proposal cannot overlap an active goal');
+select is(public.propose_goal('10000000-0000-0000-0000-000000000091','per_member_minutes','monthly',10,'30000000-0000-0000-0000-000000000102')#>>'{error,code}','GOAL_ALREADY_OPEN','per-member proposal cannot overlap an active goal');
+select is(public.propose_goal('10000000-0000-0000-0000-000000000091','shared_checkin_days','weekly',3,'30000000-0000-0000-0000-000000000103')#>>'{error,code}','GOAL_ALREADY_OPEN','shared-checkin proposal cannot overlap an active goal');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000092',true);
 select is(public.vote_goal_proposal('50000000-0000-0000-0000-000000000095','accepted','30000000-0000-0000-0000-000000000104')#>>'{error,code}',public.vote_goal_proposal('50000000-0000-0000-0000-000000000999','accepted','30000000-0000-0000-0000-000000000105')#>>'{error,code}','cross-space proposal is not enumerable');
 reset role;
@@ -65,7 +65,7 @@ select is((select count(*)::int from public.achievements where space_id='1000000
 set local role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000091',true);
 select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000091')#>>'{data,active_goal_summary,goal_id}','60000000-0000-0000-0000-000000000091','home returns real active goal summary');
 select is(public.disable_member('10000000-0000-0000-0000-000000000091','20000000-0000-0000-0000-000000000092','30000000-0000-0000-0000-000000000106')#>>'{data,member,status}','disabled','owner disables member under the shared space lock');
-select is(public.propose_goal('10000000-0000-0000-0000-000000000091','group_total_minutes','weekly',10,'30000000-0000-0000-0000-000000000107')#>>'{error,code}','NOT_ENOUGH_MEMBERS','proposal recounts active members after acquiring lock');
+select is(public.propose_goal('10000000-0000-0000-0000-000000000091','group_total_minutes','weekly',10,'30000000-0000-0000-0000-000000000107')#>>'{error,code}','GOAL_ALREADY_OPEN','open-goal guard remains authoritative after member changes');
 
 reset role; select set_config('request.headers','{"x-forwarded-for":"203.0.113.9","x-client-fingerprint":"audit-device"}',true);
 do $$begin for i in 1..30 loop perform public.get_invite_preview('rate-token-abcdefghijklmnopqrstuvwxyz-1234567890'); end loop; end$$;
