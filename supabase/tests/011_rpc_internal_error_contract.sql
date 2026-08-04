@@ -2,6 +2,10 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(17);
 
+-- Browser tests may intentionally exercise failed RPCs before pgTAP runs.
+-- Isolate this contract test from those persistent audit rows.
+delete from private.rpc_internal_errors;
+
 insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000131'),
  ('00000000-0000-0000-0000-000000000132');
