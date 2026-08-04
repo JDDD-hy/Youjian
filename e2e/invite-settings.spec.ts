@@ -205,12 +205,11 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     await expect(
       achievementHeading.locator('..').locator('.achievement-card__icon--gold'),
     ).toBeVisible();
-    const conditionDisclosure = achievementHeading
+    const conditionTrigger = achievementHeading
       .locator('..')
-      .locator('details')
-      .filter({ hasText: '达成条件' });
-    await conditionDisclosure.locator('summary').click();
-    await expect(conditionDisclosure).toHaveAttribute('open', '');
+      .getByRole('button', { name: /达成条件/ });
+    await conditionTrigger.hover();
+    await expect(conditionTrigger.getByRole('tooltip')).toBeVisible();
     const participantDisclosure = achievementHeading
       .locator('..')
       .locator('details')

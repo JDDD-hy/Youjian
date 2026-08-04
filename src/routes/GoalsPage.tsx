@@ -127,10 +127,14 @@ function AchievementCard({ item }: { item: Achievement }) {
       <h3>{achievementTitle(item)}</h3>
       <p>{formatLocalDateTime(item.earned_at)}</p>
       {item.count !== undefined && <p>累计达成 {item.count} 次</p>}
-      <details className="achievement-disclosure">
-        <summary>达成条件</summary>
-        <p>{achievementCondition(item)}</p>
-      </details>
+      <button
+        type="button"
+        className="achievement-condition"
+        aria-label={`达成条件：${achievementCondition(item)}`}
+      >
+        达成条件
+        <span role="tooltip">{achievementCondition(item)}</span>
+      </button>
       {item.achievement_type !== 'night_owl' &&
         item.achievement_type !== 'solo_focus' && (
           <details className="achievement-disclosure">

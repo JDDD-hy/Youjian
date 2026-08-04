@@ -1229,6 +1229,41 @@ a:focus-visible {
   color: var(--text);
   box-shadow: 0 1px 4px rgb(20 30 40 / 10%);
 }
+.achievement-condition {
+  position: relative;
+  display: block;
+  min-height: 32px;
+  margin-top: 9px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--achievement-color);
+  font: inherit;
+  font-size: 0.74rem;
+  cursor: help;
+}
+.achievement-condition > span[role='tooltip'] {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  bottom: calc(100% + 6px);
+  display: none;
+  width: max-content;
+  max-width: min(280px, 72vw);
+  padding: 8px 10px;
+  border: 1px solid var(--achievement-color);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgb(20 30 40 / 14%);
+  text-align: left;
+  line-height: 1.5;
+}
+.achievement-condition:hover > span[role='tooltip'],
+.achievement-condition:focus-visible > span[role='tooltip'],
+.achievement-condition:focus > span[role='tooltip'] {
+  display: block;
+}
 .achievement-disclosure {
   margin-top: 9px;
   color: var(--muted);
