@@ -26,6 +26,7 @@ import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { Icon } from '../components/Icons';
 import { AchievementIcon } from '../components/AchievementIcon';
+import { achievementTier } from '../domain/achievementTier';
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { loadResolvedGoalProposals } from '../lib/goalHistory';
 import { assertRouteSpace } from '../lib/spaceBoundary';
@@ -104,7 +105,7 @@ function GoalCard({ goal }: { goal: Goal }) {
 }
 
 function AchievementCard({ item }: { item: Achievement }) {
-  const tier = item.tier ?? 'bronze';
+  const tier = achievementTier(item);
   const participants = item.participants ?? [];
   const participantText = item.participants_recorded
     ? participants

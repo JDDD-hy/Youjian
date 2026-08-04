@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Achievement } from '../domain/types';
+import { achievementTier } from '../domain/achievementTier';
 import { AchievementIcon } from './AchievementIcon';
 
 afterEach(cleanup);
@@ -46,5 +47,17 @@ describe('AchievementIcon', () => {
         metadata: { completed_goal_count: 10 },
       }),
     ).toContain('lucide-trophy');
+  });
+
+  it('derives shared tiers from their thresholds instead of stale RPC tiers', () => {
+    expect(
+      achievementTier({
+        achievement_id: 'three-days',
+        achievement_type: 'together_streak',
+        earned_at: '2026-08-04T00:00:00Z',
+        metadata: { days: 3 },
+        tier: 'gold',
+      }),
+    ).toBe('silver');
   });
 });
