@@ -1229,7 +1229,8 @@ a:focus-visible {
   color: var(--text);
   box-shadow: 0 1px 4px rgb(20 30 40 / 10%);
 }
-.achievement-condition {
+.achievement-condition,
+.achievement-tooltip-trigger {
   position: relative;
   display: block;
   min-height: 32px;
@@ -1242,7 +1243,13 @@ a:focus-visible {
   font-size: 0.74rem;
   cursor: help;
 }
-.achievement-condition > span[role='tooltip'] {
+.achievement-tooltip-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.achievement-condition > span[role='tooltip'],
+.achievement-tooltip-trigger > span[role='tooltip'] {
   position: absolute;
   z-index: 5;
   left: 0;
@@ -1261,25 +1268,11 @@ a:focus-visible {
 }
 .achievement-condition:hover > span[role='tooltip'],
 .achievement-condition:focus-visible > span[role='tooltip'],
-.achievement-condition:focus > span[role='tooltip'] {
+.achievement-condition:focus > span[role='tooltip'],
+.achievement-tooltip-trigger:hover > span[role='tooltip'],
+.achievement-tooltip-trigger:focus-visible > span[role='tooltip'],
+.achievement-tooltip-trigger:focus > span[role='tooltip'] {
   display: block;
-}
-.achievement-disclosure {
-  margin-top: 9px;
-  color: var(--muted);
-  font-size: 0.74rem;
-}
-.achievement-disclosure summary {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 32px;
-  color: var(--achievement-color);
-  cursor: pointer;
-}
-.achievement-disclosure p {
-  margin: 4px 0 0;
-  line-height: 1.55;
 }
 .settings-card > p {
   color: var(--muted);

@@ -210,12 +210,11 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       .getByRole('button', { name: /达成条件/ });
     await conditionTrigger.hover();
     await expect(conditionTrigger.getByRole('tooltip')).toBeVisible();
-    const participantDisclosure = achievementHeading
+    const participantTrigger = achievementHeading
       .locator('..')
-      .locator('details')
-      .filter({ hasText: '一起达成的人' });
-    await participantDisclosure.locator('summary').click();
-    await expect(participantDisclosure).toContainText(
+      .getByRole('button', { name: /一起达成的人/ });
+    await participantTrigger.hover();
+    await expect(participantTrigger.getByRole('tooltip')).toContainText(
       `房主-${suffix}（7 天）、成员-${suffix}（7 天）`,
     );
     await owner.getByRole('button', { name: '发起提案' }).click();

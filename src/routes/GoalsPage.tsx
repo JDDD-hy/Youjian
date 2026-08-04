@@ -137,13 +137,14 @@ function AchievementCard({ item }: { item: Achievement }) {
       </button>
       {item.achievement_type !== 'night_owl' &&
         item.achievement_type !== 'solo_focus' && (
-          <details className="achievement-disclosure">
-            <summary>
-              <Icon name="people" /> 一起达成的人（{participants.length || '—'}
-              ）
-            </summary>
-            <p>{participantText}</p>
-          </details>
+          <button
+            type="button"
+            className="achievement-tooltip-trigger"
+            aria-label={`一起达成的人：${participantText}`}
+          >
+            <Icon name="people" /> 一起达成的人（{participants.length || '—'}）
+            <span role="tooltip">{participantText}</span>
+          </button>
         )}
       {!item.seen && <small>新成就，已自动记录为已读</small>}
     </article>
