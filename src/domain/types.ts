@@ -89,6 +89,7 @@ export interface HomeSnapshot {
   };
   active_goal_summary: Goal | null;
   unseen_achievement: Achievement | null;
+  unseen_personal_achievement?: Achievement | null;
 }
 
 export interface StatsSummary {
@@ -178,7 +179,7 @@ export interface Goal {
 export interface Achievement {
   achievement_id: string;
   achievement_type: string;
-  tier?: 'bronze' | 'silver' | 'gold';
+  tier?: 'bronze' | 'silver' | 'gold' | 'diamond';
   earned_at: string;
   metadata?: Record<string, string | number | boolean>;
   participants_recorded?: boolean;
@@ -191,6 +192,18 @@ export interface Achievement {
   first_earned_at?: string;
   last_earned_at?: string;
   count?: number;
+  events?: Array<{
+    achievement_id?: string;
+    earned_at: string;
+    local_date?: string;
+    source_space_id?: string;
+    metadata?: Record<string, string | number | boolean>;
+    participants?: Array<{
+      member_id: string;
+      display_name: string;
+      participation_days: number;
+    }>;
+  }>;
 }
 
 export interface SpaceSettings {

@@ -91,6 +91,22 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
       }),
     });
   });
+  await page.route('**/rest/v1/rpc/get_nav_notifications', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ok: true,
+        request_id: '77777777-7777-4777-8777-777777777777',
+        server_now: '2026-07-27T12:00:00.000Z',
+        data: {
+          space_id: spaceId,
+          personal: false,
+          shared: false,
+          proposal: false,
+        },
+      }),
+    }),
+  );
   await page.route('**/rest/v1/rpc/set_personal_daily_goal', async (route) => {
     savedGoal = route.request().postDataJSON() as Record<string, unknown>;
     const scope = savedGoal.p_scope as 'today' | 'future_default';
@@ -129,7 +145,7 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
   ).toBeVisible();
 
   await page.getByRole('button', { name: '修改我的目标 · 45 分钟' }).click();
-  await goalDialog.getByLabel('从明天起每天重复').check();
+  await goalDialog.getByText('从明天起每天重复', { exact: true }).click();
   await goalDialog.getByLabel('目标时长（分钟）').fill('90');
   await goalDialog.getByRole('button', { name: '保存目标' }).click();
   await expect(goalDialog).toBeHidden();

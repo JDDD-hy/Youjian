@@ -71,7 +71,7 @@ select is((select tier from public.personal_achievements where user_id='00000000
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000201',true);
 select is(public.list_personal_achievements('10000000-0000-0000-0000-000000000201',30,null)#>>'{data,items,0,tier}','gold','personal achievement RPC returns the global summary');
-select is((select count(*)::integer from public.personal_achievements),2,'RLS lets the owner read only their own summaries');
+select is((select count(*)::integer from public.personal_achievements),4,'RLS lets the owner read only their own summaries, including newly enabled rules');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
 select is((select count(*)::integer from public.personal_achievements),0,'RLS hides another user personal achievements');
 select is(public.list_personal_achievements('10000000-0000-0000-0000-000000000202',30,null)#>>'{error,code}','SPACE_ACCESS_DENIED','personal list still requires access to the route space');

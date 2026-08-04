@@ -109,6 +109,22 @@ test('offline focus controls remain visible and never claim success', async ({
       }),
     }),
   );
+  await page.route('**/rest/v1/rpc/get_nav_notifications', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ok: true,
+        request_id: crypto.randomUUID(),
+        server_now: new Date().toISOString(),
+        data: {
+          space_id: spaceId,
+          personal: false,
+          shared: false,
+          proposal: false,
+        },
+      }),
+    }),
+  );
   await page.route('**/rest/v1/rpc/heartbeat_focus', (route) =>
     route.fulfill({
       contentType: 'application/json',

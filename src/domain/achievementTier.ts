@@ -2,11 +2,21 @@ import type { Achievement } from './types';
 
 export function achievementTier(
   item: Achievement,
-): 'bronze' | 'silver' | 'gold' {
+): 'bronze' | 'silver' | 'gold' | 'diamond' {
   if (item.achievement_type === 'night_owl') return 'gold';
   if (item.achievement_type === 'solo_focus') {
     const count = item.count ?? 1;
     return count >= 20 ? 'gold' : count >= 5 ? 'silver' : 'bronze';
+  }
+  if (item.achievement_type === 'promise_keeper') {
+    const days = Number(item.metadata?.stage_days ?? 1);
+    return days >= 30
+      ? 'diamond'
+      : days >= 7
+        ? 'gold'
+        : days >= 3
+          ? 'silver'
+          : 'bronze';
   }
   if (item.achievement_type === 'together_streak') {
     const days = Number(item.metadata?.days ?? 1);

@@ -701,6 +701,24 @@ export function HomePage() {
   useAutoAcknowledge(unseenAchievementId, (achievementId) =>
     markAchievement.mutate(achievementId),
   );
+  const unseenPersonalAchievement =
+    query.data?.snapshot.unseen_personal_achievement;
+  useAutoAcknowledge(
+    unseenPersonalAchievement
+      ? `personal:${unseenPersonalAchievement.achievement_id}`
+      : undefined,
+    () => {
+      void rpc('mark_achievement_tab_seen', {
+        space_id: spaceId,
+        tab: 'personal',
+      }).then(() => {
+        void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
+        void queryClient.invalidateQueries({
+          queryKey: ['nav-notifications', spaceId],
+        });
+      });
+    },
+  );
   useEffect(() => {
     if (!heartbeatSessionId) return;
     let timer: number | undefined;
@@ -1049,6 +1067,22 @@ export function HomePage() {
           <small>已记录，可在统计页查看</small>
         </section>
       )}
+      {data.unseen_personal_achievement && (
+        <section className="achievement-toast">
+          <span>
+            <Icon name="sparkle" />
+          </span>
+          <div>
+            <small>获得个人成就</small>
+            <strong>
+              {achievementTitle(
+                data.unseen_personal_achievement.achievement_type,
+              )}
+            </strong>
+          </div>
+          <small>已记录，可在成就页查看</small>
+        </section>
+      )}
       {drawer && (
         <StartDrawer
           pending={command.isPending}
@@ -1099,6 +1133,15 @@ function achievementTitle(type: string) {
         three_days_together: '三日相伴',
         first_goal: '第一个共同目标',
         focus_milestone: '时光里程碑',
+        night_owl: '挑灯夜战',
+        dawn_walker: '破晓而行',
+        solo_focus: '孤军奋战',
+        unbroken_focus: '一气呵成',
+        double_focus: '梅开二度',
+        triple_focus: '三顾书桌',
+        three_categories: '六边形战士',
+        promise_keeper: '守约者',
+        return_after_break: '久别重逢',
       } as Record<string, string>
     )[type] ?? '共同的光'
   );

@@ -29,7 +29,7 @@ describe('AchievementIcon', () => {
     expect(iconClass({ achievement_type: 'night_owl' })).toContain(
       'lucide-moon-star',
     );
-    expect(iconClass({ count: 1 })).toContain('lucide-lamp');
+    expect(iconClass({ count: 1 })).toContain('lucide-pointer');
     expect(iconClass({ count: 5 })).toContain('lucide-person-standing');
     expect(iconClass({ count: 20 })).toContain('lucide-trees');
   });
@@ -47,6 +47,47 @@ describe('AchievementIcon', () => {
         metadata: { completed_goal_count: 10 },
       }),
     ).toContain('lucide-trophy');
+  });
+
+  it('uses every approved extended Lucide mapping', () => {
+    const expected = {
+      dawn_walker: 'lucide-sunrise',
+      unbroken_focus: 'lucide-move-right',
+      double_focus: 'lucide-spline',
+      triple_focus: 'lucide-ev-charger',
+      three_categories: 'lucide-hexagon',
+      return_after_break: 'lucide-list-restart',
+      chance_encounter: 'lucide-orbit',
+      fellow_travelers: 'lucide-shapes',
+      focus_relay: 'lucide-heart-handshake',
+      living_flame: 'lucide-flame-kindling',
+    };
+    for (const [achievement_type, className] of Object.entries(expected)) {
+      expect(iconClass({ achievement_type })).toContain(className);
+    }
+    expect(
+      iconClass({
+        achievement_type: 'focus_milestone',
+        metadata: { threshold_minutes: 600 },
+      }),
+    ).toContain('lucide-metronome');
+    expect(
+      iconClass({
+        achievement_type: 'fellow_travelers',
+        metadata: { stage: 5 },
+      }),
+    ).toContain('lucide-building-2');
+  });
+
+  it('uses diamond for the fourth promise stage', () => {
+    expect(
+      achievementTier({
+        achievement_id: 'promise',
+        achievement_type: 'promise_keeper',
+        earned_at: '2026-08-05T00:00:00Z',
+        metadata: { stage_days: 30 },
+      }),
+    ).toBe('diamond');
   });
 
   it('derives shared tiers from their thresholds instead of stale RPC tiers', () => {

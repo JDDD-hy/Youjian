@@ -1,13 +1,28 @@
 import {
-  Clock3,
+  Anvil,
+  Building2,
+  Droplet,
+  EvCharger,
+  FlameKindling,
+  HeartHandshake,
+  Hexagon,
   Hourglass,
-  Lamp,
   LampCeiling,
   LampDesk,
   LampWallUp,
   ListChecks,
+  ListRestart,
+  Metronome,
+  MoveRight,
   MoonStar,
+  Orbit,
   PersonStanding,
+  Pointer,
+  Shapes,
+  Spline,
+  Sprout,
+  Stamp,
+  Sunrise,
   Target,
   Timer,
   Trees,
@@ -45,10 +60,30 @@ function sharedAchievementIcon(item: Achievement) {
     ) : minutes >= 3000 ? (
       <Timer {...iconProps} />
     ) : (
-      <Clock3 {...iconProps} />
+      <Metronome {...iconProps} />
     );
   }
-  return <Lamp {...iconProps} />;
+  if (item.achievement_type === 'fellow_travelers') {
+    return Number(item.metadata?.stage ?? 3) >= 5 ? (
+      <Building2 {...iconProps} />
+    ) : (
+      <Shapes {...iconProps} />
+    );
+  }
+  const icons = {
+    dawn_walker: Sunrise,
+    unbroken_focus: MoveRight,
+    double_focus: Spline,
+    triple_focus: EvCharger,
+    three_categories: Hexagon,
+    promise_keeper: Stamp,
+    return_after_break: ListRestart,
+    chance_encounter: Orbit,
+    focus_relay: HeartHandshake,
+    living_flame: FlameKindling,
+  } as const;
+  const Icon = icons[item.achievement_type as keyof typeof icons] ?? Building2;
+  return <Icon {...iconProps} />;
 }
 
 export function AchievementIcon({ item }: { item: Achievement }) {
@@ -62,8 +97,15 @@ export function AchievementIcon({ item }: { item: Achievement }) {
     ) : count >= 5 ? (
       <PersonStanding {...iconProps} />
     ) : (
-      <Lamp {...iconProps} />
+      <Pointer {...iconProps} />
     );
+  }
+  if (item.achievement_type === 'promise_keeper') {
+    const days = Number(item.metadata?.stage_days ?? 1);
+    if (days >= 30) return <Anvil {...iconProps} />;
+    if (days >= 7) return <Droplet {...iconProps} />;
+    if (days >= 3) return <Sprout {...iconProps} />;
+    return <Stamp {...iconProps} />;
   }
   return sharedAchievementIcon(item);
 }

@@ -351,6 +351,7 @@ a:focus-visible {
   backdrop-filter: blur(14px);
 }
 .nav-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -360,6 +361,17 @@ a:focus-visible {
   color: #77756f;
   font-size: 0.7rem;
   text-decoration: none;
+}
+.nav-notification-dot {
+  position: absolute;
+  top: 7px;
+  left: calc(50% + 8px);
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--surface);
+  border-radius: 50%;
+  background: #df3d3d;
+  box-shadow: 0 0 0 1px rgb(223 61 61 / 18%);
 }
 .nav-item svg {
   width: 21px;
@@ -1177,6 +1189,19 @@ a:focus-visible {
   --achievement-color: #775b00;
   --achievement-soft: #fff0b8;
 }
+.achievement-card.achievement-card--diamond {
+  --achievement-color: #5d9fca;
+  --achievement-soft: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e7f8ff 36%,
+    #cbeeff 68%,
+    #ffffff 100%
+  );
+  box-shadow:
+    0 0 0 1px rgb(116 190 229 / 14%),
+    0 7px 22px rgb(85 174 218 / 12%);
+}
 .achievement-card > span {
   width: 52px;
   height: 52px;
@@ -1197,6 +1222,26 @@ a:focus-visible {
 .achievement-card__icon--gold {
   background: var(--achievement-soft) !important;
   color: var(--achievement-color) !important;
+}
+.achievement-card__icon--diamond {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e7f8ff 36%,
+    #cbeeff 68%,
+    #ffffff 100%
+  ) !important;
+  color: var(--achievement-color) !important;
+  box-shadow:
+    inset 0 0 0 1px rgb(93 159 202 / 20%),
+    0 0 12px rgb(147 219 255 / 32%);
+}
+.achievement-card__series {
+  display: block;
+  margin-top: 3px;
+  color: var(--achievement-color);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
 }
 .achievement-grid h3 {
   margin-top: 10px;
@@ -1265,6 +1310,7 @@ a:focus-visible {
   box-shadow: 0 6px 18px rgb(20 30 40 / 14%);
   text-align: left;
   line-height: 1.5;
+  white-space: pre-line;
 }
 .achievement-condition:hover > span[role='tooltip'],
 .achievement-condition:focus-visible > span[role='tooltip'],

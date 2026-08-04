@@ -35,6 +35,12 @@ export function useRoomRealtime(
       void queryClient.invalidateQueries({
         queryKey: ['achievements', spaceId],
       });
+      void queryClient.invalidateQueries({
+        queryKey: ['personal-achievements', spaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['nav-notifications', spaceId],
+      });
       void queryClient.invalidateQueries({ queryKey: ['settings', spaceId] });
     };
     const refreshMembership = async () => {

@@ -16,31 +16,34 @@
 | 4 | 完成 1 个共同目标 | [Target](https://lucide.dev/icons/target) | 铜；已实现 |
 | 5 | 完成 3 个共同目标 | [List Checks](https://lucide.dev/icons/list-checks) | 银；已实现 |
 | 6 | 完成 10 个共同目标 | [Trophy](https://lucide.dev/icons/trophy) | 金；已实现 |
-| 7 | 累计专注 10 小时 | [Clock 3](https://lucide.dev/icons/clock-3) | 铜；已实现 |
+| 7 | 累计专注 10 小时 | [Metronome](https://lucide.dev/icons/metronome) | 铜；已实现 |
 | 8 | 累计专注 50 小时 | [Timer](https://lucide.dev/icons/timer) | 银；已实现 |
 | 9 | 累计专注 100 小时 | [Hourglass](https://lucide.dev/icons/hourglass) | 金；已实现 |
-| 10 | 挑灯夜战 | [Moon Star](https://lucide.dev/icons/moon-star) | 固定金；首批实现 |
-| 11 | 破晓而行 | [Sunrise](https://lucide.dev/icons/sunrise) | 后续规则待定 |
-| 12 | 孤军奋战 | [Lamp](https://lucide.dev/icons/lamp) | 1 次，铜；首批实现 |
-| 13 | 独行者 | [Person Standing](https://lucide.dev/icons/person-standing) | 5 次，银；首批实现 |
-| 14 | 独木成林 | [Trees](https://lucide.dev/icons/trees) | 20 次，金；首批实现 |
-| 15 | 一气呵成 | [Move Right](https://lucide.dev/icons/move-right) | 后续规则待定 |
-| 16 | 梅开二度 | [Spline](https://lucide.dev/icons/spline) | 后续规则待定 |
-| 17 | 三顾书桌 | [EV Charger](https://lucide.dev/icons/ev-charger) | 后续规则待定 |
-| 18 | 六边形战士 | [Hexagon](https://lucide.dev/icons/hexagon) | 后续规则待定 |
-| 19 | 言出必行 | [Stamp](https://lucide.dev/icons/stamp) | 后续规则待定 |
-| 20 | 初守约定 | [Sprout](https://lucide.dev/icons/sprout) | 后续规则待定 |
-| 21 | 滴水穿石 | [Droplet](https://lucide.dev/icons/droplet) | 后续规则待定 |
-| 22 | 久久为功 | [Tree Deciduous](https://lucide.dev/icons/tree-deciduous) | 后续规则待定 |
-| 23 | 久别重逢 | [Refresh CCW](https://lucide.dev/icons/refresh-ccw) | 后续规则待定 |
-| 24 | 不期而遇 | [Orbit](https://lucide.dev/icons/orbit) | 后续规则待定 |
-| 25 | 三人成行 | [Shapes](https://lucide.dev/icons/shapes) | 后续规则待定 |
-| 26 | 万家灯火 | [Building 2](https://lucide.dev/icons/building-2) | 后续规则待定 |
-| 27 | 接力燃灯 | [Hand Helping](https://lucide.dev/icons/hand-helping) | 后续规则待定 |
-| 28 | 星火相传 | [Flame Kindling](https://lucide.dev/icons/flame-kindling) | 后续规则待定 |
+| 10 | 挑灯夜战 | [Moon Star](https://lucide.dev/icons/moon-star) | 固定金；已实现 |
+| 11 | 破晓而行 | [Sunrise](https://lucide.dev/icons/sunrise) | 固定金；已实现 |
+| 12 | 孤军奋战 | [Pointer](https://lucide.dev/icons/pointer) | 1 次，铜；已实现 |
+| 13 | 独行者 | [Person Standing](https://lucide.dev/icons/person-standing) | 5 次，银；已实现 |
+| 14 | 独木成林 | [Trees](https://lucide.dev/icons/trees) | 20 次，金；已实现 |
+| 15 | 一气呵成 | [Move Right](https://lucide.dev/icons/move-right) | 固定金；已实现 |
+| 16 | 梅开二度 | [Spline](https://lucide.dev/icons/spline) | 固定金；已实现 |
+| 17 | 三顾书桌 | [EV Charger](https://lucide.dev/icons/ev-charger) | 固定金；已实现 |
+| 18 | 六边形战士 | [Hexagon](https://lucide.dev/icons/hexagon) | 固定金；已实现 |
+| 19 | 言出必行 | [Stamp](https://lucide.dev/icons/stamp) | 1 天，铜；已实现 |
+| 20 | 初守约定 | [Sprout](https://lucide.dev/icons/sprout) | 连续 3 天，银；已实现 |
+| 21 | 滴水穿石 | [Droplet](https://lucide.dev/icons/droplet) | 连续 7 天，金；已实现 |
+| 22 | 久久为功 | [Anvil](https://lucide.dev/icons/anvil) | 连续 30 天，钻石；已实现 |
+| 23 | 久别重逢 | [List Restart](https://lucide.dev/icons/list-restart) | 固定金；已实现 |
+| 24 | 不期而遇 | [Orbit](https://lucide.dev/icons/orbit) | 固定金；已实现 |
+| 25 | 三人成行 | [Shapes](https://lucide.dev/icons/shapes) | 银；已实现 |
+| 26 | 万家灯火 | [Building 2](https://lucide.dev/icons/building-2) | 金；已实现 |
+| 27 | 接力燃灯 | [Heart Handshake](https://lucide.dev/icons/heart-handshake) | 固定金；已实现 |
+| 28 | 星火相传 | [Flame Kindling](https://lucide.dev/icons/flame-kindling) | 固定金；已实现 |
 
-图标在成就卡内显示为 32×32，容器为 52×52。图标描边、容器主题和卡片外框必须使用相同的铜／银／金等级色。
+图标在成就卡内显示为 32×32，容器为 52×52。图标描边、容器主题和卡片外框必须使用相同的铜／银／金／钻石等级色。钻石级使用浅蓝主色、冰蓝至白色渐变和轻微 bling 光泽。
 
+达成条件和“一起达成的人”均使用鼠标悬浮、键盘聚焦或触屏聚焦显示的浮层，不展开卡片。所有系列聚合为一张卡片，以小字标注系列名和已获得阶段；共同成就的参与人按每次事件分组记录。
+
+## 规则
 | 成就名 | 达成要求 | 趣味点 | 图案设计 |
 |---|---|---|---|
 | **日相伴系列（现有）**：1日相伴／3日相伴／7日相伴 | 空间内至少两名有效成员全部完成当天空间签到目标；分别达成1天、连续3天、连续7天 | 表现“大家一起把灯点亮”，强调共同坚持 | 两盏相互照亮的台灯，背景加入1／3／7页日历；分别使用铜、银、金配色 |
@@ -48,10 +51,10 @@
 | **时光里程碑（现有）**：累计专注10／50／100小时 | 空间内所有已完成专注的有效时长累计达到10、50、100小时 | 将看不见的专注时间变成共同积累的资产 | 沙漏与环形刻度；铜色小沙漏、银色半满沙漏、金色发光沙漏 |
 | **昼夜行者系列（构想）**：挑灯夜战／破晓而行 | **挑灯夜战**：本地时间23:00—23:59开始，跨越午夜，有效专注累计60分钟；允许暂停但暂停不计时。**破晓而行**：本地时间05:00—06:59开始，有效专注累计60分钟 | 一项属于深夜，一项属于清晨，形成昼夜对照 | 挑灯夜战：月亮下的中式灯笼；破晓而行：地平线升起的太阳与亮灯 |
 | **独行者系列（构想）**：孤军奋战／独行者／独木成林 | **孤军奋战**：无其他成员产生任何专注交集时，累计有效专注60分钟；允许暂停。累计达成5次升级为“独行者”，20次升级为“独木成林” | 从一盏孤灯逐渐成长为自己的森林 | 孤军奋战：黑暗中的单盏灯；独行者：提灯前行的人；独木成林：由灯光组成的树冠 |
-| **一气呵成（构想）** | 单个有效专注片段连续达到60分钟，中途没有暂停 | 奖励真正不间断的沉浸，与允许暂停的孤军奋战形成区别 | 一支贯穿圆环的箭，或一笔到底的发光书法线条 |
+| **一气呵成** | 整个会话从未暂停，并连续达到60分钟有效专注 | 奖励真正不间断的沉浸，与允许暂停的孤军奋战形成区别 | 一支贯穿圆环的箭，或一笔到底的发光书法线条 |
 | **梅开二度（构想）** | 同一本地自然日完成两次专注，每次有效专注至少30分钟 | 适合上午一次、下午一次，名字轻松且容易记忆 | 同一枝条上的两朵梅花，花心设计成小时钟 |
 | **三顾书桌（构想）** | 同一本地自然日完成三次专注，每次有效专注至少30分钟 | 用典故表达“一天三次回到专注状态” | 书桌旁三个由浅到深的脚印，桌面亮着一盏灯 |
-| **六边形战士（构想）** | 同一天在两个不同任务类别中分别完成至少30分钟有效专注 | 鼓励学习、工作、阅读或创作之间的多样化 | 雷达图六边形 |
+| **六边形战士** | 同一本地自然日在三个不同最终任务类别中分别累计至少30分钟有效专注；“其他”类别计入 | 鼓励学习、工作、阅读或创作之间的多样化 | 雷达图六边形 |
 | **守约者系列（构想）**：言出必行／初守约定／滴水穿石／久久为功 | **言出必行**：首次完成个人每日目标。连续完成3天为“初守约定”，7天为“滴水穿石”，30天为“久久为功” | 与个人每日目标直接结合；既奖励第一次，也展示长期坚持 | 印章与日历组合；3天出现嫩芽，7天出现水滴穿石，30天形成带年轮的大树 |
 | **久别重逢（构想）** | 连续7个完整本地自然日没有完成专注后，回归并完成至少60分钟有效专注 | 奖励重新开始，避免断签后产生“全盘失败”的感觉 | 一盏重新点亮、周围带少量灰尘的旧灯；火苗呈温暖金色 |
 | **不期而遇（构想）** | 两位成员开始专注的时间相差不超过3分钟，并产生至少30分钟有效专注交集；双方获得 | 表现“没有约好，却刚好同时亮灯”的偶遇感 | 两颗从不同方向运行、轨迹偶然相交的流星，交点形成灯光 |
