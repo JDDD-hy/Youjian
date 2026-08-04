@@ -39,8 +39,8 @@ select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000191')#>>'{d
 select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000191')#>>'{data,today,goal_locked}','false','today remains editable before first focus');
 reset role;
 insert into public.focus_sessions(id,space_id,user_id,member_id,task_name,status,accumulated_focus_seconds,started_at,completed_at,completion_reason,last_seen_at) values
- ('40000000-0000-0000-0000-000000000191','10000000-0000-0000-0000-000000000191','00000000-0000-0000-0000-000000000191','20000000-0000-0000-0000-000000000191','Reached personal goal','completed',2700,now()-interval '45 minutes',now(),'manual_end',now());
-insert into public.focus_segments(session_id,started_at,ended_at) values('40000000-0000-0000-0000-000000000191',now()-interval '45 minutes',now());
+ ('40000000-0000-0000-0000-000000000191','10000000-0000-0000-0000-000000000191','00000000-0000-0000-0000-000000000191','20000000-0000-0000-0000-000000000191','Reached personal goal','completed',2700,current_date+interval '12 hours',current_date+interval '12 hours 45 minutes','manual_end',current_date+interval '12 hours 45 minutes');
+insert into public.focus_segments(session_id,started_at,ended_at) values('40000000-0000-0000-0000-000000000191',current_date+interval '12 hours',current_date+interval '12 hours 45 minutes');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000191',true);
 select is(public.get_stats_summary('10000000-0000-0000-0000-000000000191','mine','daily',current_date)#>>'{data,days,0,checkin_completed}','true','personal stats use the effective forty-five minute goal instead of the space fallback');
