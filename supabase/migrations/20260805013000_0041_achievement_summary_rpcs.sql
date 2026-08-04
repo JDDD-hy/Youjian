@@ -59,7 +59,8 @@ begin
     from base b
   ),cards as(select * from ranked where pick=1 order by last_at desc limit p_limit)
   select coalesce(jsonb_agg(jsonb_build_object(
-    'achievement_id',card_type,'achievement_type',card_type,'tier',tier,'earned_at',last_at,
+    'achievement_id',case when card_type in('together_streak','goal_milestone','focus_milestone','fellow_travelers','chance_encounter','focus_relay','living_flame') then card_type else id::text end,
+    'achievement_type',card_type,'tier',tier,'earned_at',last_at,
     'first_earned_at',first_at,'last_earned_at',last_at,'count',event_count,'metadata',metadata,
     'participants_recorded',true,'seen',not exists(select 1 from base unread where unread.card_type=cards.card_type
       and not exists(select 1 from public.achievement_reads ar where ar.achievement_id=unread.id and ar.member_id=m)),
