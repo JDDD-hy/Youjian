@@ -1158,69 +1158,45 @@ a:focus-visible {
   gap: 10px;
 }
 .achievement-grid article {
+  --achievement-color: #b77942;
+  --achievement-soft: #f2dfcf;
   padding: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--achievement-color);
   border-radius: 14px;
   background: var(--surface);
 }
 .achievement-card--bronze {
-  border-color: #b77942 !important;
+  --achievement-color: #86502c;
+  --achievement-soft: #f2dfcf;
 }
 .achievement-card--silver {
-  border-color: #9aa5b1 !important;
+  --achievement-color: #56616d;
+  --achievement-soft: #e5e9ee;
 }
 .achievement-card--gold {
-  border-color: #d5a514 !important;
-}
-.achievement-participants {
-  position: relative;
-  margin-top: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-.achievement-participants > span[role='tooltip'] {
-  display: none;
-  position: absolute;
-  z-index: 5;
-  left: 0;
-  bottom: calc(100% + 6px);
-  width: max-content;
-  max-width: min(260px, 70vw);
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #263238;
-  color: white;
-  text-align: left;
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-.achievement-participants:hover > span[role='tooltip'],
-.achievement-participants:focus-visible > span[role='tooltip'],
-.achievement-participants:focus > span[role='tooltip'] {
-  display: block;
+  --achievement-color: #775b00;
+  --achievement-soft: #fff0b8;
 }
 .achievement-grid article > span {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--primary-soft);
-  color: #d79d15;
+  background: var(--achievement-soft);
+  color: var(--achievement-color);
 }
 .achievement-card__icon--bronze {
-  background: #f2dfcf !important;
-  color: #86502c !important;
+  background: var(--achievement-soft) !important;
+  color: var(--achievement-color) !important;
 }
 .achievement-card__icon--silver {
-  background: #e5e9ee !important;
-  color: #56616d !important;
+  background: var(--achievement-soft) !important;
+  color: var(--achievement-color) !important;
 }
 .achievement-card__icon--gold {
-  background: #fff0b8 !important;
-  color: #775b00 !important;
+  background: var(--achievement-soft) !important;
+  color: var(--achievement-color) !important;
 }
 .achievement-grid h3 {
   margin-top: 10px;
@@ -1229,6 +1205,46 @@ a:focus-visible {
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 0.7rem;
+}
+.achievement-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+}
+.achievement-tabs button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.achievement-tabs button.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgb(20 30 40 / 10%);
+}
+.achievement-disclosure {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.achievement-disclosure summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  color: var(--achievement-color);
+  cursor: pointer;
+}
+.achievement-disclosure p {
+  margin: 4px 0 0;
+  line-height: 1.55;
 }
 .settings-card > p {
   color: var(--muted);

@@ -1,5 +1,7 @@
 # 🪔 友间 Youjian
 
+Achievement icons are provided by [Lucide](https://lucide.dev/) under the [ISC License](https://lucide.dev/license). Copyright © Lucide Icons and Contributors.
+
 > 在友间，自有间。
 
 和固定的好友一起专注——不需要同一个地方，不需要同一件事，只需要看见彼此的灯亮着。

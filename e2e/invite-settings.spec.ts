@@ -161,7 +161,42 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
         }),
       });
     });
+    await owner.route(
+      '**/rest/v1/rpc/list_personal_achievements',
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: true,
+            request_id: randomUUID(),
+            server_now: new Date().toISOString(),
+            data: {
+              space_id: spaceId,
+              items: [
+                {
+                  achievement_id: 'night_owl',
+                  achievement_type: 'night_owl',
+                  tier: 'gold',
+                  earned_at: new Date().toISOString(),
+                  first_earned_at: new Date().toISOString(),
+                  last_earned_at: new Date().toISOString(),
+                  count: 1,
+                  metadata: {},
+                  seen: true,
+                },
+              ],
+              next_cursor: null,
+            },
+          }),
+        });
+      },
+    );
     await owner.goto(`./space/${spaceId}/goals`);
+    await expect(
+      owner.getByRole('heading', { name: '挑灯夜战' }),
+    ).toBeVisible();
+    await owner.getByRole('tab', { name: '共同成就' }).click();
     const achievementHeading = owner.getByRole('heading', {
       name: '7 日相伴',
     });
@@ -170,12 +205,20 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     await expect(
       achievementHeading.locator('..').locator('.achievement-card__icon--gold'),
     ).toBeVisible();
-    const participantButton = owner.getByRole('button', {
-      name: `查看参与成员：房主-${suffix}（7 天）、成员-${suffix}（7 天）`,
-    });
-    await expect(participantButton).toBeVisible();
-    await participantButton.focus();
-    await expect(owner.getByRole('tooltip')).toBeVisible();
+    const conditionDisclosure = achievementHeading
+      .locator('..')
+      .locator('details')
+      .filter({ hasText: '达成条件' });
+    await conditionDisclosure.locator('summary').click();
+    await expect(conditionDisclosure).toHaveAttribute('open', '');
+    const participantDisclosure = achievementHeading
+      .locator('..')
+      .locator('details')
+      .filter({ hasText: '一起达成的人' });
+    await participantDisclosure.locator('summary').click();
+    await expect(participantDisclosure).toContainText(
+      `房主-${suffix}（7 天）、成员-${suffix}（7 天）`,
+    );
     await owner.getByRole('button', { name: '发起提案' }).click();
     await owner.getByRole('button', { name: '下一步' }).click();
     await owner.getByLabel('目标值（分钟）').fill('30');

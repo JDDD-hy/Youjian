@@ -25,6 +25,7 @@ import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
 import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { Icon } from '../components/Icons';
+import { AchievementIcon } from '../components/AchievementIcon';
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { loadResolvedGoalProposals } from '../lib/goalHistory';
 import { assertRouteSpace } from '../lib/spaceBoundary';
@@ -121,18 +122,25 @@ function AchievementCard({ item }: { item: Achievement }) {
       <span
         className={`achievement-card__icon achievement-card__icon--${tier}`}
       >
-        <Icon name="sparkle" />
+        <AchievementIcon item={item} />
       </span>
       <h3>{achievementTitle(item)}</h3>
       <p>{formatLocalDateTime(item.earned_at)}</p>
-      <button
-        type="button"
-        className="achievement-participants"
-        aria-label={`查看参与成员：${participantText}`}
-      >
-        <Icon name="people" /> {participants.length || '—'}
-        <span role="tooltip">{participantText}</span>
-      </button>
+      {item.count !== undefined && <p>累计达成 {item.count} 次</p>}
+      <details className="achievement-disclosure">
+        <summary>达成条件</summary>
+        <p>{achievementCondition(item)}</p>
+      </details>
+      {item.achievement_type !== 'night_owl' &&
+        item.achievement_type !== 'solo_focus' && (
+          <details className="achievement-disclosure">
+            <summary>
+              <Icon name="people" /> 一起达成的人（{participants.length || '—'}
+              ）
+            </summary>
+            <p>{participantText}</p>
+          </details>
+        )}
       {!item.seen && <small>新成就，已自动记录为已读</small>}
     </article>
   );
@@ -155,6 +163,9 @@ export function GoalsPage() {
   const [goalType, setGoalType] = useState<GoalType>('group_total_minutes');
   const [periodType, setPeriodType] = useState<PeriodType>('weekly');
   const [target, setTarget] = useState(1200);
+  const [achievementTab, setAchievementTab] = useState<'personal' | 'shared'>(
+    'personal',
+  );
   const targetMax =
     goalType !== 'shared_checkin_days'
       ? 1_000_000
@@ -201,6 +212,29 @@ export function GoalsPage() {
         spaceId,
         result.data.space_id,
         'goal_achievements_space',
+      );
+      return result;
+    },
+    getNextPageParam: (last) => last.data.next_cursor ?? undefined,
+    refetchInterval: 60_000,
+  });
+  const personalAchievements = useInfiniteQuery({
+    queryKey: ['personal-achievements', spaceId],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const result = await rpc<{
+        space_id: string;
+        items: Achievement[];
+        next_cursor: string | null;
+      }>('list_personal_achievements', {
+        space_id: spaceId,
+        limit: 30,
+        cursor: pageParam,
+      });
+      assertRouteSpace(
+        spaceId,
+        result.data.space_id,
+        'goal_personal_achievements_space',
       );
       return result;
     },
@@ -289,6 +323,8 @@ export function GoalsPage() {
   );
   const achievementItems =
     achievements.data?.pages.flatMap((page) => page.data.items) ?? [];
+  const personalAchievementItems =
+    personalAchievements.data?.pages.flatMap((page) => page.data.items) ?? [];
   const unseenAchievementId = achievementItems.find(
     (item) => !item.seen,
   )?.achievement_id;
@@ -474,26 +510,89 @@ export function GoalsPage() {
               onRetry={() => void resolvedHistory.refetch()}
             />
           )}
-          <section className="section">
+          <section className="section achievement-section">
             <div className="section-heading">
-              <h2>共同成就</h2>
-              <span>{achievementItems.length}</span>
+              <h2>成就</h2>
+              <span>
+                {achievementTab === 'personal'
+                  ? personalAchievementItems.length
+                  : achievementItems.length}
+              </span>
             </div>
-            {achievements.error && achievementItems.length > 0 && (
-              <div
-                className="inline-notice inline-notice--warning"
-                role="status"
+            <div
+              className="achievement-tabs"
+              role="tablist"
+              aria-label="成就类型"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={achievementTab === 'personal'}
+                className={achievementTab === 'personal' ? 'is-active' : ''}
+                onClick={() => setAchievementTab('personal')}
               >
-                新的成就暂时没有加载，当前记录仍可查看。
-                <button
-                  type="button"
-                  onClick={() => void achievements.refetch()}
+                个人成就
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={achievementTab === 'shared'}
+                className={achievementTab === 'shared' ? 'is-active' : ''}
+                onClick={() => setAchievementTab('shared')}
+              >
+                共同成就
+              </button>
+            </div>
+            {achievementTab === 'shared' &&
+              achievements.error &&
+              achievementItems.length > 0 && (
+                <div
+                  className="inline-notice inline-notice--warning"
+                  role="status"
                 >
-                  重新加载
-                </button>
-              </div>
-            )}
-            {achievementItems.length ? (
+                  新的成就暂时没有加载，当前记录仍可查看。
+                  <button
+                    type="button"
+                    onClick={() => void achievements.refetch()}
+                  >
+                    重新加载
+                  </button>
+                </div>
+              )}
+            {achievementTab === 'personal' ? (
+              personalAchievementItems.length ? (
+                <>
+                  <div className="achievement-grid">
+                    {personalAchievementItems.map((item) => (
+                      <AchievementCard item={item} key={item.achievement_id} />
+                    ))}
+                  </div>
+                  {personalAchievements.hasNextPage && (
+                    <button
+                      className="button button--secondary button--full"
+                      disabled={personalAchievements.isFetchingNextPage}
+                      onClick={() => void personalAchievements.fetchNextPage()}
+                    >
+                      {personalAchievements.isFetchingNextPage
+                        ? '正在加载…'
+                        : '加载更多成就'}
+                    </button>
+                  )}
+                </>
+              ) : personalAchievements.error ? (
+                <ErrorState
+                  title="无法加载个人成就"
+                  message="个人成就尚未完整加载。"
+                  onRetry={() => void personalAchievements.refetch()}
+                />
+              ) : personalAchievements.isLoading ? (
+                <PageLoader />
+              ) : (
+                <p className="quiet-copy">
+                  完成符合条件的专注后，个人成就会出现在这里。
+                </p>
+              )
+            ) : achievementItems.length ? (
               <>
                 <div className="achievement-grid">
                   {achievementItems.map((item) => (
@@ -734,6 +833,11 @@ export function GoalsPage() {
 
 function achievementTitle(item: Achievement) {
   const type = item.achievement_type;
+  if (type === 'night_owl') return '挑灯夜战';
+  if (type === 'solo_focus') {
+    const count = item.count ?? 1;
+    return count >= 20 ? '独木成林' : count >= 5 ? '独行者' : '孤军奋战';
+  }
   return (
     (
       {
@@ -743,4 +847,23 @@ function achievementTitle(item: Achievement) {
       } as Record<string, string>
     )[type] ?? '共同的光'
   );
+}
+
+function achievementCondition(item: Achievement) {
+  if (item.achievement_type === 'night_owl') {
+    return '本地时间 23:00—23:59 开始，跨越午夜，并累计至少 60 分钟有效专注；暂停时间不计入。';
+  }
+  if (item.achievement_type === 'solo_focus') {
+    return '单次会话累计至少 60 分钟有效专注，且有效专注片段不与同一空间其他成员重叠。';
+  }
+  if (item.achievement_type === 'together_streak') {
+    return `空间内至少两名有效成员全部完成空间签到目标，连续达成 ${item.metadata?.days ?? 1} 天。`;
+  }
+  if (item.achievement_type === 'goal_milestone') {
+    return `空间累计完成 ${item.metadata?.completed_goal_count ?? 1} 个经成员投票通过的共同目标。`;
+  }
+  if (item.achievement_type === 'focus_milestone') {
+    return `空间累计有效专注达到 ${Number(item.metadata?.threshold_minutes ?? 0) / 60} 小时。`;
+  }
+  return '完成对应的共同成就要求。';
 }

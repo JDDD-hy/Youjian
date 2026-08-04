@@ -188,6 +188,9 @@ export interface Achievement {
     participation_days: number;
   }>;
   seen?: boolean;
+  first_earned_at?: string;
+  last_earned_at?: string;
+  count?: number;
 }
 
 export interface SpaceSettings {
