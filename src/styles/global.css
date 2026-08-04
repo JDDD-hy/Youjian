@@ -1157,7 +1157,7 @@ a:focus-visible {
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
-.achievement-grid article {
+.achievement-card {
   --achievement-color: #b77942;
   --achievement-soft: #f2dfcf;
   padding: 16px;
@@ -1165,19 +1165,19 @@ a:focus-visible {
   border-radius: 14px;
   background: var(--surface);
 }
-.achievement-card--bronze {
+.achievement-card.achievement-card--bronze {
   --achievement-color: #86502c;
   --achievement-soft: #f2dfcf;
 }
-.achievement-card--silver {
+.achievement-card.achievement-card--silver {
   --achievement-color: #56616d;
   --achievement-soft: #e5e9ee;
 }
-.achievement-card--gold {
+.achievement-card.achievement-card--gold {
   --achievement-color: #775b00;
   --achievement-soft: #fff0b8;
 }
-.achievement-grid article > span {
+.achievement-card > span {
   width: 52px;
   height: 52px;
   display: grid;
