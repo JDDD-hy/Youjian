@@ -18,6 +18,9 @@ async function createSpace(
   await expect(page).toHaveURL(/\/space\/[0-9a-f-]{36}$/i, {
     timeout: 30_000,
   });
+  await expect(
+    page.getByRole('heading', { name: `生命周期友间-${suffix}` }),
+  ).toBeVisible({ timeout: 30_000 });
 }
 
 test('owner transfers ownership, former owner leaves, and new owner dissolves', async ({
