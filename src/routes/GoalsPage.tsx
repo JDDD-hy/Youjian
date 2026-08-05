@@ -27,6 +27,7 @@ import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { Icon } from '../components/Icons';
 import { AchievementIcon } from '../components/AchievementIcon';
 import { achievementTier } from '../domain/achievementTier';
+import { uniqueAchievementParticipantCount } from '../domain/achievementParticipants';
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { loadResolvedGoalProposals } from '../lib/goalHistory';
 import { assertRouteSpace } from '../lib/spaceBoundary';
@@ -109,6 +110,7 @@ function AchievementCard({ item }: { item: Achievement }) {
   const participants = item.participants ?? [];
   const eventGroups =
     item.events?.filter((event) => event.participants?.length) ?? [];
+  const participantCount = uniqueAchievementParticipantCount(item);
   const participantText = eventGroups.length
     ? eventGroups
         .map(
@@ -160,13 +162,8 @@ function AchievementCard({ item }: { item: Achievement }) {
           aria-label={`一起达成的人：${participantText}`}
         >
           <Icon name="people" /> 一起达成的人（
-          {eventGroups.length
-            ? eventGroups.reduce(
-                (total, event) => total + (event.participants?.length ?? 0),
-                0,
-              )
-            : participants.length || '—'}
-          ）<span role="tooltip">{participantText}</span>
+          {participantCount || '—'}）
+          <span role="tooltip">{participantText}</span>
         </button>
       )}
       {!item.seen && <small>新成就，已自动记录为已读</small>}
