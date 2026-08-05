@@ -30,6 +30,7 @@ export function PWAStatus() {
   const updateSW = useRef<
     ((reloadPage?: boolean) => Promise<void>) | undefined
   >(undefined);
+  const registration = useRef<ServiceWorkerRegistration | undefined>(undefined);
   const cachedActiveFocus = useSyncExternalStore(
     (notify) => queryClient.getQueryCache().subscribe(notify),
     () =>
@@ -67,8 +68,20 @@ export function PWAStatus() {
       onNeedRefresh: () => setUpdateReady(true),
       onOfflineReady: () => setOfflineReady(true),
       onRegisterError: () => setUpdateError('registration'),
+      onRegisteredSW: (_swUrl, currentRegistration) => {
+        registration.current = currentRegistration;
+      },
     });
     updateSW.current = update;
+    const checkForUpdate = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void registration.current?.update().catch(() => {
+          setUpdateError('registration');
+        });
+      }
+    };
+    const updateInterval = window.setInterval(checkForUpdate, 60 * 60 * 1000);
+    document.addEventListener('visibilitychange', checkForUpdate);
     const beforeInstall = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
@@ -79,6 +92,8 @@ export function PWAStatus() {
     return () => {
       window.removeEventListener('beforeinstallprompt', beforeInstall);
       window.removeEventListener('appinstalled', appInstalled);
+      document.removeEventListener('visibilitychange', checkForUpdate);
+      window.clearInterval(updateInterval);
     };
   }, []);
   const installApp = async () => {

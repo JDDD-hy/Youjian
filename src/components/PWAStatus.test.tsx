@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PWAStatus } from './PWAStatus';
 import { resetPwaInstallStateForTests } from '../lib/pwaInstall';
@@ -10,17 +16,29 @@ const pwa = vi.hoisted(() => ({
         onNeedRefresh?: () => void;
         onOfflineReady?: () => void;
         onRegisterError?: () => void;
+        onRegisteredSW?: (
+          swUrl: string,
+          registration: ServiceWorkerRegistration | undefined,
+        ) => void;
       }
     | undefined,
   update: vi.fn(() => Promise.resolve()),
+  registrationUpdate: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('virtual:pwa-register', () => ({
   registerSW: (options: {
     onNeedRefresh?: () => void;
     onOfflineReady?: () => void;
     onRegisterError?: () => void;
+    onRegisteredSW?: (
+      swUrl: string,
+      registration: ServiceWorkerRegistration | undefined,
+    ) => void;
   }) => {
     pwa.options = options;
+    options.onRegisteredSW?.('/sw.js', {
+      update: pwa.registrationUpdate,
+    } as unknown as ServiceWorkerRegistration);
     return pwa.update;
   },
 }));
@@ -39,11 +57,13 @@ function mount(client = new QueryClient()) {
 
 describe('PWAStatus', () => {
   beforeEach(() => {
+    cleanup();
     resetPwaInstallStateForTests();
     membership.mockReset();
     membership.mockResolvedValue(null);
     rpc.mockReset();
     pwa.update.mockClear();
+    pwa.registrationUpdate.mockClear();
   });
   it('offers the captured install prompt', async () => {
     mount();
@@ -112,5 +132,17 @@ describe('PWAStatus', () => {
     mount();
     act(() => pwa.options?.onRegisterError?.());
     expect(screen.getByRole('alert')).toHaveTextContent('服务注册失败');
+  });
+
+  it('checks for an update when the installed client returns to the foreground', () => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+    mount();
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(pwa.registrationUpdate).toHaveBeenCalledTimes(1);
   });
 });
