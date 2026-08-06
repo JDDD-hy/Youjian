@@ -1186,8 +1186,8 @@ a:focus-visible {
   --achievement-soft: #e5e9ee;
 }
 .achievement-card.achievement-card--gold {
-  --achievement-color: #775b00;
-  --achievement-soft: #fff0b8;
+  --achievement-color: #966d0a;
+  --achievement-soft: #fff4cc;
 }
 .achievement-card.achievement-card--diamond {
   --achievement-color: #5d9fca;

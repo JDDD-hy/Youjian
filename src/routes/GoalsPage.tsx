@@ -146,7 +146,6 @@ function AchievementCard({ item }: { item: Achievement }) {
         <small>已获得：{achievementStages(item)}</small>
       )}
       <p>{formatLocalDateTime(item.earned_at)}</p>
-      {item.count !== undefined && <p>累计达成 {item.count} 次</p>}
       <button
         type="button"
         className="achievement-condition"

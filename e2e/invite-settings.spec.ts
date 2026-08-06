@@ -140,6 +140,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
                 tier: 'gold',
                 earned_at: new Date().toISOString(),
                 metadata: { days: 7 },
+                count: 3,
                 participants_recorded: true,
                 participants: [
                   {
@@ -196,15 +197,29 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     await expect(
       owner.getByRole('heading', { name: '挑灯夜战' }),
     ).toBeVisible();
+    await expect(owner.getByText(/累计达成/)).toHaveCount(0);
     await owner.getByRole('tab', { name: '共同成就' }).click();
     const achievementHeading = owner.getByRole('heading', {
       name: '7 日相伴',
     });
     await expect(achievementHeading).toBeVisible();
     await expect(owner.getByText('金级', { exact: true })).toHaveCount(0);
+    await expect(owner.getByText(/累计达成/)).toHaveCount(0);
     await expect(
       achievementHeading.locator('..').locator('.achievement-card__icon--gold'),
     ).toBeVisible();
+    const goldCard = achievementHeading.locator('..');
+    const goldIcon = goldCard.locator('.achievement-card__icon--gold');
+    await expect
+      .poll(() =>
+        goldCard.evaluate((element) => getComputedStyle(element).borderColor),
+      )
+      .toBe('rgb(150, 109, 10)');
+    await expect
+      .poll(() =>
+        goldIcon.evaluate((element) => getComputedStyle(element).color),
+      )
+      .toBe('rgb(150, 109, 10)');
     const conditionTrigger = achievementHeading
       .locator('..')
       .getByRole('button', { name: /达成条件/ });
