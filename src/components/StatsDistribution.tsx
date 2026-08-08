@@ -158,16 +158,35 @@ function WeekBars({ summary }: { summary: StatsSummary }) {
 
 function MonthHeatmap({ summary }: { summary: StatsSummary }) {
   const monthPrefix = summary.anchor_local_date.slice(0, 7);
-  const days = summary.days.filter(
+  const recordedDays = summary.days.filter(
     (day) =>
       day.local_date.startsWith(`${monthPrefix}-`) &&
       day.local_date <= summary.anchor_local_date,
   );
-  const max = Math.max(...days.map((day) => day.credited_focus_seconds), 1);
+  const recordedByDate = new Map(
+    recordedDays.map((day) => [day.local_date, day]),
+  );
+  const year = Number(monthPrefix.slice(0, 4));
+  const month = Number(monthPrefix.slice(5, 7));
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const monthNumber = Number(monthPrefix.slice(5, 7));
+  const calendarDays = Array.from({ length: daysInMonth }, (_, index) => {
+    const dayOfMonth = index + 1;
+    const localDate = `${monthPrefix}-${String(dayOfMonth).padStart(2, '0')}`;
+    return {
+      dayOfMonth,
+      localDate,
+      recorded: recordedByDate.get(localDate),
+      isFuture: localDate > summary.anchor_local_date,
+    };
+  });
+  const max = Math.max(
+    ...recordedDays.map((day) => day.credited_focus_seconds),
+    1,
+  );
   const firstWeekday =
     (new Date(`${monthPrefix}-01T12:00:00Z`).getUTCDay() + 6) % 7;
-  const anchorDay = Number(summary.anchor_local_date.slice(8, 10));
-  const weekCount = Math.ceil((firstWeekday + anchorDay) / 7);
+  const weekCount = Math.ceil((firstWeekday + daysInMonth) / 7);
   return (
     <div className="month-heatmap-wrap">
       <div className="month-heatmap__weekdays" aria-hidden="true">
@@ -181,34 +200,36 @@ function MonthHeatmap({ summary }: { summary: StatsSummary }) {
         aria-label="本月每日专注热力图"
         style={{ '--month-week-count': weekCount } as CSSProperties}
       >
-        {days.map((day) => {
-          const dayOfMonth = Number(day.local_date.slice(8, 10));
+        {calendarDays.map(({ dayOfMonth, localDate, recorded, isFuture }) => {
           const gridIndex = firstWeekday + dayOfMonth - 1;
           const weekIndex = Math.floor(gridIndex / 7);
-          const ratio = day.credited_focus_seconds / max;
+          const seconds = isFuture
+            ? 0
+            : (recorded?.credited_focus_seconds ?? 0);
+          const ratio = seconds / max;
           const level =
-            day.credited_focus_seconds === 0
-              ? 0
-              : Math.min(4, Math.max(1, Math.ceil(ratio * 4)));
+            seconds === 0 ? 0 : Math.min(4, Math.max(1, Math.ceil(ratio * 4)));
           return (
             <span
-              key={day.local_date}
-              className="month-heatmap__cell"
+              key={localDate}
+              className={`month-heatmap__cell${isFuture ? ' month-heatmap__cell--future' : ''}`}
               style={{
                 background: HEAT_COLORS[level],
                 gridColumn: weekIndex + 1,
                 gridRow: (gridIndex % 7) + 1,
               }}
               tabIndex={0}
-              aria-label={`${day.local_date}，专注 ${formatDuration(day.credited_focus_seconds)}`}
+              aria-label={
+                isFuture
+                  ? `${localDate}，尚未到来`
+                  : `${localDate}，专注 ${formatDuration(seconds)}`
+              }
             >
               <span
                 className={`chart-tooltip${tooltipEdgeClass(weekIndex, weekCount)}`}
               >
-                {dayOfMonth
-                  ? `${Number(monthPrefix.slice(5, 7))}/${dayOfMonth}`
-                  : ''}{' '}
-                · {formatDuration(day.credited_focus_seconds)}
+                {monthNumber}/{dayOfMonth} ·{' '}
+                {isFuture ? '尚未到来' : formatDuration(seconds)}
               </span>
             </span>
           );
