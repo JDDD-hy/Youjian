@@ -1,0 +1,9 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 190 170'>
+<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='#e0e6ea'/><stop offset='1' stop-color='#9ba8b2'/></linearGradient></defs>
+<ellipse cx='130' cy='147' rx='34' ry='8' fill='#7f8d98'/>
+<path d='M130 141V94L99 63' fill='none' stroke='#7f8d98' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'/>
+<circle cx='130' cy='94' r='7' fill='#99a6b0'/><circle cx='99' cy='63' r='6' fill='#99a6b0'/>
+<path d='M93 48H64c-6 0-10 4-11 10l-4 20h54l-4-20c-1-6-3-10-6-10Z' fill='url(#g)'/>
+<path d='M48 78h56' stroke='#74828d' stroke-width='4' stroke-linecap='round'/>
+<rect x='70' y='41' width='18' height='9' rx='4.5' fill='#aeb9c1'/>
+</svg>
