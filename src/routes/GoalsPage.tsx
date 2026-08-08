@@ -67,7 +67,7 @@ function GoalCard({ goal }: { goal: Goal }) {
       <h3>{goalTypeLabels[goal.goal_type]}</h3>
       {credited === null ? (
         <p>
-          每位成员分别完成 {goal.target_value} {unit}
+          每位成员每天至少完成 {goal.target_value} {unit}
         </p>
       ) : (
         <p>
@@ -90,7 +90,10 @@ function GoalCard({ goal }: { goal: Goal }) {
             <div key={member.member_id}>
               <span>{member.display_name}</span>
               <span>
-                {member.credited_value ?? 0} / {goal.target_value} {unit}{' '}
+                {goal.goal_type === 'per_member_minutes' &&
+                member.required_days !== undefined
+                  ? `已达标 ${member.completed_days ?? 0} / ${member.required_days} 天 · 当天 ${member.current_day_credited_minutes ?? 0} / ${goal.target_value} 分钟`
+                  : `${member.credited_value ?? 0} / ${goal.target_value} ${unit}`}{' '}
                 {member.completed && <Icon name="check" />}
               </span>
             </div>
@@ -143,7 +146,9 @@ function AchievementCard({ item }: { item: Achievement }) {
         </small>
       )}
       {achievementStages(item) && (
-        <small>已获得：{achievementStages(item)}</small>
+        <small className="achievement-card__earned-stages">
+          已获得：{achievementStages(item)}
+        </small>
       )}
       <p>{formatLocalDateTime(item.earned_at)}</p>
       <button
@@ -191,13 +196,15 @@ export function GoalsPage() {
     'personal',
   );
   const targetMax =
-    goalType !== 'shared_checkin_days'
+    goalType === 'group_total_minutes'
       ? 1_000_000
-      : periodType === 'daily'
-        ? 1
-        : periodType === 'weekly'
-          ? 7
-          : 31;
+      : goalType === 'per_member_minutes'
+        ? 720
+        : periodType === 'daily'
+          ? 1
+          : periodType === 'weekly'
+            ? 7
+            : 31;
   const goals = useQuery({
     queryKey: ['goals', spaceId],
     queryFn: async () => {
@@ -462,10 +469,11 @@ export function GoalsPage() {
                       {goalTypeLabels[proposal.goal_type]}
                     </h3>
                     <p>
-                      目标值 {proposal.target_value}{' '}
-                      {proposal.goal_type === 'shared_checkin_days'
-                        ? '天'
-                        : '分钟'}
+                      {proposalSentence(
+                        proposal.goal_type,
+                        proposal.period_type,
+                        proposal.target_value,
+                      )}
                     </p>
                     <small>
                       {proposal.accepted_vote_count} /{' '}
@@ -700,7 +708,15 @@ export function GoalsPage() {
                 onChange={(e) => {
                   const type = e.target.value as GoalType;
                   setGoalType(type);
-                  setTarget(type === 'shared_checkin_days' ? 3 : 1200);
+                  setTarget(
+                    type === 'shared_checkin_days'
+                      ? periodType === 'daily'
+                        ? 1
+                        : 3
+                      : type === 'per_member_minutes'
+                        ? 180
+                        : 1200,
+                  );
                 }}
               >
                 {Object.entries(goalTypeLabels).map(([value, label]) => (
@@ -717,7 +733,17 @@ export function GoalsPage() {
                 <span>周期</span>
                 <select
                   value={periodType}
-                  onChange={(e) => setPeriodType(e.target.value as PeriodType)}
+                  onChange={(e) => {
+                    const period = e.target.value as PeriodType;
+                    setPeriodType(period);
+                    if (goalType === 'shared_checkin_days') {
+                      setTarget((current) =>
+                        period === 'daily'
+                          ? 1
+                          : Math.min(current, period === 'weekly' ? 7 : 31),
+                      );
+                    }
+                  }}
                 >
                   {Object.entries(periodLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -728,7 +754,8 @@ export function GoalsPage() {
               </label>
               <label className="field">
                 <span>
-                  目标值（{goalType === 'shared_checkin_days' ? '天' : '分钟'}）
+                  {goalType === 'per_member_minutes' ? '每日' : ''}目标值（
+                  {goalType === 'shared_checkin_days' ? '天' : '分钟'}）
                 </span>
                 <input
                   type="number"
@@ -738,6 +765,9 @@ export function GoalsPage() {
                   value={target}
                   onChange={(e) => setTarget(Number(e.target.value))}
                 />
+                <small className="field-hint">
+                  {proposalSentence(goalType, periodType, target)}
+                </small>
               </label>
             </>
           )}
@@ -951,9 +981,9 @@ function achievementCondition(item: Achievement) {
           '成员开始时间以相邻不超过 3 分钟形成一组，并共同连续专注至少 30 分钟。',
         fellow_travelers: '至少 3 人连续共同专注 30 分钟；达到 5 人时升级。',
         focus_relay:
-          '一名成员完成至少 30 分钟后，另一名成员在 5 分钟内开始并完成至少 30 分钟。',
+          '一名成员完成至少 30 分钟后，另一名成员在 5 分钟内开始并完成至少 30 分钟；同一无向成员组合每天最多计数一次。',
         living_flame:
-          '空间当天专注接续至少 1 小时，空档均不超过 30 分钟，且至少 3 人各完成 30 分钟。',
+          '按空间时区的当天计算：专注接续至少 1 小时，空档均不超过 30 分钟，且至少 3 人各完成 30 分钟。',
       } as Record<string, string>
     )[item.achievement_type] ?? '完成对应的共同成就要求。'
   );

@@ -217,9 +217,30 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       .toBe('rgb(150, 109, 10)');
     await expect
       .poll(() =>
+        goldCard.evaluate((element) => getComputedStyle(element).borderWidth),
+      )
+      .toBe('2px');
+    await expect
+      .poll(() =>
+        goldCard.evaluate((element) => getComputedStyle(element).animationName),
+      )
+      .toContain('achievement-breathe');
+    await expect
+      .poll(() =>
         goldIcon.evaluate((element) => getComputedStyle(element).color),
       )
       .toBe('rgb(150, 109, 10)');
+    await expect
+      .poll(() =>
+        goldIcon.locator('svg').evaluate((element) => ({
+          width: getComputedStyle(element).width,
+          height: getComputedStyle(element).height,
+        })),
+      )
+      .toEqual({ width: '36px', height: '36px' });
+    await expect(
+      goldCard.locator('.achievement-card__earned-stages'),
+    ).toHaveCSS('font-size', '11.2px');
     const conditionTrigger = achievementHeading
       .locator('..')
       .getByRole('button', { name: /达成条件/ });

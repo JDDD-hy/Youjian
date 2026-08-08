@@ -5,17 +5,23 @@ export function proposalSentence(
   periodType: PeriodType,
   target: number,
 ) {
-  const unit = goalType === 'shared_checkin_days' ? '天' : '分钟';
   const period = {
-    daily: '1 个自然日',
-    weekly: '连续 7 天',
-    monthly: '连续一个月',
+    daily: '1 个自然日内',
+    weekly: '连续 7 天内',
+    monthly: '连续一个月内',
   }[periodType];
-  if (goalType === 'per_member_minutes')
-    return `${period}内，每位成员分别专注 ${target} ${unit}。`;
+  if (goalType === 'per_member_minutes') {
+    const completion =
+      periodType === 'daily'
+        ? ''
+        : periodType === 'weekly'
+          ? '，7 天必须每天全部达标'
+          : '，周期内必须每天全部达标';
+    return `${period}，每位成员每天至少专注 ${target} 分钟${completion}。`;
+  }
   if (goalType === 'shared_checkin_days')
-    return `${period}内，所有成员共同完成 ${target} 个打卡日。`;
-  return `${period}内，友间成员合计专注 ${target} ${unit}。`;
+    return `${period}，累计完成 ${target} 个全员打卡日；每个打卡日都要求所有成员达到空间每日目标。`;
+  return `${period}，友间所有成员的专注时间合计达到 ${target} 分钟。`;
 }
 
 export function nextPeriodStart(

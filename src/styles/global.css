@@ -1172,10 +1172,15 @@ a:focus-visible {
 .achievement-card {
   --achievement-color: #b77942;
   --achievement-soft: #f2dfcf;
+  position: relative;
   padding: 16px;
-  border: 1px solid var(--achievement-color);
+  border: 2px solid var(--achievement-color);
   border-radius: 14px;
   background: var(--surface);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--achievement-color) 18%, transparent),
+    0 0 12px color-mix(in srgb, var(--achievement-color) 18%, transparent);
+  animation: achievement-breathe 3.6s ease-in-out infinite;
 }
 .achievement-card.achievement-card--bronze {
   --achievement-color: #86502c;
@@ -1198,18 +1203,19 @@ a:focus-visible {
     #cbeeff 68%,
     #ffffff 100%
   );
-  box-shadow:
-    0 0 0 1px rgb(116 190 229 / 14%),
-    0 7px 22px rgb(85 174 218 / 12%);
 }
 .achievement-card > span {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: var(--achievement-soft);
   color: var(--achievement-color);
+}
+.achievement-card__icon > svg {
+  width: 36px;
+  height: 36px;
 }
 .achievement-card__icon--bronze {
   background: var(--achievement-soft) !important;
@@ -1242,6 +1248,13 @@ a:focus-visible {
   color: var(--achievement-color);
   font-size: 0.62rem;
   letter-spacing: 0.04em;
+}
+.achievement-card__earned-stages {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
 }
 .achievement-grid h3 {
   margin-top: 10px;
@@ -1319,6 +1332,46 @@ a:focus-visible {
 .achievement-tooltip-trigger:focus-visible > span[role='tooltip'],
 .achievement-tooltip-trigger:focus > span[role='tooltip'] {
   display: block;
+}
+@keyframes achievement-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--achievement-color) 14%, transparent),
+      0 0 8px color-mix(in srgb, var(--achievement-color) 14%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--achievement-color) 24%, transparent),
+      0 0 18px color-mix(in srgb, var(--achievement-color) 28%, transparent);
+  }
+}
+.focus-timezone-label,
+.member-card__timezone {
+  color: #347ea8;
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.focus-panel__status-line,
+.member-card__name-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+.focus-panel__status-line .eyebrow,
+.member-card__name-line h3 {
+  margin-bottom: 0;
+}
+.member-card__name-line {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .achievement-card {
+    animation: none;
+  }
 }
 .settings-card > p {
   color: var(--muted);

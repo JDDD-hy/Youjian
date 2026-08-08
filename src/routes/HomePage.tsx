@@ -12,6 +12,7 @@ import {
   categoryLabels,
   formatDuration,
   formatLocalDateTime,
+  getDeviceTimezone,
 } from '../lib/format';
 import { calculateFocusSeconds, useServerClock } from '../hooks/useServerClock';
 import {
@@ -437,6 +438,7 @@ function FocusPanel({
   onEdit,
   onDismiss,
   pending,
+  timezoneLabel,
 }: {
   session: FocusSession | null;
   now: number;
@@ -447,6 +449,7 @@ function FocusPanel({
   onEdit: () => void;
   onDismiss: () => void;
   pending: boolean;
+  timezoneLabel?: string;
 }) {
   const [drawer, setDrawer] = useState(false);
   if (!session)
@@ -486,7 +489,12 @@ function FocusPanel({
       <section className="focus-panel focus-panel--paused">
         <div className="pause-stage">
           <Lamp state="paused" />
-          <p className="eyebrow">暂时离开</p>
+          <div className="focus-panel__status-line">
+            <p className="eyebrow">暂时离开</p>
+            {timezoneLabel && (
+              <span className="focus-timezone-label">{timezoneLabel}</span>
+            )}
+          </div>
           <h2>{session.task_name}</h2>
           <p>{categoryLabels[session.category]}</p>
           <TaskHistory history={session.task_history ?? []} />
@@ -530,7 +538,12 @@ function FocusPanel({
   return (
     <section className="focus-panel focus-panel--active">
       <Lamp state="focusing" />
-      <p className="eyebrow">灯已点亮</p>
+      <div className="focus-panel__status-line">
+        <p className="eyebrow">灯已点亮</p>
+        {timezoneLabel && (
+          <span className="focus-timezone-label">{timezoneLabel}</span>
+        )}
+      </div>
       <h2>{session.task_name}</h2>
       <p>{categoryLabels[session.category]}</p>
       <TaskHistory history={session.task_history ?? []} />
@@ -819,11 +832,14 @@ export function HomePage() {
       setDrawer(false);
       return;
     }
+    const timezone = getDeviceTimezone();
     command.mutate(
       {
         name: 'start_focus',
-        params: { space_id: spaceId, task_name: task, category },
-        key: commandIntent.get(`start_focus:${spaceId}:${task}:${category}`),
+        params: { space_id: spaceId, task_name: task, category, timezone },
+        key: commandIntent.get(
+          `start_focus:${spaceId}:${task}:${category}:${timezone}`,
+        ),
       },
       { onSuccess: () => setDrawer(false) },
     );
@@ -898,24 +914,33 @@ export function HomePage() {
       )}
       <Summary data={data.today} onEdit={() => setEditingGoal(true)} />
       {session ? (
-        <FocusPanel
-          session={session}
-          now={now}
-          connection={connection}
-          pending={command.isPending}
-          onPause={() =>
-            runCommand('pause_focus', { session_id: session.session_id })
-          }
-          onResume={() =>
-            runCommand('resume_focus', { session_id: session.session_id })
-          }
-          onEnd={end}
-          onEdit={() => setEditingSession(session)}
-          onDismiss={() => {
-            setLocalSettled(null);
-            void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
-          }}
-        />
+        <>
+          <FocusPanel
+            session={session}
+            now={now}
+            connection={connection}
+            pending={command.isPending}
+            onPause={() =>
+              runCommand('pause_focus', { session_id: session.session_id })
+            }
+            onResume={() =>
+              runCommand('resume_focus', { session_id: session.session_id })
+            }
+            onEnd={end}
+            onEdit={() => setEditingSession(session)}
+            onDismiss={() => {
+              setLocalSettled(null);
+              void queryClient.invalidateQueries({
+                queryKey: ['home', spaceId],
+              });
+            }}
+            timezoneLabel={
+              session.timezone_snapshot !== data.space.timezone
+                ? `当地 ${session.timezone_snapshot}`
+                : undefined
+            }
+          />
+        </>
       ) : (
         <section className="focus-panel focus-panel--idle">
           <Lamp />
@@ -977,7 +1002,14 @@ export function HomePage() {
                 <article className="member-card" key={member.member_id}>
                   <Lamp state="focusing" compact />
                   <div>
-                    <h3>{member.display_name}</h3>
+                    <div className="member-card__name-line">
+                      <h3>{member.display_name}</h3>
+                      {member.timezone_snapshot !== data.space.timezone && (
+                        <span className="member-card__timezone">
+                          当地 {member.timezone_snapshot}
+                        </span>
+                      )}
+                    </div>
                     <p>{member.task_name}</p>
                     <TaskHistory history={member.task_history ?? []} />
                     <small>

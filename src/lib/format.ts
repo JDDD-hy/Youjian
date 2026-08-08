@@ -14,9 +14,9 @@ export const categoryLabels: Record<FocusCategory, string> = {
 };
 
 export const goalTypeLabels: Record<GoalType, string> = {
-  group_total_minutes: '小组合计',
-  per_member_minutes: '每人门槛',
-  shared_checkin_days: '共同出勤',
+  group_total_minutes: '小组合计（周期累计）',
+  per_member_minutes: '每人每日门槛',
+  shared_checkin_days: '共同出勤天数',
 };
 
 export const periodLabels: Record<PeriodType, string> = {

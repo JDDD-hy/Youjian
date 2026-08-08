@@ -38,6 +38,7 @@ export interface FocusSession {
   task_history: TaskRevision[];
   status: FocusStatus;
   started_at: string;
+  timezone_snapshot: string;
   accumulated_focus_seconds: number;
   active_segment_started_at: string | null;
   paused_at: string | null;
@@ -63,6 +64,7 @@ export interface FocusingMember {
   status: 'focusing';
   accumulated_focus_seconds: number;
   active_segment_started_at: string;
+  timezone_snapshot: string;
   connection: { status: 'connected' | 'unconfirmed'; last_seen_at: string };
 }
 
@@ -172,6 +174,9 @@ export interface Goal {
       display_name: string;
       credited_value: number | null;
       completed: boolean;
+      completed_days?: number;
+      required_days?: number;
+      current_day_credited_minutes?: number;
     }> | null;
   };
 }

@@ -37,7 +37,7 @@
     "lucide-react": "^1.28.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "7.18.1",
+    "react-router-dom": "7.18.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {

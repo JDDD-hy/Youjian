@@ -11,6 +11,7 @@ const base: FocusSession = {
   task_history: [],
   status: 'focusing',
   started_at: '2026-07-27T06:00:00.000Z',
+  timezone_snapshot: 'UTC',
   accumulated_focus_seconds: 300,
   active_segment_started_at: '2026-07-27T06:10:00.000Z',
   paused_at: null,
