@@ -54,7 +54,6 @@ export async function loadMembership(): Promise<MembershipState | null> {
   );
   if (error) throw error;
   if (!data.session) {
-    persistMembership(null);
     return null;
   }
   let state: MembershipState;

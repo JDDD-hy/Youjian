@@ -6,6 +6,7 @@ import { WelcomePage } from './WelcomePage';
 
 vi.mock('../lib/membership', () => ({
   loadMembership: vi.fn().mockResolvedValue(null),
+  readCachedMembership: vi.fn().mockReturnValue(undefined),
 }));
 
 describe('WelcomePage', () => {

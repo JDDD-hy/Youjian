@@ -11,6 +11,10 @@ import { Icon } from '../components/Icons';
 import { TurnstileField } from '../components/TurnstileField';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import {
+  downloadRecoveryCodes,
+  rotateRecoveryCodes,
+} from '../lib/recoveryCodes';
 
 const schema = z.object({
   displayName: z
@@ -53,7 +57,7 @@ export function CreateSpacePage() {
   const mutation = useMutation({
     mutationFn: async (input: typeof values) => {
       await ensureAnonymousSession(captchaToken);
-      return rpc<{
+      const created = await rpc<{
         space: SpaceSummary;
         membership: Membership;
         invite: { invite_url: string };
@@ -65,14 +69,21 @@ export function CreateSpacePage() {
         member_limit: input.memberLimit,
         idempotency_key: intent.get(JSON.stringify(input)),
       });
+      const recovery = await rotateRecoveryCodes();
+      return { created, recovery };
     },
-    onSuccess: ({ data }) => {
+    onSuccess: ({ created: { data }, recovery }) => {
       intent.clear();
       cacheActiveMembership(queryClient, {
         ...data.membership,
         space_id: data.space.id,
       });
       saveInviteUrl(data.space.id, data.invite.invite_url);
+      downloadRecoveryCodes(
+        recovery.data.codes,
+        data.membership.display_name,
+        recovery.data.generated_at,
+      );
       void navigate(`/space/${data.space.id}`, {
         replace: true,
         state: { justCreated: true },

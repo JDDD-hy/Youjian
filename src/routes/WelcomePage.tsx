@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { BrandLogo } from '../components/BrandLogo';
-import { loadMembership } from '../lib/membership';
+import { loadMembership, readCachedMembership } from '../lib/membership';
 import { ErrorState } from '../components/AsyncState';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
@@ -13,6 +13,7 @@ export function WelcomePage() {
   });
   const online = useOnlineStatus();
   const active = membership.data?.membership;
+  const cached = readCachedMembership()?.membership;
   return (
     <main className="welcome-shell">
       <section className="welcome-card" aria-labelledby="welcome-title">
@@ -47,8 +48,14 @@ export function WelcomePage() {
               等待加入
             </Link>
             <Link className="button button--text button--full" to="/transfer">
-              迁移已有身份
+              恢复已有身份
             </Link>
+          </div>
+        )}
+        {!active && cached && (
+          <div className="inline-notice inline-notice--warning" role="status">
+            本机仍保存“{cached.display_name}
+            ”的成员线索，但登录凭证没有恢复。请让房主在成员列表为你生成一次性恢复码；不要重新创建或加入。
           </div>
         )}
         <p className="identity-note">

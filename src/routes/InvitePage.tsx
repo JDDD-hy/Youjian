@@ -11,6 +11,10 @@ import { TurnstileField } from '../components/TurnstileField';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { pendingDisplayNameKey } from './JoinWaitingPage';
+import {
+  downloadRecoveryCodes,
+  rotateRecoveryCodes,
+} from '../lib/recoveryCodes';
 
 interface InvitePreview {
   status: 'valid' | 'full';
@@ -48,7 +52,7 @@ export function InvitePage() {
       if (!value || value.length > 20)
         throw new Error('昵称需要包含 1–20 个字符。');
       await ensureAnonymousSession(captchaToken);
-      return rpc<{ space: SpaceSummary; membership: Membership }>(
+      const joined = await rpc<{ space: SpaceSummary; membership: Membership }>(
         'join_space',
         {
           invite_token: token,
@@ -57,14 +61,21 @@ export function InvitePage() {
           idempotency_key: intent.get(`${token}:${value}`),
         },
       );
+      const recovery = await rotateRecoveryCodes();
+      return { joined, recovery };
     },
-    onSuccess: ({ data }) => {
+    onSuccess: ({ joined: { data }, recovery }) => {
       intent.clear();
       localStorage.removeItem(pendingDisplayNameKey);
       cacheActiveMembership(queryClient, {
         ...data.membership,
         space_id: data.space.id,
       });
+      downloadRecoveryCodes(
+        recovery.data.codes,
+        data.membership.display_name,
+        recovery.data.generated_at,
+      );
       void navigate(`/space/${data.space.id}`, { replace: true });
     },
     onError: async (error) => {

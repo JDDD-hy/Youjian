@@ -917,6 +917,21 @@ a:focus-visible {
   letter-spacing: 0.04em;
   text-align: center;
 }
+.recovery-code-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  padding-left: 24px;
+}
+.recovery-code-list code {
+  font-size: 0.82rem;
+  user-select: all;
+}
+@media (max-width: 520px) {
+  .recovery-code-list {
+    grid-template-columns: 1fr;
+  }
+}
 .segmented {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

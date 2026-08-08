@@ -125,8 +125,8 @@ test('one-time code moves identity and revokes the old device', async ({
       await expect(
         newDevice.locator('[name="cf-turnstile-response"]'),
       ).toHaveValue(/.+/, { timeout: 30_000 });
-    await newDevice.getByLabel('迁移码').fill(code!);
-    await newDevice.getByRole('button', { name: '迁移到这台设备' }).click();
+    await newDevice.getByLabel('身份码或恢复码').fill(code!);
+    await newDevice.getByRole('button', { name: '恢复到这台设备' }).click();
     await expect(newDevice).toHaveURL(new RegExp(`/space/${spaceId}$`), {
       timeout: 30_000,
     });
@@ -156,8 +156,8 @@ test('one-time code moves identity and revokes the old device', async ({
         await expect(
           replay.locator('[name="cf-turnstile-response"]'),
         ).toHaveValue(/.+/, { timeout: 30_000 });
-      await replay.getByLabel('迁移码').fill(code!);
-      await replay.getByRole('button', { name: '迁移到这台设备' }).click();
+      await replay.getByLabel('身份码或恢复码').fill(code!);
+      await replay.getByRole('button', { name: '恢复到这台设备' }).click();
       await expect(replay.getByText('这个迁移码已经使用过')).toBeVisible({
         timeout: 30_000,
       });

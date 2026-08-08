@@ -18,6 +18,11 @@ import { assertRouteSpace } from '../lib/spaceBoundary';
 import { loadInviteUrl, saveInviteUrl } from '../lib/inviteUrl';
 import { appPath, appBasePath } from '../lib/appBase';
 import { clearDeviceIdentity } from '../lib/deviceIdentity';
+import {
+  downloadRecoveryCodes,
+  rotateRecoveryCodes,
+  type RecoveryCodeSet,
+} from '../lib/recoveryCodes';
 
 export function SettingsPage() {
   const { spaceId = '' } = useParams();
@@ -50,6 +55,15 @@ export function SettingsPage() {
     expiresAt: string;
   } | null>(null);
   const [transferCodeCopied, setTransferCodeCopied] = useState(false);
+  const [memberRecoveryCode, setMemberRecoveryCode] = useState<{
+    value: string;
+    expiresAt: string;
+    memberName: string;
+  } | null>(null);
+  const [memberRecoveryCodeCopied, setMemberRecoveryCodeCopied] =
+    useState(false);
+  const [recoveryCodeSet, setRecoveryCodeSet] =
+    useState<RecoveryCodeSet | null>(null);
   const rotateIntent = useIntentKey();
   const disableIntent = useIntentKey();
   const lifecycleIntent = useIntentKey();
@@ -190,6 +204,29 @@ export function SettingsPage() {
       });
       setTransferCodeCopied(false);
     },
+  });
+  const createMemberRecoveryCode = useMutation({
+    mutationFn: (member: { member_id: string; display_name: string }) =>
+      rpc<{
+        transfer_code: string;
+        expires_at: string;
+        member: { member_id: string; display_name: string };
+      }>('create_member_recovery_code', {
+        space_id: spaceId,
+        member_id: member.member_id,
+      }),
+    onSuccess: ({ data }) => {
+      setMemberRecoveryCode({
+        value: data.transfer_code,
+        expiresAt: data.expires_at,
+        memberName: data.member.display_name,
+      });
+      setMemberRecoveryCodeCopied(false);
+    },
+  });
+  const createRecoveryCodes = useMutation({
+    mutationFn: rotateRecoveryCodes,
+    onSuccess: ({ data }) => setRecoveryCodeSet(data),
   });
   const invite = loadInviteUrl(spaceId);
   const copy = async () => {
@@ -407,6 +444,19 @@ export function SettingsPage() {
                       member.status === 'active' && (
                         <button
                           className="button button--text"
+                          disabled={createMemberRecoveryCode.isPending}
+                          onClick={() =>
+                            createMemberRecoveryCode.mutate(member)
+                          }
+                        >
+                          协助恢复
+                        </button>
+                      )}
+                    {data.me.role === 'owner' &&
+                      member.role !== 'owner' &&
+                      member.status === 'active' && (
+                        <button
+                          className="button button--text"
                           onClick={() => {
                             transfer.reset();
                             setTransferTarget(member);
@@ -475,6 +525,20 @@ export function SettingsPage() {
             >
               {createTransferCode.isPending ? '正在生成…' : '生成身份迁移码'}
             </button>
+            <button
+              className="button button--secondary button--full"
+              disabled={createRecoveryCodes.isPending}
+              onClick={() => createRecoveryCodes.mutate()}
+            >
+              {createRecoveryCodes.isPending
+                ? '正在生成…'
+                : '生成长期身份恢复码'}
+            </button>
+            {createRecoveryCodes.error && (
+              <div className="inline-notice inline-notice--error" role="alert">
+                {createRecoveryCodes.error.message}
+              </div>
+            )}
             {createTransferCode.error && (
               <div className="inline-notice inline-notice--error" role="alert">
                 {createTransferCode.error.message}
@@ -687,6 +751,89 @@ export function SettingsPage() {
               }}
             >
               {transferCodeCopied ? '已复制' : '复制迁移码'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {memberRecoveryCode && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="member-recovery-title"
+          onClose={() => setMemberRecoveryCode(null)}
+        >
+          <h2 id="member-recovery-title">
+            恢复 {memberRecoveryCode.memberName} 的身份
+          </h2>
+          <p>
+            将此一次性恢复码私下发送给该成员。对方在欢迎页进入“恢复已有身份”并输入；成功后会恢复原成员、历史记录和加入顺序，旧登录凭证立即失效。
+          </p>
+          <output aria-label="成员身份恢复码" className="transfer-code">
+            {memberRecoveryCode.value}
+          </output>
+          <small>
+            有效期至{' '}
+            {formatLocalDateTime(
+              memberRecoveryCode.expiresAt,
+              data?.space.timezone ?? 'UTC',
+            )}
+          </small>
+          <div className="dialog__actions">
+            <button
+              className="button button--secondary"
+              onClick={() => setMemberRecoveryCode(null)}
+            >
+              关闭
+            </button>
+            <button
+              autoFocus
+              className="button button--primary"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(memberRecoveryCode.value)
+                  .then(() => setMemberRecoveryCodeCopied(true));
+              }}
+            >
+              {memberRecoveryCodeCopied ? '已复制' : '复制恢复码'}
+            </button>
+          </div>
+        </AccessibleModal>
+      )}
+      {recoveryCodeSet && data && (
+        <AccessibleModal
+          kind="dialog"
+          titleId="recovery-codes-title"
+          onClose={() => setRecoveryCodeSet(null)}
+        >
+          <h2 id="recovery-codes-title">长期身份恢复码</h2>
+          <p>
+            这是恢复当前身份的唯一长期凭证。每个码只能使用一次；重新生成后旧码全部失效。请下载并保存到密码管理器、个人云盘或离线介质。
+          </p>
+          <ol className="recovery-code-list">
+            {recoveryCodeSet.codes.map((code) => (
+              <li key={code}>
+                <code>{code}</code>
+              </li>
+            ))}
+          </ol>
+          <div className="dialog__actions">
+            <button
+              className="button button--secondary"
+              onClick={() => setRecoveryCodeSet(null)}
+            >
+              关闭
+            </button>
+            <button
+              autoFocus
+              className="button button--primary"
+              onClick={() =>
+                downloadRecoveryCodes(
+                  recoveryCodeSet.codes,
+                  data.me.display_name,
+                  recoveryCodeSet.generated_at,
+                )
+              }
+            >
+              下载 .txt
             </button>
           </div>
         </AccessibleModal>
