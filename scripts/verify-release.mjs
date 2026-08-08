@@ -8,9 +8,9 @@ const required = [
   'dist/manifest.webmanifest',
   'dist/sw.js',
   'dist/favicon.png',
-  'dist/pwa-192.png',
-  'dist/pwa-512.png',
-  'dist/pwa-maskable-512.png',
+  'dist/pwa-192-v2.png',
+  'dist/pwa-512-v2.png',
+  'dist/pwa-maskable-512-v2.png',
   'dist/_headers',
 ];
 const errors = [];

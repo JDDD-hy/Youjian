@@ -18,9 +18,9 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         includeAssets: [
           'favicon.png',
-          'pwa-192.png',
-          'pwa-512.png',
-          'pwa-maskable-512.png',
+          'pwa-192-v2.png',
+          'pwa-512-v2.png',
+          'pwa-maskable-512-v2.png',
         ],
         manifest: {
           name: '友间 · Youjian',
@@ -34,19 +34,19 @@ export default defineConfig(({ mode }) => {
           theme_color: '#F7F3EA',
           icons: [
             {
-              src: `${base}pwa-192.png`,
+              src: `${base}pwa-192-v2.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: `${base}pwa-512.png`,
+              src: `${base}pwa-512-v2.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: `${base}pwa-maskable-512.png`,
+              src: `${base}pwa-maskable-512-v2.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',

@@ -12,9 +12,9 @@ try {
   const variants = [
     { path: 'public/favicon.png', size: 64, padding: 0, background: 'transparent' },
     { path: 'public/youjian-logo.png', size: 512, padding: 0, background: 'transparent' },
-    { path: 'public/pwa-192.png', size: 192, padding: 8, background: 'transparent' },
-    { path: 'public/pwa-512.png', size: 512, padding: 20, background: 'transparent' },
-    { path: 'public/pwa-maskable-512.png', size: 512, padding: 40, background: '#F7F3EA' },
+    { path: 'public/pwa-192-v2.png', size: 192, padding: 8, background: 'transparent' },
+    { path: 'public/pwa-512-v2.png', size: 512, padding: 20, background: 'transparent' },
+    { path: 'public/pwa-maskable-512-v2.png', size: 512, padding: 40, background: '#F7F3EA' },
   ];
 
   for (const { path, size, padding, background } of variants) {
