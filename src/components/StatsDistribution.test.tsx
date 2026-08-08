@@ -61,7 +61,7 @@ describe('StatsDistribution', () => {
     ]);
   });
 
-  it('shows only the current month through today with compact dates', () => {
+  it('lays out the complete current month and keeps future dates empty', () => {
     const { container } = render(
       <StatsDistribution
         summary={{
@@ -88,15 +88,25 @@ describe('StatsDistribution', () => {
       />,
     );
     expect(screen.getByLabelText(/2026-08-08/)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/2026-08-09/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('2026-08-09，尚未到来')).toBeInTheDocument();
     expect(screen.queryByLabelText(/2026-07-31/)).not.toBeInTheDocument();
     expect(screen.getByText('8月')).toBeInTheDocument();
     expect(screen.getByText(/8\/8 · 1 分钟/)).toBeInTheDocument();
+    expect(screen.getByText('8/9 · 尚未到来')).toBeInTheDocument();
+    expect(container.querySelectorAll('.month-heatmap__cell')).toHaveLength(31);
     expect(container.querySelector('.month-heatmap')).toHaveStyle({
-      '--month-week-count': '2',
+      '--month-week-count': '6',
+    });
+    expect(screen.getByLabelText(/2026-08-01/)).toHaveStyle({
+      gridColumn: '1',
+      gridRow: '6',
+    });
+    expect(screen.getByLabelText(/2026-08-31/)).toHaveStyle({
+      gridColumn: '6',
+      gridRow: '1',
     });
     expect(
-      container.querySelector('.month-heatmap__cell .chart-tooltip--end'),
+      screen.getByLabelText(/2026-08-31/).querySelector('.chart-tooltip--end'),
     ).toBeInTheDocument();
   });
 });

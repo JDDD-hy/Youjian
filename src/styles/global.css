@@ -1236,6 +1236,9 @@ a:focus-visible {
   outline: 2px solid rgb(87 67 35 / 16%);
   z-index: 2;
 }
+.month-heatmap__cell--future {
+  opacity: 0.52;
+}
 @media (max-width: 520px) {
   .chart-heading {
     display: block;
