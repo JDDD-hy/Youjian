@@ -61,8 +61,8 @@ describe('StatsDistribution', () => {
     ]);
   });
 
-  it('omits future month cells', () => {
-    render(
+  it('shows only the current month through today with compact dates', () => {
+    const { container } = render(
       <StatsDistribution
         summary={{
           ...base,
@@ -78,11 +78,25 @@ describe('StatsDistribution', () => {
               credited_focus_seconds: 60,
               checkin_completed: false,
             },
+            {
+              local_date: '2026-07-31',
+              credited_focus_seconds: 60,
+              checkin_completed: false,
+            },
           ],
         }}
       />,
     );
     expect(screen.getByLabelText(/2026-08-08/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/2026-08-09/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/2026-07-31/)).not.toBeInTheDocument();
+    expect(screen.getByText('8月')).toBeInTheDocument();
+    expect(screen.getByText(/8\/8 · 1 分钟/)).toBeInTheDocument();
+    expect(container.querySelector('.month-heatmap')).toHaveStyle({
+      '--month-week-count': '2',
+    });
+    expect(
+      container.querySelector('.month-heatmap__cell .chart-tooltip--end'),
+    ).toBeInTheDocument();
   });
 });

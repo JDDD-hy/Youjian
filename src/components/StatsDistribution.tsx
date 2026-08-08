@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { StatsSummary } from '../domain/types';
 import { formatDuration } from '../lib/format';
 
@@ -27,6 +28,12 @@ function shortDuration(seconds: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return hours ? `${hours}h ${rest}m` : `${minutes}m`;
+}
+
+function tooltipEdgeClass(index: number, count: number) {
+  if (index === 0) return ' chart-tooltip--start';
+  if (index === count - 1) return ' chart-tooltip--end';
+  return '';
 }
 
 function DailyClock({ summary }: { summary: StatsSummary }) {
@@ -115,7 +122,7 @@ function WeekBars({ summary }: { summary: StatsSummary }) {
   );
   return (
     <div className="week-chart" role="img" aria-label="本周各成员每日专注贡献">
-      {summary.days.map((day) => (
+      {summary.days.map((day, dayIndex) => (
         <div className="week-chart__day" key={day.local_date}>
           <div className="week-chart__track">
             {(day.member_contributions ?? []).map((contribution) => (
@@ -128,7 +135,9 @@ function WeekBars({ summary }: { summary: StatsSummary }) {
                 }}
                 tabIndex={0}
               >
-                <span className="chart-tooltip">
+                <span
+                  className={`chart-tooltip${tooltipEdgeClass(dayIndex, summary.days.length)}`}
+                >
                   {contribution.display_name} ·{' '}
                   {formatDuration(contribution.credited_focus_seconds)}
                 </span>
@@ -148,14 +157,17 @@ function WeekBars({ summary }: { summary: StatsSummary }) {
 }
 
 function MonthHeatmap({ summary }: { summary: StatsSummary }) {
+  const monthPrefix = summary.anchor_local_date.slice(0, 7);
   const days = summary.days.filter(
-    (day) => day.local_date <= summary.anchor_local_date,
+    (day) =>
+      day.local_date.startsWith(`${monthPrefix}-`) &&
+      day.local_date <= summary.anchor_local_date,
   );
   const max = Math.max(...days.map((day) => day.credited_focus_seconds), 1);
-  const first = days[0]?.local_date;
-  const firstWeekday = first
-    ? (new Date(`${first}T12:00:00Z`).getUTCDay() + 6) % 7
-    : 0;
+  const firstWeekday =
+    (new Date(`${monthPrefix}-01T12:00:00Z`).getUTCDay() + 6) % 7;
+  const anchorDay = Number(summary.anchor_local_date.slice(8, 10));
+  const weekCount = Math.ceil((firstWeekday + anchorDay) / 7);
   return (
     <div className="month-heatmap-wrap">
       <div className="month-heatmap__weekdays" aria-hidden="true">
@@ -163,11 +175,16 @@ function MonthHeatmap({ summary }: { summary: StatsSummary }) {
           <span key={day}>{day}</span>
         ))}
       </div>
-      <div className="month-heatmap" role="img" aria-label="本月每日专注热力图">
-        {Array.from({ length: firstWeekday }, (_, index) => (
-          <span key={`blank-${index}`} />
-        ))}
+      <div
+        className="month-heatmap"
+        role="img"
+        aria-label="本月每日专注热力图"
+        style={{ '--month-week-count': weekCount } as CSSProperties}
+      >
         {days.map((day) => {
+          const dayOfMonth = Number(day.local_date.slice(8, 10));
+          const gridIndex = firstWeekday + dayOfMonth - 1;
+          const weekIndex = Math.floor(gridIndex / 7);
           const ratio = day.credited_focus_seconds / max;
           const level =
             day.credited_focus_seconds === 0
@@ -177,12 +194,21 @@ function MonthHeatmap({ summary }: { summary: StatsSummary }) {
             <span
               key={day.local_date}
               className="month-heatmap__cell"
-              style={{ background: HEAT_COLORS[level] }}
+              style={{
+                background: HEAT_COLORS[level],
+                gridColumn: weekIndex + 1,
+                gridRow: (gridIndex % 7) + 1,
+              }}
               tabIndex={0}
               aria-label={`${day.local_date}，专注 ${formatDuration(day.credited_focus_seconds)}`}
             >
-              <span className="chart-tooltip">
-                {day.local_date} · {formatDuration(day.credited_focus_seconds)}
+              <span
+                className={`chart-tooltip${tooltipEdgeClass(weekIndex, weekCount)}`}
+              >
+                {dayOfMonth
+                  ? `${Number(monthPrefix.slice(5, 7))}/${dayOfMonth}`
+                  : ''}{' '}
+                · {formatDuration(day.credited_focus_seconds)}
               </span>
             </span>
           );
@@ -211,6 +237,11 @@ export function StatsDistribution({ summary }: { summary: StatsSummary }) {
               </span>
             ))}
           </div>
+        )}
+        {summary.period === 'monthly' && (
+          <span className="month-heading-label">
+            {Number(summary.anchor_local_date.slice(5, 7))}月
+          </span>
         )}
       </div>
       {summary.period === 'daily' ? (
