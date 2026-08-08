@@ -19,6 +19,7 @@ import {
 import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { assertRouteSpace } from '../lib/spaceBoundary';
+import { StatsDistribution } from '../components/StatsDistribution';
 
 type View = 'mine' | 'space';
 type Period = 'daily' | 'weekly' | 'monthly';
@@ -191,51 +192,7 @@ export function StatsPage() {
             </article>
           </section>
           <section className="chart-card" aria-labelledby="trend-title">
-            <div className="section-heading">
-              <h2 id="trend-title">专注分布</h2>
-              <span>{range.timezone}</span>
-            </div>
-            <div className="bar-chart">
-              {range.days.map((day) => {
-                const max = Math.max(
-                  ...range.days.map((item) => item.credited_focus_seconds),
-                  1,
-                );
-                const height = Math.max(
-                  3,
-                  (day.credited_focus_seconds / max) * 100,
-                );
-                return (
-                  <div className="bar-chart__item" key={day.local_date}>
-                    <div className="bar-chart__track">
-                      <svg
-                        viewBox="0 0 24 100"
-                        preserveAspectRatio="none"
-                        className={day.checkin_completed ? 'complete' : ''}
-                        role="img"
-                        aria-label={`${day.local_date}，专注 ${formatDuration(day.credited_focus_seconds)}`}
-                      >
-                        <rect
-                          x="0"
-                          y={100 - height}
-                          width="24"
-                          height={height}
-                        />
-                      </svg>
-                    </div>
-                    <small>
-                      {new Intl.DateTimeFormat('zh-CN', {
-                        timeZone: 'UTC',
-                        weekday: 'short',
-                      }).format(new Date(`${day.local_date}T12:00:00Z`))}
-                    </small>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="timezone-note">
-              按 {range.timezone} 的自然日统计，跨午夜记录会拆分到对应日期。
-            </p>
+            <StatsDistribution summary={range} />
           </section>
           <section className="section">
             <div className="section-heading">

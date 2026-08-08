@@ -45,6 +45,9 @@ describe('StatsPage session detail', () => {
             credited_focus_seconds: 600,
             valid_session_count: 1,
             checkin_day_count: 0,
+            anchor_local_date: '2026-07-28',
+            members: [{ member_id: 'member', display_name: '小友' }],
+            hourly_buckets: [],
             days: [],
           },
         });

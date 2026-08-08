@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(22);
 insert into auth.users(id) values('00000000-0000-0000-0000-000000000061');
 insert into public.profiles(id,timezone) values('00000000-0000-0000-0000-000000000061','Asia/Shanghai');
 insert into public.spaces(id,name,owner_id,timezone,invite_token_hash) values('10000000-0000-0000-0000-000000000061','Stats','00000000-0000-0000-0000-000000000061','Asia/Shanghai','stats');
@@ -19,6 +19,9 @@ select is(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine'
 select is(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine','weekly','2026-07-27')#>>'{data,valid_session_count}','1','valid session counted once across segments');
 select is(jsonb_array_length(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine','weekly','2026-07-27')#>'{data,days}'),7,'weekly summary contains seven local days');
 select is(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine','daily','2026-07-27')#>>'{data,checkin_day_count}','0','sub-hour day does not check in');
+select is(jsonb_array_length(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine','daily','2026-07-27')#>'{data,members}'),1,'stats distribution includes visible members in join order');
+select is(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine','daily','2026-07-27')#>>'{data,days,0,member_contributions,0,credited_focus_seconds}','600','member contribution includes only completed session time');
+select is(public.get_stats_summary('10000000-0000-0000-0000-000000000061','mine','daily','2026-07-27')#>>'{data,hourly_buckets,23,credited_focus_seconds}','600','historical daily clock includes all 24 local hours');
 select is(jsonb_array_length(public.list_focus_history('10000000-0000-0000-0000-000000000061','mine','2026-07-01Z','2026-08-01Z',30,null)#>'{data,items}'),2,'history includes completed and discarded records');
 select is(public.list_focus_history('10000000-0000-0000-0000-000000000061','mine','2026-07-01Z','2026-08-01Z',30,null)#>>'{data,items,0,counts_toward_stats}','true','completed history counts toward stats');
 select ok(not ((public.get_focus_session_detail('40000000-0000-0000-0000-000000000061')#>'{data}') ? 'events'),'detail excludes raw event metadata');

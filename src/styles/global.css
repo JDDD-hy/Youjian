@@ -1017,6 +1017,194 @@ a:focus-visible {
   font-size: 0.72rem;
   line-height: 1.5;
 }
+.chart-heading {
+  align-items: flex-start;
+  gap: 16px;
+}
+.member-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px 11px;
+  max-width: 72%;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.member-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.member-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+.member-legend button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+}
+.focus-clock {
+  width: min(100%, 350px);
+  margin: -4px auto -10px;
+}
+.focus-clock__axis-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+.focus-clock__bar {
+  stroke: var(--primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  cursor: pointer;
+  transition:
+    opacity 160ms,
+    stroke-width 160ms;
+}
+.focus-clock__bar:hover,
+.focus-clock__bar:focus {
+  opacity: 0.72;
+  stroke-width: 11;
+  outline: none;
+}
+.focus-clock__center {
+  fill: #fbf7ef;
+  stroke: var(--border);
+}
+.focus-clock__center-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+.focus-clock__center-value {
+  fill: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+}
+.week-chart {
+  height: 210px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 9px;
+  padding-top: 16px;
+}
+.week-chart__day {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  text-align: center;
+}
+.week-chart__track {
+  min-height: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  border-radius: 8px;
+  background: #f6f0e7;
+  overflow: visible;
+}
+.week-chart__segment {
+  position: relative;
+  display: block;
+  min-height: 2px;
+  cursor: pointer;
+}
+.week-chart__segment:first-child {
+  border-radius: 0 0 8px 8px;
+}
+.week-chart__segment:last-child {
+  border-radius: 8px 8px 0 0;
+}
+.week-chart__segment:only-child {
+  border-radius: 8px;
+}
+.week-chart__segment:hover,
+.week-chart__segment:focus {
+  filter: brightness(0.95);
+  outline: 2px solid rgb(87 67 35 / 18%);
+  z-index: 2;
+}
+.chart-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  width: max-content;
+  max-width: 190px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(55 45 30 / 12%);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms,
+    transform 120ms;
+}
+*:hover > .chart-tooltip,
+*:focus > .chart-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.month-heatmap-wrap {
+  margin-top: 18px;
+  overflow-x: auto;
+}
+.month-heatmap__weekdays,
+.month-heatmap {
+  display: grid;
+  grid-template-rows: repeat(7, 22px);
+  grid-auto-flow: column;
+  grid-auto-columns: 22px;
+  gap: 6px;
+  width: max-content;
+}
+.month-heatmap__weekdays {
+  float: left;
+  margin-right: 8px;
+  color: var(--muted);
+  font-size: 0.65rem;
+  text-align: center;
+}
+.month-heatmap__weekdays span {
+  display: grid;
+  place-items: center;
+}
+.month-heatmap__cell {
+  position: relative;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 120ms;
+}
+.month-heatmap__cell:hover,
+.month-heatmap__cell:focus {
+  transform: translateY(-2px);
+  outline: 2px solid rgb(87 67 35 / 16%);
+  z-index: 2;
+}
+@media (max-width: 520px) {
+  .chart-heading {
+    display: block;
+  }
+  .member-legend {
+    justify-content: flex-start;
+    max-width: none;
+    margin-top: 9px;
+  }
+  .week-chart {
+    gap: 5px;
+  }
+}
 .history-list {
   overflow: hidden;
   border: 1px solid var(--border);

@@ -104,10 +104,24 @@ export interface StatsSummary {
   credited_focus_seconds: number;
   valid_session_count: number;
   checkin_day_count: number;
+  anchor_local_date: string;
+  members: Array<{
+    member_id: string;
+    display_name: string;
+  }>;
+  hourly_buckets?: Array<{
+    hour: number;
+    credited_focus_seconds: number;
+  }>;
   days: Array<{
     local_date: string;
     credited_focus_seconds: number;
     checkin_completed: boolean;
+    member_contributions?: Array<{
+      member_id: string;
+      display_name: string;
+      credited_focus_seconds: number;
+    }>;
   }>;
 }
 
