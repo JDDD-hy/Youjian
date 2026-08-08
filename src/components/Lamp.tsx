@@ -1,6 +1,6 @@
-import idleLamp from '../assets/lamp-idle.svg';
-import focusingLamp from '../assets/lamp-focusing.svg';
-import pausedLamp from '../assets/lamp-paused.svg';
+import idleLamp from '../assets/lamp-idle-fixed.svg';
+import focusingLamp from '../assets/lamp-focusing-fixed.svg';
+import pausedLamp from '../assets/lamp-paused-fixed.svg';
 
 const lampSources = {
   idle: idleLamp,
