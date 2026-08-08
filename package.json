@@ -1,7 +1,7 @@
 {
   "name": "youjian",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "友间——面向固定好友的小型共享专注空间。",
   "scripts": {

@@ -22,26 +22,32 @@ export function IdentityTransferPage() {
           <Icon name="arrow-left" />
           返回
         </Link>
-        <p className="eyebrow">一次性迁移</p>
-        <h1 id="transfer-title">迁移已有身份</h1>
+        <p className="eyebrow">一次性恢复</p>
+        <h1 id="transfer-title">恢复已有身份</h1>
         <p className="lead">
-          在原设备的设置页生成迁移码。兑换成功后，本设备接管原身份，原设备立即失效。
+          可在原设备的设置页生成身份码；原设备无法登录时，也可请房主在成员列表为你生成恢复码。兑换成功后，本设备接管原身份，旧登录凭证立即失效。
         </p>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             const transferCode = code.trim();
-            if (!/^[A-Za-z0-9_-]{32}$/.test(transferCode)) {
-              setError('请输入完整的 32 位迁移码。');
+            const isTransferCode = /^[A-Za-z0-9_-]{32}$/.test(transferCode);
+            const isRecoveryCode = /^[A-Za-z0-9_-]{22}$/.test(transferCode);
+            if (!isTransferCode && !isRecoveryCode) {
+              setError('请输入完整的一次性身份码或恢复码。');
               return;
             }
             setPending(true);
             setError('');
             void ensureAnonymousSession(captchaToken)
               .then(() =>
-                rpc('redeem_identity_transfer_code', {
-                  transfer_code: transferCode,
-                }),
+                isRecoveryCode
+                  ? rpc('redeem_identity_recovery_code', {
+                      recovery_code: transferCode,
+                    })
+                  : rpc('redeem_identity_transfer_code', {
+                      transfer_code: transferCode,
+                    }),
               )
               .then(loadMembership)
               .then((state) => {
@@ -63,7 +69,7 @@ export function IdentityTransferPage() {
           noValidate
         >
           <label className="field">
-            <span>迁移码</span>
+            <span>身份码或恢复码</span>
             <input
               autoFocus
               autoComplete="off"
@@ -72,7 +78,7 @@ export function IdentityTransferPage() {
               value={code}
               onChange={(event) => setCode(event.target.value.trim())}
               aria-invalid={Boolean(error)}
-              placeholder="32 位一次性迁移码"
+              placeholder="32 位一次性身份码"
             />
           </label>
           <TurnstileField onToken={setCaptchaToken} />
@@ -81,7 +87,7 @@ export function IdentityTransferPage() {
             className="button button--primary button--full"
             disabled={pending || !online || (captchaRequired && !captchaToken)}
           >
-            {pending ? '正在迁移…' : '迁移到这台设备'}
+            {pending ? '正在恢复…' : '恢复到这台设备'}
           </button>
         </form>
       </section>

@@ -53,6 +53,8 @@ const messages: Record<string, string> = {
   INVALID_TRANSFER_CODE: '迁移码无效，请检查后重试。',
   TRANSFER_CODE_USED: '这个迁移码已经使用过，请在原设备重新生成。',
   TRANSFER_CODE_EXPIRED: '迁移码已过期，请在原设备重新生成。',
+  INVALID_RECOVERY_CODE: '恢复码无效，请检查后重试。',
+  RECOVERY_CODE_USED: '这个恢复码已经使用过，请换一个。',
   TARGET_IDENTITY_NOT_EMPTY:
     '当前设备已有使用记录，不能覆盖；请先退出当前设备后重试。',
   NETWORK_UNCONFIRMED: '连接状态不可确认，这次操作尚未生效。',
