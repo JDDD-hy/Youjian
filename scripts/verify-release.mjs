@@ -7,9 +7,10 @@ const required = [
   'dist/404.html',
   'dist/manifest.webmanifest',
   'dist/sw.js',
-  'dist/pwa-icon.svg',
+  'dist/favicon.png',
   'dist/pwa-192.png',
   'dist/pwa-512.png',
+  'dist/pwa-maskable-512.png',
   'dist/_headers',
 ];
 const errors = [];

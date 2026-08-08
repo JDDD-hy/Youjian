@@ -16,7 +16,12 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'prompt',
         injectRegister: false,
-        includeAssets: ['favicon.svg', 'pwa-192.png', 'pwa-512.png'],
+        includeAssets: [
+          'favicon.png',
+          'pwa-192.png',
+          'pwa-512.png',
+          'pwa-maskable-512.png',
+        ],
         manifest: {
           name: '友间 · Youjian',
           short_name: '友间',
@@ -41,16 +46,10 @@ export default defineConfig(({ mode }) => {
               purpose: 'any',
             },
             {
-              src: `${base}pwa-512.png`,
+              src: `${base}pwa-maskable-512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
-            },
-            {
-              src: `${base}pwa-icon.svg`,
-              sizes: 'any',
-              type: 'image/svg+xml',
-              purpose: 'any maskable',
             },
           ],
         },
