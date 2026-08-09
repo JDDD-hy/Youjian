@@ -119,4 +119,3 @@ if (errors.length) {
     `Release verification passed. Largest JS gzip: ${largestGzip} bytes.`,
   );
 }
-
