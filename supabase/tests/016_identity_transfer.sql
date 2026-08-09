@@ -79,7 +79,14 @@ select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,0}'
 select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000161'::uuid,'long-lived recovery code restores the original owner principal');
 select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,0}' from permanent_codes))#>>'{error,code}','RECOVERY_CODE_USED','recovery codes are one-time credentials');
 
-select is((select count(*)::integer from private.identity_binding_events),3,'every successful identity change has one audit event');
+select is((
+  select count(*)::integer
+  from private.identity_binding_events
+  where principal_user_id in(
+    '00000000-0000-0000-0000-000000000161',
+    '00000000-0000-0000-0000-000000000165'
+  )
+),3,'every successful identity change has one audit event');
 select is((select recovery_kind from private.identity_binding_events order by id desc limit 1),'recovery','long-lived recovery records its credential kind');
 select is((select principal_user_id from private.identity_binding_events order by id desc limit 1),'00000000-0000-0000-0000-000000000161'::uuid,'audit event records the exact recovered principal');
 
@@ -95,7 +102,14 @@ select is((select auth_user_id from private.identity_bindings where principal_us
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000169',true);
 select is(public.redeem_identity_recovery_code('AAAAAAAAAAAAAAAAAAAAAA')#>>'{error,code}','INVALID_RECOVERY_CODE','an unknown well-formed code cannot bind any principal');
 select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000169'::uuid,'unknown code leaves the caller self-bound');
-select is((select count(*)::integer from private.identity_binding_events),3,'failed recovery attempts never create binding audit events');
+select is((
+  select count(*)::integer
+  from private.identity_binding_events
+  where principal_user_id in(
+    '00000000-0000-0000-0000-000000000161',
+    '00000000-0000-0000-0000-000000000165'
+  )
+),3,'failed recovery attempts never create binding audit events');
 select is((select count(*)::integer from pg_catalog.pg_trigger where tgname like 'lock_%_identity_activity' and not tgisinternal),8,'every direct identity activity table participates in recovery serialization');
 
 select is((

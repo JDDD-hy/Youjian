@@ -24,15 +24,64 @@ import {
   STATS_QUERY_RETRY_COUNT,
   statsQueryRetryDelay,
 } from '../lib/statsRetry';
+import {
+  buildFocusExport,
+  sessionOverlapsPeriod,
+  type ExportPeriod,
+  type FocusExportSession,
+} from '../lib/focusExport';
 
 type View = 'mine' | 'space';
 type Period = 'daily' | 'weekly' | 'monthly';
+
+function isoWeekValue(localDate: string) {
+  const date = new Date(`${localDate}T00:00:00Z`);
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(
+    ((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7,
+  );
+  return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+function weekMonday(value: string) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(value);
+  if (!match) return '';
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const januaryFourth = new Date(Date.UTC(year, 0, 4));
+  const monday = new Date(januaryFourth);
+  monday.setUTCDate(
+    januaryFourth.getUTCDate() -
+      (januaryFourth.getUTCDay() || 7) +
+      1 +
+      (week - 1) * 7,
+  );
+  return monday.toISOString().slice(0, 10);
+}
+
+function downloadText(filename: string, content: string) {
+  const url = URL.createObjectURL(
+    new Blob([content], { type: 'text/markdown;charset=utf-8' }),
+  );
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function StatsPage() {
   const { spaceId = '' } = useParams();
   const [view, setView] = useState<View>('mine');
   const [period, setPeriod] = useState<Period>('weekly');
   const [detail, setDetail] = useState<HistoryItem | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportPeriod, setExportPeriod] = useState<ExportPeriod>('weekly');
+  const [exportSelection, setExportSelection] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   const home = useQuery({
     queryKey: ['home', spaceId],
     queryFn: async () => {
@@ -53,6 +102,11 @@ export function StatsPage() {
       : home.data.snapshot.space.timezone
     : undefined;
   const anchor = timezone ? isoDateInTimezone(timezone) : undefined;
+  const currentExportSelection = anchor
+    ? exportPeriod === 'weekly'
+      ? isoWeekValue(anchor)
+      : anchor.slice(0, 7)
+    : '';
   const summary = useQuery({
     queryKey: ['stats', spaceId, view, period, anchor],
     enabled: Boolean(anchor),
@@ -115,6 +169,113 @@ export function StatsPage() {
       return result;
     },
   });
+  const openExport = () => {
+    setExportSelection(currentExportSelection);
+    setExportError('');
+    setExportOpen(true);
+  };
+  const runExport = async () => {
+    if (!home.data || !exportSelection) return;
+    setExporting(true);
+    setExportError('');
+    try {
+      const anchorLocalDate =
+        exportPeriod === 'weekly'
+          ? weekMonday(exportSelection)
+          : `${exportSelection}-01`;
+      const exportSummary = await rpc<StatsSummary>('get_stats_summary', {
+        space_id: spaceId,
+        view: 'mine',
+        period: exportPeriod,
+        anchor_local_date: anchorLocalDate,
+      });
+      assertRouteSpace(
+        spaceId,
+        exportSummary.data.space_id,
+        'focus_export_summary_space',
+      );
+      const expandedStart = new Date(
+        Date.parse(exportSummary.data.period_start) - 7 * 60 * 60 * 1000,
+      ).toISOString();
+      const expandedEnd = new Date(
+        Date.parse(exportSummary.data.period_end) + 7 * 60 * 60 * 1000,
+      ).toISOString();
+      const historyItems: HistoryItem[] = [];
+      let cursor: string | null = null;
+      do {
+        const page: {
+          data: {
+            space_id: string;
+            items: HistoryItem[];
+            next_cursor: string | null;
+          };
+          serverNow: string;
+          requestId: string;
+        } = await rpc<{
+          space_id: string;
+          items: HistoryItem[];
+          next_cursor: string | null;
+        }>('list_focus_history', {
+          space_id: spaceId,
+          view: 'mine',
+          period_start: expandedStart,
+          period_end: expandedEnd,
+          limit: 100,
+          cursor,
+        });
+        assertRouteSpace(
+          spaceId,
+          page.data.space_id,
+          'focus_export_history_space',
+        );
+        historyItems.push(...page.data.items);
+        cursor = page.data.next_cursor;
+      } while (cursor);
+      const sessions: FocusExportSession[] = [];
+      for (let index = 0; index < historyItems.length; index += 6) {
+        const batch = await Promise.all(
+          historyItems.slice(index, index + 6).map(async (historyItem) => {
+            const response = await rpc<FocusSessionDetail>(
+              'get_focus_session_detail',
+              { session_id: historyItem.session_id },
+            );
+            assertRouteSpace(
+              spaceId,
+              response.data.session.space_id,
+              'focus_export_detail_space',
+            );
+            return { history: historyItem, detail: response.data };
+          }),
+        );
+        sessions.push(...batch);
+      }
+      const overlapping = sessions.filter(({ detail: session }) =>
+        sessionOverlapsPeriod(
+          session,
+          exportSummary.data.period_start,
+          exportSummary.data.period_end,
+        ),
+      );
+      const result = await buildFocusExport({
+        period: exportPeriod,
+        summary: exportSummary.data,
+        space: {
+          id: home.data.snapshot.space.id,
+          name: home.data.snapshot.space.name,
+        },
+        memberId: home.data.snapshot.me.member_id,
+        sessions: overlapping,
+        exportedAt: exportSummary.serverNow,
+        dataUntil: exportSummary.serverNow,
+      });
+      downloadText(result.filename, result.content);
+      setExportOpen(false);
+    } catch {
+      setExportError('导出失败，未生成文件。请稍后重试。');
+    } finally {
+      setExporting(false);
+    }
+  };
   return (
     <div className="page stats-page">
       <header className="page-header">
@@ -203,7 +364,13 @@ export function StatsPage() {
           <section className="section">
             <div className="section-heading">
               <h2>历史记录</h2>
-              <span>不可修改</span>
+              <button
+                type="button"
+                className="button button--text stats-export-trigger"
+                onClick={openExport}
+              >
+                数据导出
+              </button>
             </div>
             {history.error && items.length > 0 && (
               <div
@@ -416,6 +583,80 @@ export function StatsPage() {
           >
             关闭
           </button>
+        </AccessibleModal>
+      )}
+      {exportOpen && (
+        <AccessibleModal
+          titleId="focus-export-title"
+          onClose={() => !exporting && setExportOpen(false)}
+        >
+          <span className="drawer__handle" />
+          <p className="eyebrow">专注数据</p>
+          <h2 id="focus-export-title">数据导出</h2>
+          <div className="segmented segmented--small" aria-label="导出周期">
+            {(
+              [
+                ['weekly', '周'],
+                ['monthly', '月'],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={exportPeriod === value ? 'active' : ''}
+                aria-pressed={exportPeriod === value}
+                disabled={exporting}
+                onClick={() => {
+                  setExportPeriod(value);
+                  if (anchor)
+                    setExportSelection(
+                      value === 'weekly'
+                        ? isoWeekValue(anchor)
+                        : anchor.slice(0, 7),
+                    );
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="field">
+            <span>{exportPeriod === 'weekly' ? '选择周' : '选择月'}</span>
+            <input
+              data-autofocus
+              type={exportPeriod === 'weekly' ? 'week' : 'month'}
+              value={exportSelection}
+              max={currentExportSelection}
+              disabled={exporting}
+              onChange={(event) => setExportSelection(event.target.value)}
+            />
+          </label>
+          <p className="quiet-copy">
+            仅导出你本人在当前友间的数据。文件内容使用英语，空周期也可导出。
+          </p>
+          {exportError && (
+            <div className="inline-notice inline-notice--warning" role="alert">
+              {exportError}
+            </div>
+          )}
+          <div className="dialog-actions">
+            <button
+              type="button"
+              className="button button--secondary"
+              disabled={exporting}
+              onClick={() => setExportOpen(false)}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="button button--primary"
+              disabled={exporting || !exportSelection}
+              onClick={() => void runExport()}
+            >
+              {exporting ? '正在导出…' : '导出 Markdown'}
+            </button>
+          </div>
         </AccessibleModal>
       )}
     </div>

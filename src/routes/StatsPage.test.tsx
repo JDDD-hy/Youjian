@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -113,6 +113,31 @@ describe('StatsPage session detail', () => {
     expect(rpc).toHaveBeenCalledWith('get_focus_session_detail', {
       session_id: 'session',
     });
+  });
+
+  it('opens the Chinese week/month export chooser from history heading', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: '数据导出' }));
+
+    expect(
+      screen.getByRole('heading', { name: '数据导出' }),
+    ).toBeInTheDocument();
+    const dialogs = screen.getAllByRole('dialog');
+    const dialog = dialogs[dialogs.length - 1]!;
+    expect(within(dialog).getByRole('button', { name: '周' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(
+      within(dialog).getByRole('button', { name: '月' }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('选择周')).toHaveAttribute(
+      'type',
+      'week',
+    );
+    expect(
+      within(dialog).getByRole('button', { name: '导出 Markdown' }),
+    ).toBeInTheDocument();
   });
 });
 
