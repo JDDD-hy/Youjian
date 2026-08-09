@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(28);
 
 insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000161'),
@@ -10,7 +10,9 @@ insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000165'),
  ('00000000-0000-0000-0000-000000000166'),
  ('00000000-0000-0000-0000-000000000167');
-insert into public.profiles(id,timezone) values('00000000-0000-0000-0000-000000000161','UTC');
+insert into public.profiles(id,timezone) values
+ ('00000000-0000-0000-0000-000000000161','UTC'),
+ ('00000000-0000-0000-0000-000000000165','UTC');
 insert into public.spaces(id,name,owner_id,timezone,invite_token_hash) values
  ('10000000-0000-0000-0000-000000000161','Transfer','00000000-0000-0000-0000-000000000161','UTC','transfer-room');
 insert into public.space_members(id,space_id,user_id,display_name,role) values
@@ -63,6 +65,8 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000166'
 select is(public.redeem_identity_transfer_code((select result#>>'{data,transfer_code}' from recovery_code))#>>'{data,transferred}','true','fresh session redeems owner-assisted recovery code');
 select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000165'::uuid,'recovered session resolves to original member principal');
 select is(public.get_my_membership()#>>'{data,membership,member_id}','20000000-0000-0000-0000-000000000165','recovery preserves the original member record');
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000161')#>>'{data,me,member_id}','20000000-0000-0000-0000-000000000165','recovered session loads the original home snapshot');
+select is(public.get_stats_summary('10000000-0000-0000-0000-000000000161','mine','weekly','2026-08-03')#>>'{data,space_id}','10000000-0000-0000-0000-000000000161','recovered session loads stats through the stable principal');
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000162',true);
 create temporary table permanent_codes as select public.rotate_identity_recovery_codes() result;
@@ -72,6 +76,20 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000167'
 select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,0}' from permanent_codes))#>>'{data,transferred}','true','owner can recover without a working old device');
 select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000161'::uuid,'long-lived recovery code restores the original owner principal');
 select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,0}' from permanent_codes))#>>'{error,code}','RECOVERY_CODE_USED','recovery codes are one-time credentials');
+
+select is((
+  select count(*)::integer
+  from pg_catalog.pg_proc p
+  join pg_catalog.pg_namespace n on n.oid=p.pronamespace
+  where n.nspname in ('public','private') and p.prokind='f'
+    and pg_catalog.pg_get_functiondef(p.oid) like '%auth.uid()%'
+    and not (n.nspname='private' and p.proname='current_principal_id')
+    and not (n.nspname='public' and p.proname in (
+      'create_identity_transfer_code',
+      'redeem_identity_transfer_code',
+      'redeem_identity_recovery_code'
+    ))
+),0,'all application RPCs resolve the stable principal after later migrations');
 
 select * from finish();
 rollback;
