@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type {
   FocusSessionDetail,
@@ -100,6 +100,7 @@ export function StatsPage() {
   const [exportSelection, setExportSelection] = useState('');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  const exportPicker = useRef<HTMLInputElement>(null);
   const home = useQuery({
     queryKey: ['home', spaceId],
     queryFn: async () => {
@@ -125,6 +126,16 @@ export function StatsPage() {
       ? isoWeekValue(anchor)
       : anchor.slice(0, 7)
     : '';
+  const exportPickerValue =
+    exportPeriod === 'weekly' ? weekMonday(exportSelection) : exportSelection;
+  const exportPickerMax =
+    exportPeriod === 'weekly' ? (anchor ?? '') : currentExportSelection;
+  const openExportPicker = () => {
+    const input = exportPicker.current;
+    if (!input || exporting) return;
+    if (typeof input.showPicker === 'function') input.showPicker();
+    else input.click();
+  };
   const summary = useQuery({
     queryKey: ['stats', spaceId, view, period, anchor],
     enabled: Boolean(anchor),
@@ -650,24 +661,39 @@ export function StatsPage() {
             <span className="stats-export-picker-label">
               {exportPeriod === 'weekly' ? '选择周' : '选择月'}
             </span>
-            <label className="stats-export-picker">
+            <button
+              data-autofocus
+              type="button"
+              className="stats-export-picker"
+              aria-label={`${exportPeriod === 'weekly' ? '选择周' : '选择月'}：${exportPeriodLabel(exportPeriod, exportSelection)}`}
+              disabled={exporting}
+              onClick={openExportPicker}
+            >
               <span className="stats-export-picker__date">
                 {exportPeriodLabel(exportPeriod, exportSelection)}
               </span>
               <span className="stats-export-picker__icon">
                 <Icon name="calendar" width={20} height={20} />
               </span>
-              <input
-                data-autofocus
-                className="stats-export-picker__input"
-                aria-label={exportPeriod === 'weekly' ? '选择周' : '选择月'}
-                type={exportPeriod === 'weekly' ? 'week' : 'month'}
-                value={exportSelection}
-                max={currentExportSelection}
-                disabled={exporting}
-                onChange={(event) => setExportSelection(event.target.value)}
-              />
-            </label>
+            </button>
+            <input
+              ref={exportPicker}
+              className="stats-export-picker__input"
+              aria-label={exportPeriod === 'weekly' ? '选择周日期' : '选择月份'}
+              type={exportPeriod === 'weekly' ? 'date' : 'month'}
+              value={exportPickerValue}
+              max={exportPickerMax}
+              disabled={exporting}
+              onChange={(event) =>
+                setExportSelection(
+                  !event.target.value
+                    ? ''
+                    : exportPeriod === 'weekly'
+                      ? isoWeekValue(event.target.value)
+                      : event.target.value,
+                )
+              }
+            />
           </div>
           <p className="quiet-copy stats-export-note">
             仅导出你本人在当前友间的数据。文件内容使用英语，空周期也可导出。

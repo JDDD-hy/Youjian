@@ -131,11 +131,19 @@ describe('StatsPage session detail', () => {
     expect(
       within(dialog).getByRole('button', { name: '月' }),
     ).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('选择周')).toHaveAttribute(
-      'type',
-      'week',
-    );
-    expect(within(dialog).getByText('8/3 ~ 8/9')).toBeInTheDocument();
+    const weekPicker = within(dialog).getByLabelText('选择周日期');
+    expect(weekPicker).toHaveAttribute('type', 'date');
+    const showPicker = vi.fn();
+    Object.defineProperty(weekPicker, 'showPicker', {
+      configurable: true,
+      value: showPicker,
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: /^选择周：/ }));
+    expect(showPicker).toHaveBeenCalledOnce();
+    fireEvent.change(weekPicker, {
+      target: { value: '2026-07-15' },
+    });
+    expect(within(dialog).getByText('7/13 ~ 7/19')).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: '月' }));
     expect(within(dialog).getByText('2026年8月')).toBeInTheDocument();
     expect(
