@@ -1269,6 +1269,16 @@ a:focus-visible {
   border: 1px solid var(--border);
   border-radius: 15px;
 }
+.stats-export-trigger {
+  min-height: 0;
+  padding: 4px 0;
+  color: var(--muted);
+  font-weight: 400;
+}
+.stats-export-trigger:hover,
+.stats-export-trigger:focus-visible {
+  color: var(--accent-strong);
+}
 .history-row {
   width: 100%;
   min-height: 74px;
