@@ -160,4 +160,43 @@ describe('focus Markdown export', () => {
       }),
     ).rejects.toThrow('FOCUS_EXPORT_INCONSISTENT_SNAPSHOT');
   });
+
+  it('matches the database by flooring each local day before summing', async () => {
+    const fractionalDetail: FocusSessionDetail = {
+      ...detail,
+      segments: [
+        {
+          started_at: '2026-08-03T23:59:58.400Z',
+          ended_at: '2026-08-04T00:00:01.600Z',
+        },
+      ],
+    };
+    const result = await buildFocusExport({
+      period: 'weekly',
+      summary: {
+        ...summary,
+        credited_focus_seconds: 2,
+        days: [
+          {
+            local_date: '2026-08-03',
+            credited_focus_seconds: 1,
+            checkin_completed: false,
+          },
+          {
+            local_date: '2026-08-04',
+            credited_focus_seconds: 1,
+            checkin_completed: false,
+          },
+        ],
+      },
+      space: { id: detail.session.space_id, name: 'Research room' },
+      memberId: history.member.member_id,
+      sessions: [{ history, detail: fractionalDetail }],
+      exportedAt: '2026-08-04T01:00:00Z',
+      dataUntil: '2026-08-04T01:00:00Z',
+    });
+
+    expect(result.content).toContain('| effective_focus | 2 | 0:00:02 |');
+    expect(result.content).not.toContain('\n+schema:');
+  });
 });

@@ -135,6 +135,9 @@ describe('StatsPage session detail', () => {
       'type',
       'week',
     );
+    expect(within(dialog).getByText('8/3 ~ 8/9')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: '月' }));
+    expect(within(dialog).getByText('2026年8月')).toBeInTheDocument();
     expect(
       within(dialog).getByRole('button', { name: '导出 Markdown' }),
     ).toBeInTheDocument();
