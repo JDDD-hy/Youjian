@@ -2,6 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  STATS_QUERY_RETRY_COUNT,
+  statsQueryRetryDelay,
+} from '../lib/statsRetry';
 import { StatsPage } from './StatsPage';
 
 const rpc = vi.hoisted(() => vi.fn());
@@ -109,5 +113,14 @@ describe('StatsPage session detail', () => {
     expect(rpc).toHaveBeenCalledWith('get_focus_session_detail', {
       session_id: 'session',
     });
+  });
+});
+
+describe('StatsPage transient failure recovery', () => {
+  it('keeps retrying read-only stats requests through the schema-cache convergence window', () => {
+    expect(STATS_QUERY_RETRY_COUNT).toBe(4);
+    expect([0, 1, 2, 3, 4].map(statsQueryRetryDelay)).toEqual([
+      1_000, 2_000, 4_000, 4_000, 4_000,
+    ]);
   });
 });
