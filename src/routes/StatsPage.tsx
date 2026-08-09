@@ -20,6 +20,10 @@ import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { StatsDistribution } from '../components/StatsDistribution';
+import {
+  STATS_QUERY_RETRY_COUNT,
+  statsQueryRetryDelay,
+} from '../lib/statsRetry';
 
 type View = 'mine' | 'space';
 type Period = 'daily' | 'weekly' | 'monthly';
@@ -52,6 +56,8 @@ export function StatsPage() {
   const summary = useQuery({
     queryKey: ['stats', spaceId, view, period, anchor],
     enabled: Boolean(anchor),
+    retry: STATS_QUERY_RETRY_COUNT,
+    retryDelay: statsQueryRetryDelay,
     queryFn: async () => {
       const result = await rpc<StatsSummary>('get_stats_summary', {
         space_id: spaceId,
