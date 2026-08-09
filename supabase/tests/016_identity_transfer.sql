@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(40);
 
 insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000161'),
@@ -9,8 +9,12 @@ insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000164'),
  ('00000000-0000-0000-0000-000000000165'),
  ('00000000-0000-0000-0000-000000000166'),
- ('00000000-0000-0000-0000-000000000167');
-insert into public.profiles(id,timezone) values('00000000-0000-0000-0000-000000000161','UTC');
+ ('00000000-0000-0000-0000-000000000167'),
+ ('00000000-0000-0000-0000-000000000168'),
+ ('00000000-0000-0000-0000-000000000169');
+insert into public.profiles(id,timezone) values
+ ('00000000-0000-0000-0000-000000000161','UTC'),
+ ('00000000-0000-0000-0000-000000000165','UTC');
 insert into public.spaces(id,name,owner_id,timezone,invite_token_hash) values
  ('10000000-0000-0000-0000-000000000161','Transfer','00000000-0000-0000-0000-000000000161','UTC','transfer-room');
 insert into public.space_members(id,space_id,user_id,display_name,role) values
@@ -63,6 +67,8 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000166'
 select is(public.redeem_identity_transfer_code((select result#>>'{data,transfer_code}' from recovery_code))#>>'{data,transferred}','true','fresh session redeems owner-assisted recovery code');
 select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000165'::uuid,'recovered session resolves to original member principal');
 select is(public.get_my_membership()#>>'{data,membership,member_id}','20000000-0000-0000-0000-000000000165','recovery preserves the original member record');
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000161')#>>'{data,me,member_id}','20000000-0000-0000-0000-000000000165','recovered session loads the original home snapshot');
+select is(public.get_stats_summary('10000000-0000-0000-0000-000000000161','mine','weekly','2026-08-03')#>>'{data,space_id}','10000000-0000-0000-0000-000000000161','recovered session loads stats through the stable principal');
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000162',true);
 create temporary table permanent_codes as select public.rotate_identity_recovery_codes() result;
@@ -72,6 +78,39 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000167'
 select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,0}' from permanent_codes))#>>'{data,transferred}','true','owner can recover without a working old device');
 select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000161'::uuid,'long-lived recovery code restores the original owner principal');
 select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,0}' from permanent_codes))#>>'{error,code}','RECOVERY_CODE_USED','recovery codes are one-time credentials');
+
+select is((select count(*)::integer from private.identity_binding_events),3,'every successful identity change has one audit event');
+select is((select recovery_kind from private.identity_binding_events order by id desc limit 1),'recovery','long-lived recovery records its credential kind');
+select is((select principal_user_id from private.identity_binding_events order by id desc limit 1),'00000000-0000-0000-0000-000000000161'::uuid,'audit event records the exact recovered principal');
+
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000168',true);
+insert into private.client_error_reports(actor_id,error_code,route,metadata)
+values('00000000-0000-0000-0000-000000000168','PRE_RECOVERY_ACTIVITY','/','{}');
+select is(private.auth_identity_is_pristine('00000000-0000-0000-0000-000000000168'),false,'any existing target activity makes the auth identity non-pristine');
+select is(public.redeem_identity_recovery_code((select result#>>'{data,codes,1}' from permanent_codes))#>>'{error,code}','TARGET_IDENTITY_NOT_EMPTY','recovery refuses a target with pre-existing activity');
+select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000168'::uuid,'rejected recovery leaves the target self-bound');
+select is((select consumed_at from private.identity_recovery_codes where code_hash=private.identity_recovery_hash((select result#>>'{data,codes,1}' from permanent_codes))),null::timestamptz,'rejected recovery does not consume the credential');
+select is((select auth_user_id from private.identity_bindings where principal_user_id='00000000-0000-0000-0000-000000000161' and active),'00000000-0000-0000-0000-000000000167'::uuid,'rejected recovery cannot move the source principal');
+
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000169',true);
+select is(public.redeem_identity_recovery_code('AAAAAAAAAAAAAAAAAAAAAA')#>>'{error,code}','INVALID_RECOVERY_CODE','an unknown well-formed code cannot bind any principal');
+select is(private.current_principal_id(),'00000000-0000-0000-0000-000000000169'::uuid,'unknown code leaves the caller self-bound');
+select is((select count(*)::integer from private.identity_binding_events),3,'failed recovery attempts never create binding audit events');
+select is((select count(*)::integer from pg_catalog.pg_trigger where tgname like 'lock_%_identity_activity' and not tgisinternal),8,'every direct identity activity table participates in recovery serialization');
+
+select is((
+  select count(*)::integer
+  from pg_catalog.pg_proc p
+  join pg_catalog.pg_namespace n on n.oid=p.pronamespace
+  where n.nspname in ('public','private') and p.prokind='f'
+    and pg_catalog.pg_get_functiondef(p.oid) like '%auth.uid()%'
+    and not (n.nspname='private' and p.proname='current_principal_id')
+    and not (n.nspname='public' and p.proname in (
+      'create_identity_transfer_code',
+      'redeem_identity_transfer_code',
+      'redeem_identity_recovery_code'
+    ))
+),0,'all application RPCs resolve the stable principal after later migrations');
 
 select * from finish();
 rollback;
