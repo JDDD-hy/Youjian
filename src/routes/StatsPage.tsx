@@ -17,6 +17,7 @@ import {
   splitSegmentsByLocalDate,
 } from '../lib/format';
 import { AccessibleModal } from '../components/AccessibleModal';
+import { Icon } from '../components/Icons';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { StatsDistribution } from '../components/StatsDistribution';
@@ -59,6 +60,23 @@ function weekMonday(value: string) {
       (week - 1) * 7,
   );
   return monday.toISOString().slice(0, 10);
+}
+
+function shortDate(date: Date) {
+  return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+}
+
+function exportPeriodLabel(period: ExportPeriod, value: string) {
+  if (period === 'weekly') {
+    const mondayValue = weekMonday(value);
+    if (!mondayValue) return '选择一周';
+    const monday = new Date(`${mondayValue}T00:00:00Z`);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    return `${shortDate(monday)} ~ ${shortDate(sunday)}`;
+  }
+  const match = /^(\d{4})-(\d{2})$/.exec(value);
+  return match ? `${match[1]}年${Number(match[2])}月` : '选择一个月';
 }
 
 function downloadText(filename: string, content: string) {
@@ -270,8 +288,13 @@ export function StatsPage() {
       });
       downloadText(result.filename, result.content);
       setExportOpen(false);
-    } catch {
-      setExportError('导出失败，未生成文件。请稍后重试。');
+    } catch (error) {
+      setExportError(
+        error instanceof Error &&
+          error.message === 'FOCUS_EXPORT_INCONSISTENT_SNAPSHOT'
+          ? '统计数据刚刚发生变化，请重新导出。'
+          : '导出失败，未生成文件。请稍后重试。',
+      );
     } finally {
       setExporting(false);
     }
@@ -593,7 +616,10 @@ export function StatsPage() {
           <span className="drawer__handle" />
           <p className="eyebrow">专注数据</p>
           <h2 id="focus-export-title">数据导出</h2>
-          <div className="segmented segmented--small" aria-label="导出周期">
+          <div
+            className="segmented stats-export-period-tabs"
+            aria-label="导出周期"
+          >
             {(
               [
                 ['weekly', '周'],
@@ -620,18 +646,30 @@ export function StatsPage() {
               </button>
             ))}
           </div>
-          <label className="field">
-            <span>{exportPeriod === 'weekly' ? '选择周' : '选择月'}</span>
-            <input
-              data-autofocus
-              type={exportPeriod === 'weekly' ? 'week' : 'month'}
-              value={exportSelection}
-              max={currentExportSelection}
-              disabled={exporting}
-              onChange={(event) => setExportSelection(event.target.value)}
-            />
-          </label>
-          <p className="quiet-copy">
+          <div className="stats-export-picker-group">
+            <span className="stats-export-picker-label">
+              {exportPeriod === 'weekly' ? '选择周' : '选择月'}
+            </span>
+            <label className="stats-export-picker">
+              <span className="stats-export-picker__date">
+                {exportPeriodLabel(exportPeriod, exportSelection)}
+              </span>
+              <span className="stats-export-picker__icon">
+                <Icon name="calendar" width={20} height={20} />
+              </span>
+              <input
+                data-autofocus
+                className="stats-export-picker__input"
+                aria-label={exportPeriod === 'weekly' ? '选择周' : '选择月'}
+                type={exportPeriod === 'weekly' ? 'week' : 'month'}
+                value={exportSelection}
+                max={currentExportSelection}
+                disabled={exporting}
+                onChange={(event) => setExportSelection(event.target.value)}
+              />
+            </label>
+          </div>
+          <p className="quiet-copy stats-export-note">
             仅导出你本人在当前友间的数据。文件内容使用英语，空周期也可导出。
           </p>
           {exportError && (
@@ -639,7 +677,7 @@ export function StatsPage() {
               {exportError}
             </div>
           )}
-          <div className="dialog-actions">
+          <div className="stats-export-actions">
             <button
               type="button"
               className="button button--secondary"

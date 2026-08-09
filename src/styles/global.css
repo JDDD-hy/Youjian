@@ -1279,6 +1279,103 @@ a:focus-visible {
 .stats-export-trigger:focus-visible {
   color: var(--accent-strong);
 }
+.stats-export-period-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  margin: 14px 0 28px;
+  padding: 5px;
+  border: 1px solid #e6ded1;
+  border-radius: 16px;
+  background: #f0ece4;
+}
+.stats-export-period-tabs button {
+  min-height: 52px;
+  font-size: 1rem;
+}
+.stats-export-picker-group {
+  margin-top: 2px;
+}
+.stats-export-picker-label {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.stats-export-picker {
+  position: relative;
+  min-height: 64px;
+  padding: 0 16px 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  overflow: hidden;
+  border: 1px solid #ded5c7;
+  border-radius: 16px;
+  background: #f5f1ea;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 140ms,
+    background 140ms,
+    box-shadow 140ms;
+}
+.stats-export-picker:hover {
+  border-color: #cfc2af;
+  background: #f2ede5;
+}
+.stats-export-picker:focus-within {
+  border-color: #c6a65b;
+  box-shadow: 0 0 0 3px rgb(198 166 91 / 14%);
+}
+.stats-export-picker__date {
+  font-size: 1rem;
+  font-weight: 720;
+  letter-spacing: 0.01em;
+}
+.stats-export-picker__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  background: #e8e1d6;
+  color: #8d8171;
+}
+.stats-export-picker__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.stats-export-picker__input:disabled {
+  cursor: wait;
+}
+.stats-export-note {
+  margin: 22px 0 0;
+  font-size: 0.82rem;
+}
+.stats-export-actions {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.38fr) minmax(180px, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+.stats-export-actions .button {
+  width: 100%;
+}
+@media (max-width: 390px) {
+  .stats-export-actions {
+    grid-template-columns: 1fr;
+  }
+  .stats-export-actions .button--primary {
+    grid-row: 1;
+  }
+}
 .history-row {
   width: 100%;
   min-height: 74px;

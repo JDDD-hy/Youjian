@@ -308,11 +308,20 @@ export async function buildFocusExport(input: FocusExportInput) {
     );
   }
 
-  const activeTotal = [...dailyActive.values()].reduce((a, b) => a + b, 0);
-  const elapsedTotal = [...dailyElapsed.values()].reduce((a, b) => a + b, 0);
-  const invalidTotal = [...dailyInvalid.values()].reduce((a, b) => a + b, 0);
+  const activeTotal = [...dailyActive.values()].reduce(
+    (total, value) => total + Math.floor(value),
+    0,
+  );
+  const elapsedTotal = [...dailyElapsed.values()].reduce(
+    (total, value) => total + Math.floor(value),
+    0,
+  );
+  const invalidTotal = [...dailyInvalid.values()].reduce(
+    (total, value) => total + Math.floor(value),
+    0,
+  );
   const pausedTotal = Math.max(0, elapsedTotal - activeTotal - invalidTotal);
-  if (Math.floor(activeTotal) !== input.summary.credited_focus_seconds) {
+  if (activeTotal !== input.summary.credited_focus_seconds) {
     throw new Error('FOCUS_EXPORT_INCONSISTENT_SNAPSHOT');
   }
   const currentLocalDate = localDate(
@@ -369,21 +378,21 @@ export async function buildFocusExport(input: FocusExportInput) {
     );
   });
   const periodLabel = input.period === 'weekly' ? 'Weekly' : 'Monthly';
-  const content = `---\n+schema: youjian.focus-export\n+schema_version: 1.0.0\n+calculation_version: 1\n+exported_at: ${input.exportedAt}\n+timezone: ${input.summary.timezone}\n+period_type: ${input.period === 'weekly' ? 'week' : 'month'}\n+period_start: ${localDate(rangeStart, input.summary.timezone)}\n+period_end_exclusive: ${localDate(rangeEnd, input.summary.timezone)}\n+period_status: ${partial ? 'partial' : 'complete'}\n+data_until: ${input.dataUntil}\n+subject_id: ${subjectId}\n+record_count: ${sessionRows.length}\n+events_sha256: ${eventsSha}\n+---\n+\n+# Youjian Focus ${periodLabel} Report${partial ? ' (Partial)' : ''}\n+\n+## Period totals\n+\n+| metric | seconds | display |\n+| --- | ---: | ---: |\n+| effective_focus | ${Math.floor(activeTotal)} | ${formatSeconds(activeTotal)} |\n+| elapsed | ${Math.floor(elapsedTotal)} | ${formatSeconds(elapsedTotal)} |\n+| paused | ${Math.floor(pausedTotal)} | ${formatSeconds(pausedTotal)} |\n+| invalid | ${Math.floor(invalidTotal)} | ${formatSeconds(invalidTotal)} |\n+| sessions | ${sessionRows.length} | ${sessionRows.length} |\n+\n+## Daily totals (TSV)\n+\n+\`\`\`tsv\n+date\teffective_s\telapsed_s\tpaused_s\tinvalid_s\n+${dailyRows.join('\n')}\n+\`\`\`\n+\n+## Task allocation (TSV)\n+\n+\`\`\`tsv\n+task_id\teffective_s\n+${[
+  const content = `---\nschema: youjian.focus-export\nschema_version: 1.0.0\ncalculation_version: 1\nexported_at: ${input.exportedAt}\ntimezone: ${input.summary.timezone}\nperiod_type: ${input.period === 'weekly' ? 'week' : 'month'}\nperiod_start: ${localDate(rangeStart, input.summary.timezone)}\nperiod_end_exclusive: ${localDate(rangeEnd, input.summary.timezone)}\nperiod_status: ${partial ? 'partial' : 'complete'}\ndata_until: ${input.dataUntil}\nsubject_id: ${subjectId}\nrecord_count: ${sessionRows.length}\nevents_sha256: ${eventsSha}\n---\n\n# Youjian Focus ${periodLabel} Report${partial ? ' (Partial)' : ''}\n\n## Period totals\n\n| metric | seconds | display |\n| --- | ---: | ---: |\n| effective_focus | ${activeTotal} | ${formatSeconds(activeTotal)} |\n| elapsed | ${Math.floor(elapsedTotal)} | ${formatSeconds(elapsedTotal)} |\n| paused | ${Math.floor(pausedTotal)} | ${formatSeconds(pausedTotal)} |\n| invalid | ${Math.floor(invalidTotal)} | ${formatSeconds(invalidTotal)} |\n| sessions | ${sessionRows.length} | ${sessionRows.length} |\n\n## Daily totals (TSV)\n\n\`\`\`tsv\ndate\teffective_s\telapsed_s\tpaused_s\tinvalid_s\n${dailyRows.join('\n')}\n\`\`\`\n\n## Task allocation (TSV)\n\n\`\`\`tsv\ntask_id\teffective_s\n${[
     ...taskSeconds.entries(),
   ]
     .sort()
     .map(([id, value]) => row(id, Math.floor(value)))
     .join(
       '\n',
-    )}\n+\`\`\`\n+\n+## Space allocation (TSV)\n+\n+\`\`\`tsv\n+space_id\tname\teffective_s\n+${row(spaceId, input.space.name, Math.floor(activeTotal))}\n+\`\`\`\n+\n+## Termination reasons (TSV)\n+\n+\`\`\`tsv\n+reason\tsessions\n+${[
+    )}\n\`\`\`\n\n## Space allocation (TSV)\n\n\`\`\`tsv\nspace_id\tname\teffective_s\n${row(spaceId, input.space.name, activeTotal)}\n\`\`\`\n\n## Termination reasons (TSV)\n\n\`\`\`tsv\nreason\tsessions\n${[
     ...termination.entries(),
   ]
     .sort()
     .map(([reason, count]) => row(reason, count))
     .join(
       '\n',
-    )}\n+\`\`\`\n+\n+## Dictionaries (TSV)\n+\n+\`\`\`tsv\n+tasks\n+id\tcategory\tname\n+${taskDictionary.join('\n')}\n+\n+spaces\n+id\tname\n+${row(spaceId, input.space.name)}\n+\`\`\`\n+\n+## Raw timeline (TSV)\n+\n+Offsets are integer seconds from \`${input.summary.period_start}\`. Event codes: \`T=task change\`, \`P=pause\`, \`R=resume\`. TSV escapes are \`\\t\`, \`\\r\`, \`\\n\`, and \`\\\\\`. The SHA-256 digest covers the normalized UTF-8 raw block below plus one trailing LF.\n+\n+\`\`\`tsv\n+${rawBlocks}\n+\`\`\`\n+`;
+    )}\n\`\`\`\n\n## Dictionaries (TSV)\n\n\`\`\`tsv\ntasks\nid\tcategory\tname\n${taskDictionary.join('\n')}\n\nspaces\nid\tname\n${row(spaceId, input.space.name)}\n\`\`\`\n\n## Raw timeline (TSV)\n\nOffsets are integer seconds from \`${input.summary.period_start}\`. Event codes: \`T=task change\`, \`P=pause\`, \`R=resume\`. TSV escapes are \`\\t\`, \`\\r\`, \`\\n\`, and \`\\\\\`. The SHA-256 digest covers the normalized UTF-8 raw block below plus one trailing LF.\n\n\`\`\`tsv\n${rawBlocks}\n\`\`\`\n`;
   const periodStart = localDate(rangeStart, input.summary.timezone);
   const suffix = partial ? '_partial' : '';
   const filename =
