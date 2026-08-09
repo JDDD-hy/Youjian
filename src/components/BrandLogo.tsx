@@ -7,3 +7,4 @@ export function BrandLogo({ className = '' }: BrandLogoProps) {
 
   return <img className={className} src={src} alt="" aria-hidden="true" />;
 }
+
