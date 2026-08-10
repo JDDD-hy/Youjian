@@ -26,6 +26,7 @@ import { AccessibleModal } from '../components/AccessibleModal';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
+import { FocusReminder } from '../components/FocusReminder';
 import {
   applyPersonalDailyGoal,
   type PersonalDailyGoalResult,
@@ -940,6 +941,9 @@ export function HomePage() {
                 : undefined
             }
           />
+          {(session.status === 'focusing' || session.status === 'paused') && (
+            <FocusReminder session={session} />
+          )}
         </>
       ) : (
         <section className="focus-panel focus-panel--idle">
