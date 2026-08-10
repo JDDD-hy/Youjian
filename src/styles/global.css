@@ -506,6 +506,42 @@ a:focus-visible {
   padding: 0;
   background: transparent;
 }
+.focus-reminder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #eadcae;
+  border-radius: 14px;
+  background: #fff9df;
+}
+.focus-reminder div {
+  min-width: 0;
+}
+.focus-reminder strong,
+.focus-reminder p {
+  display: block;
+  margin: 0;
+}
+.focus-reminder strong {
+  color: #66511d;
+  font-size: 0.82rem;
+}
+.focus-reminder p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.focus-reminder .button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 5px 9px;
+  color: #775d1c;
+  font-size: 0.72rem;
+}
 .pause-stage {
   padding: 24px 16px;
   border-radius: 20px;

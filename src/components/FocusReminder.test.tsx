@@ -1,0 +1,96 @@
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FocusSession } from '../domain/types';
+import { FOCUS_REMINDER_DELAY_MS } from '../lib/focusReminder';
+import { FocusReminder } from './FocusReminder';
+
+const session: FocusSession = {
+  session_id: 'session-1',
+  space_id: 'space-1',
+  member_id: 'member-1',
+  task_name: '阅读论文',
+  category: 'reading',
+  task_history: [],
+  status: 'focusing',
+  started_at: '2026-08-10T00:00:00.000Z',
+  timezone_snapshot: 'Asia/Shanghai',
+  accumulated_focus_seconds: 600,
+  active_segment_started_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+  paused_at: null,
+  auto_settle_at: null,
+  completed_at: null,
+  completion_reason: null,
+  credited_focus_seconds: null,
+  counts_toward_stats: null,
+};
+
+describe('FocusReminder', () => {
+  const notification =
+    vi.fn<(title: string, options?: NotificationOptions) => void>();
+  let permission: NotificationPermission;
+  let visibility: DocumentVisibilityState;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+    permission = 'default';
+    visibility = 'visible';
+    notification.mockClear();
+
+    class MockNotification {
+      static get permission() {
+        return permission;
+      }
+      static requestPermission = vi.fn(() => {
+        permission = 'granted';
+        return Promise.resolve(permission);
+      });
+      close = vi.fn();
+      constructor(title: string, options?: NotificationOptions) {
+        notification(title, options);
+      }
+    }
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: MockNotification,
+    });
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(
+      () => visibility,
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('enables reminders after the user grants notification permission', async () => {
+    render(<FocusReminder session={session} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '开启提醒' }));
+    await act(() => Promise.resolve());
+
+    expect(localStorage.getItem('youjian:focus-reminder-enabled')).toBe('true');
+    expect(screen.getByText(/页面最小化或切走 2 分钟后/)).toBeVisible();
+  });
+
+  it('notifies after an enabled focus stays in the background for two minutes', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    render(<FocusReminder session={session} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(FOCUS_REMINDER_DELAY_MS);
+    });
+
+    expect(notification).toHaveBeenCalled();
+    const [title, options] = notification.mock.calls.at(-1) ?? [];
+    expect(title).toBe('友间 · 专注仍在进行');
+    expect(options?.body).toContain('阅读论文');
+    expect(options?.requireInteraction).toBe(true);
+  });
+});
