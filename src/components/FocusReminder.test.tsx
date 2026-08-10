@@ -100,7 +100,9 @@ describe('FocusReminder', () => {
     await act(() => Promise.resolve());
 
     expect(localStorage.getItem('youjian:focus-reminder-enabled')).toBe('true');
-    expect(screen.getByText(/离开后按 2\/30\/90 分钟提醒/)).toBeVisible();
+    expect(
+      screen.getByText(/离开 2 分钟后提醒，持续离开则在 30 分钟后每小时提醒/),
+    ).toBeVisible();
   });
 
   it('notifies after an enabled focus stays in the background for two minutes', async () => {
