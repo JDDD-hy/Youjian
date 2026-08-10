@@ -3,15 +3,21 @@ import { appPath } from './appBase';
 export const FOCUS_REMINDER_DELAY_MS = 2 * 60 * 1000;
 export const FOCUS_REMINDER_SECOND_DELAY_MS = 30 * 60 * 1000;
 export const FOCUS_REMINDER_REPEAT_INTERVAL_MS = 60 * 60 * 1000;
+export const PAUSED_FOCUS_WARNING_DELAY_MS = 10 * 60 * 1000;
 export const FOCUS_REMINDER_TAG = 'youjian-active-focus';
 
 const enabledKey = 'youjian:focus-reminder-enabled';
 const claimKeyPrefix = 'youjian:focus-reminder-claim:';
+const pauseWarningClaimKeyPrefix = 'youjian:focus-pause-warning-claim:';
 const resetKeyPrefix = 'youjian:focus-reminder-reset:';
 let fallbackNotification: Notification | undefined;
 
 function claimKey(sessionId: string) {
   return `${claimKeyPrefix}${sessionId}`;
+}
+
+function pauseWarningClaimKey(sessionId: string) {
+  return `${pauseWarningClaimKeyPrefix}${sessionId}`;
 }
 
 export function getFocusReminderResetKey(sessionId: string) {
@@ -89,6 +95,30 @@ export function releaseFocusReminder(sessionId: string, token?: string) {
   }
 }
 
+export function reservePausedFocusWarning(sessionId: string) {
+  const token =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  try {
+    const key = pauseWarningClaimKey(sessionId);
+    if (localStorage.getItem(key)) return undefined;
+    localStorage.setItem(key, token);
+    return localStorage.getItem(key) === token ? token : undefined;
+  } catch {
+    return token;
+  }
+}
+
+export function releasePausedFocusWarning(sessionId: string, token?: string) {
+  try {
+    const key = pauseWarningClaimKey(sessionId);
+    if (token && localStorage.getItem(key) !== token) return;
+    localStorage.removeItem(key);
+  } catch {
+    // Reservation cleanup is best effort.
+  }
+}
+
 export function supportsFocusReminder() {
   return typeof window !== 'undefined' && 'Notification' in window;
 }
@@ -117,10 +147,12 @@ export async function enableFocusReminder() {
 export async function showFocusReminder({
   taskName,
   focusedSeconds,
+  awaySeconds,
   url,
 }: {
   taskName: string;
   focusedSeconds: number;
+  awaySeconds: number;
   url: string;
 }) {
   if (
@@ -130,9 +162,10 @@ export async function showFocusReminder({
   )
     return false;
 
-  const minutes = Math.max(1, Math.floor(focusedSeconds / 60));
+  const focusedMinutes = Math.max(1, Math.floor(focusedSeconds / 60));
+  const awayMinutes = Math.max(1, Math.floor(awaySeconds / 60));
   const options: NotificationOptions = {
-    body: `你仍在专注「${taskName}」，已经 ${minutes} 分钟。记得在离开时暂停或结束。`,
+    body: `页面已离开 ${awayMinutes} 分钟；你仍在专注「${taskName}」，本次累计 ${focusedMinutes} 分钟。`,
     icon: appPath('pwa-192-v2.png'),
     badge: appPath('favicon.png'),
     tag: FOCUS_REMINDER_TAG,
@@ -147,6 +180,49 @@ export async function showFocusReminder({
     } else {
       fallbackNotification?.close();
       fallbackNotification = new Notification('友间 · 专注仍在进行', options);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function showPausedFocusWarning({
+  taskName,
+  remainingSeconds,
+  url,
+}: {
+  taskName: string;
+  remainingSeconds: number;
+  url: string;
+}) {
+  if (
+    !supportsFocusReminder() ||
+    Notification.permission !== 'granted' ||
+    !readFocusReminderEnabled()
+  )
+    return false;
+
+  const minutes = Math.max(1, Math.ceil(remainingSeconds / 60));
+  const options: NotificationOptions = {
+    body: `「${taskName}」已暂停 10 分钟，将在约 ${minutes} 分钟后自动结束。`,
+    icon: appPath('pwa-192-v2.png'),
+    badge: appPath('favicon.png'),
+    tag: FOCUS_REMINDER_TAG,
+    requireInteraction: true,
+    data: { url },
+  };
+
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    if (registration) {
+      await registration.showNotification('友间 · 专注即将自动结束', options);
+    } else {
+      fallbackNotification?.close();
+      fallbackNotification = new Notification(
+        '友间 · 专注即将自动结束',
+        options,
+      );
     }
     return true;
   } catch {

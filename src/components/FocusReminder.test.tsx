@@ -1,10 +1,17 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FocusSession } from '../domain/types';
 import {
   FOCUS_REMINDER_DELAY_MS,
   FOCUS_REMINDER_REPEAT_INTERVAL_MS,
   FOCUS_REMINDER_SECOND_DELAY_MS,
+  PAUSED_FOCUS_WARNING_DELAY_MS,
   getFocusReminderResetKey,
   getFocusReminderDelay,
   releaseFocusReminder,
@@ -31,6 +38,16 @@ const session: FocusSession = {
   credited_focus_seconds: null,
   counts_toward_stats: null,
 };
+
+function pausedSession(pausedAt = Date.now()): FocusSession {
+  return {
+    ...session,
+    status: 'paused',
+    active_segment_started_at: null,
+    paused_at: new Date(pausedAt).toISOString(),
+    auto_settle_at: new Date(pausedAt + 15 * 60_000).toISOString(),
+  };
+}
 
 describe('FocusReminder', () => {
   const notification =
@@ -68,7 +85,9 @@ describe('FocusReminder', () => {
     );
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    cleanup();
+    await Promise.resolve();
     vi.clearAllTimers();
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -81,7 +100,7 @@ describe('FocusReminder', () => {
     await act(() => Promise.resolve());
 
     expect(localStorage.getItem('youjian:focus-reminder-enabled')).toBe('true');
-    expect(screen.getByText(/离开 2 分钟后提醒/)).toBeVisible();
+    expect(screen.getByText(/离开后按 2\/30\/90 分钟提醒/)).toBeVisible();
   });
 
   it('notifies after an enabled focus stays in the background for two minutes', async () => {
@@ -99,7 +118,145 @@ describe('FocusReminder', () => {
     const [title, options] = notification.mock.calls.at(-1) ?? [];
     expect(title).toBe('友间 · 专注仍在进行');
     expect(options?.body).toContain('阅读论文');
+    expect(options?.body).toContain('页面已离开 2 分钟');
+    expect(options?.body).toContain('本次累计');
     expect(options?.requireInteraction).toBe(true);
+  });
+
+  it('warns once after focus has stayed paused in the background for ten minutes', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    const pausedAt = Date.now();
+    render(<FocusReminder session={pausedSession(pausedAt)} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAUSED_FOCUS_WARNING_DELAY_MS - 1);
+    });
+    expect(notification).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(notification).toHaveBeenCalledTimes(1);
+    const [title, options] = notification.mock.calls[0] ?? [];
+    expect(title).toBe('友间 · 专注即将自动结束');
+    expect(options?.body).toContain('已暂停 10 分钟');
+    expect(options?.body).toContain('约 5 分钟后自动结束');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5 * 60_000);
+    });
+    expect(notification).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the paused warning deadline across snapshot refreshes', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    const paused = pausedSession();
+    const { rerender } = render(<FocusReminder session={paused} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5 * 60_000);
+    });
+    rerender(
+      <FocusReminder session={{ ...paused, accumulated_focus_seconds: 900 }} />,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5 * 60_000);
+    });
+
+    expect(notification).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels the paused warning after focus resumes', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    const { rerender } = render(<FocusReminder session={pausedSession()} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9 * 60_000);
+    });
+    visibility = 'visible';
+    document.dispatchEvent(new Event('visibilitychange'));
+    rerender(<FocusReminder session={session} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10 * 60_000);
+    });
+
+    expect(notification).not.toHaveBeenCalled();
+  });
+
+  it('does not send a stale warning after the auto-settle deadline', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    const pausedAt = Date.now();
+    render(<FocusReminder session={pausedSession(pausedAt)} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    vi.setSystemTime(pausedAt + 16 * 60_000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAUSED_FOCUS_WARNING_DELAY_MS);
+    });
+
+    expect(notification).not.toHaveBeenCalled();
+  });
+
+  it('cancels a paused warning on return and uses the original deadline if away again', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    render(<FocusReminder session={pausedSession()} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9 * 60_000);
+    });
+    visibility = 'visible';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2 * 60_000);
+    });
+    expect(notification).not.toHaveBeenCalled();
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(notification).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts a fresh paused warning timeline for a new pause episode', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    const { rerender } = render(<FocusReminder session={pausedSession()} />);
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAUSED_FOCUS_WARNING_DELAY_MS);
+    });
+    expect(notification).toHaveBeenCalledTimes(1);
+
+    visibility = 'visible';
+    document.dispatchEvent(new Event('visibilitychange'));
+    rerender(<FocusReminder session={session} />);
+    const nextPaused = pausedSession(Date.now());
+    rerender(<FocusReminder session={nextPaused} />);
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAUSED_FOCUS_WARNING_DELAY_MS);
+    });
+
+    expect(notification).toHaveBeenCalledTimes(2);
   });
 
   it('keeps the absolute reminder timeline when the session snapshot refreshes', async () => {
