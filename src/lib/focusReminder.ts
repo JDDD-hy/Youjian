@@ -1,10 +1,93 @@
 import { appPath } from './appBase';
 
 export const FOCUS_REMINDER_DELAY_MS = 2 * 60 * 1000;
+export const FOCUS_REMINDER_SECOND_DELAY_MS = 30 * 60 * 1000;
+export const FOCUS_REMINDER_REPEAT_INTERVAL_MS = 60 * 60 * 1000;
 export const FOCUS_REMINDER_TAG = 'youjian-active-focus';
 
 const enabledKey = 'youjian:focus-reminder-enabled';
+const claimKeyPrefix = 'youjian:focus-reminder-claim:';
+const resetKeyPrefix = 'youjian:focus-reminder-reset:';
 let fallbackNotification: Notification | undefined;
+
+function claimKey(sessionId: string) {
+  return `${claimKeyPrefix}${sessionId}`;
+}
+
+export function getFocusReminderResetKey(sessionId: string) {
+  return `${resetKeyPrefix}${sessionId}`;
+}
+
+export function announceFocusReminderReset(sessionId: string) {
+  try {
+    const key = getFocusReminderResetKey(sessionId);
+    localStorage.setItem(
+      key,
+      `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+    );
+    localStorage.removeItem(key);
+  } catch {
+    // Cross-tab reset is best effort when storage is unavailable.
+  }
+}
+
+type ReminderClaim = {
+  reminderIndex: number;
+  token: string;
+};
+
+function readReminderClaim(key: string): ReminderClaim | undefined {
+  const value = localStorage.getItem(key);
+  if (!value) return undefined;
+  try {
+    const parsed = JSON.parse(value) as Partial<ReminderClaim>;
+    if (
+      typeof parsed.reminderIndex === 'number' &&
+      typeof parsed.token === 'string'
+    ) {
+      return { reminderIndex: parsed.reminderIndex, token: parsed.token };
+    }
+  } catch {
+    // A malformed or legacy claim can be replaced safely.
+  }
+  return undefined;
+}
+
+export function getFocusReminderDelay(reminderIndex: number) {
+  if (reminderIndex <= 0) return FOCUS_REMINDER_DELAY_MS;
+  return (
+    FOCUS_REMINDER_SECOND_DELAY_MS +
+    (reminderIndex - 1) * FOCUS_REMINDER_REPEAT_INTERVAL_MS
+  );
+}
+
+export function reserveFocusReminder(sessionId: string, reminderIndex: number) {
+  const token =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
+  try {
+    const key = claimKey(sessionId);
+    const existing = readReminderClaim(key);
+    if (existing && existing.reminderIndex >= reminderIndex) return undefined;
+    localStorage.setItem(key, JSON.stringify({ reminderIndex, token }));
+    return readReminderClaim(key)?.token === token ? token : undefined;
+  } catch {
+    // Storage can be unavailable in privacy modes. Single-tab deduplication
+    // still works in the component, so allow the reminder to continue.
+    return token;
+  }
+}
+
+export function releaseFocusReminder(sessionId: string, token?: string) {
+  try {
+    const key = claimKey(sessionId);
+    if (token && readReminderClaim(key)?.token !== token) return;
+    localStorage.removeItem(key);
+  } catch {
+    // Reservation cleanup is best effort.
+  }
+}
 
 export function supportsFocusReminder() {
   return typeof window !== 'undefined' && 'Notification' in window;
