@@ -238,7 +238,7 @@ export function FocusReminder({ session }: { session: FocusSession }) {
           {permission === 'denied'
             ? '浏览器已阻止通知，请在地址栏的网站设置中重新允许。'
             : enabled
-              ? '已开启。离开后按 2/30/90 分钟提醒；暂停 10 分钟时预警自动结束。'
+              ? '已开启。离开 2 分钟后提醒，持续离开则在 30 分钟后每小时提醒；暂停 10 分钟时预警自动结束。'
               : '页面最小化后，用 Windows 通知提醒专注仍在进行。'}
         </p>
       </div>
