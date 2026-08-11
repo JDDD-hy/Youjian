@@ -58,8 +58,6 @@ describe('FocusHealthCheckModal', () => {
       />,
     );
     expect(screen.getByRole('button', { name: '收起此刻' })).toBeDisabled();
-    expect(
-      screen.getByRole('button', { name: '我想继续专注' }),
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: '我想继续专注' })).toBeDisabled();
   });
 });

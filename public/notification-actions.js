@@ -12,18 +12,18 @@ self.addEventListener('notificationclick', (event) => {
         type: 'window',
         includeUncontrolled: true,
       });
-    const target = windows[0];
-    if (target) {
-      if (action) {
-        target.postMessage({
-          type: 'focus-health-action',
-          action,
-          sessionId: data.sessionId,
-        });
+      const target = windows[0];
+      if (target) {
+        if (action) {
+          target.postMessage({
+            type: 'focus-health-action',
+            action,
+            sessionId: data.sessionId,
+          });
+          return;
+        }
+        await target.focus();
         return;
-      }
-      await target.focus();
-      return;
       }
       const url = new URL(data.url || self.registration.scope);
       if (action) {
