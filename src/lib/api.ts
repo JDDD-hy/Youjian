@@ -59,6 +59,10 @@ const messages: Record<string, string> = {
     '当前设备已有使用记录，不能覆盖；请先退出当前设备后重试。',
   NETWORK_UNCONFIRMED: '连接状态不可确认，这次操作尚未生效。',
   IDEMPOTENCY_KEY_REUSED: '请求标识已用于其他操作，请重新提交。',
+  HEALTH_POLICY_ACK_REQUIRED: '请先阅读并确认两小时健康检查规则。',
+  INVALID_POLICY_VERSION: '健康检查规则版本无效，请刷新后重试。',
+  INVALID_HEALTH_CHECK_CHOICE: '请选择结束或继续专注。',
+  HEALTH_CHECK_NOT_PENDING: '健康检查状态已更新，正在同步服务器结果。',
 };
 
 export class ApiError extends Error {

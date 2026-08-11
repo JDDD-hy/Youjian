@@ -18,6 +18,7 @@ import { assertRouteSpace } from '../lib/spaceBoundary';
 import { loadInviteUrl, saveInviteUrl } from '../lib/inviteUrl';
 import { appPath, appBasePath } from '../lib/appBase';
 import { clearDeviceIdentity } from '../lib/deviceIdentity';
+import { FocusHealthPolicyInfo } from '../components/FocusHealthPolicyInfo';
 import {
   downloadRecoveryCodes,
   rotateRecoveryCodes,
@@ -508,6 +509,7 @@ export function SettingsPage() {
             )}
             <small>应用版本 {packageInfo.version}</small>
           </section>
+          <FocusHealthPolicyInfo />
           <section className="settings-card">
             <h2>关于身份</h2>
             <p>

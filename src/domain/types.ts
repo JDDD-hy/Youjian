@@ -2,7 +2,20 @@ export type MemberRole = 'owner' | 'member';
 export type FocusCategory = 'study' | 'work' | 'reading' | 'exercise' | 'other';
 export type FocusStatus = 'focusing' | 'paused' | 'completed' | 'discarded';
 export type CompletionReason =
-  'manual_end' | 'pause_timeout' | 'focus_limit' | 'member_disabled';
+  | 'manual_end'
+  | 'pause_timeout'
+  | 'focus_limit'
+  | 'member_disabled'
+  | 'health_check_accepted'
+  | 'health_check_timeout';
+
+export type FocusHealthCheckState =
+  | 'not_applicable'
+  | 'waiting'
+  | 'pending'
+  | 'continued'
+  | 'satisfied_by_pause'
+  | 'cancelled';
 
 export interface TaskRevision {
   task_name: string;
@@ -45,6 +58,13 @@ export interface FocusSession {
   auto_settle_at: string | null;
   completed_at: string | null;
   completion_reason: CompletionReason | null;
+  health_check?: {
+    policy_version: number | null;
+    state: FocusHealthCheckState;
+    triggered_at: string | null;
+    deadline_at: string | null;
+    result_seen: boolean;
+  };
   credited_focus_seconds: number | null;
   counts_toward_stats: boolean | null;
   connection?: {
@@ -92,6 +112,12 @@ export interface HomeSnapshot {
   active_goal_summary: Goal | null;
   unseen_achievement: Achievement | null;
   unseen_personal_achievement?: Achievement | null;
+  health_check_policy?: {
+    current_version: number;
+    acknowledged_version: number;
+    enabled: boolean;
+  };
+  unseen_health_check_result?: FocusSession | null;
 }
 
 export interface StatsSummary {

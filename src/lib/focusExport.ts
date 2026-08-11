@@ -399,7 +399,11 @@ export async function buildFocusExport(input: FocusExportInput) {
     input.period === 'weekly'
       ? `youjian-focus-week-${periodStart}${suffix}.md`
       : `youjian-focus-month-${periodStart.slice(0, 7)}${suffix}.md`;
-  return { content, filename, eventsSha256: eventsSha };
+  return {
+    content: content.replace('schema_version: 1.0.0', 'schema_version: 1.1.0'),
+    filename,
+    eventsSha256: eventsSha,
+  };
 }
 
 export function sessionOverlapsPeriod(

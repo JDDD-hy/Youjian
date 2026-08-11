@@ -125,6 +125,31 @@ describe('FocusReminder', () => {
     expect(options?.requireInteraction).toBe(true);
   });
 
+  it('suppresses ordinary reminders once the health check is pending', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    visibility = 'hidden';
+    render(
+      <FocusReminder
+        session={{
+          ...session,
+          health_check: {
+            policy_version: 1,
+            state: 'pending',
+            triggered_at: new Date().toISOString(),
+            deadline_at: new Date(Date.now() + 60_000).toISOString(),
+            result_seen: false,
+          },
+        }}
+      />,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(FOCUS_REMINDER_DELAY_MS);
+    });
+    expect(notification).not.toHaveBeenCalled();
+  });
+
   it('warns once after focus has stayed paused in the background for ten minutes', async () => {
     permission = 'granted';
     localStorage.setItem('youjian:focus-reminder-enabled', 'true');

@@ -21,6 +21,10 @@ export default defineConfig(({ mode }) => {
           'pwa-192-v2.png',
           'pwa-512-v2.png',
           'pwa-maskable-512-v2.png',
+          'lamp-dimmed.svg',
+          'lamp-paused-fixed.svg',
+          'lamp-focusing-fixed.svg',
+          'notification-actions.js',
         ],
         manifest: {
           name: '友间 · Youjian',
@@ -54,6 +58,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          importScripts: ['notification-actions.js'],
           navigateFallback: `${base}index.html`,
           cleanupOutdatedCaches: true,
           runtimeCaching: [

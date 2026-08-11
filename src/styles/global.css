@@ -2007,6 +2007,50 @@ a:focus-visible {
 .modal-backdrop .dialog:focus {
   outline: none;
 }
+.focus-health-policy,
+.focus-health-check {
+  text-align: center;
+}
+.focus-health-policy img,
+.focus-health-check img {
+  display: block;
+  margin: -10px auto 4px;
+}
+.focus-health-policy p,
+.focus-health-check p {
+  max-width: 34rem;
+  margin-inline: auto;
+}
+.focus-health-check__countdown {
+  width: 116px;
+  min-height: 116px;
+  margin: 22px auto;
+  display: grid;
+  place-content: center;
+  border: 2px solid #d69a42;
+  border-radius: 50%;
+  background: #fff7e7;
+  color: #7b4a1f;
+  font-size: 2.7rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  box-shadow: 0 0 0 8px rgb(239 173 69 / 12%);
+}
+.focus-health-check__countdown small {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.focus-health-policy-info ul {
+  margin: 12px 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+}
+.focus-health-policy-info li + li {
+  margin-top: 6px;
+}
 @media (prefers-reduced-motion: no-preference) {
   .achievement-toast {
     animation: achievement-in 0.6s ease-out both;

@@ -34,6 +34,8 @@ export function FocusReminder({ session }: { session: FocusSession }) {
   useEffect(() => {
     if (
       (session.status !== 'focusing' && session.status !== 'paused') ||
+      session.health_check?.state === 'pending' ||
+      session.health_check?.state === 'continued' ||
       !enabled ||
       permission !== 'granted'
     ) {
@@ -212,6 +214,7 @@ export function FocusReminder({ session }: { session: FocusSession }) {
     enabled,
     permission,
     session.auto_settle_at,
+    session.health_check?.state,
     session.paused_at,
     session.session_id,
     session.status,
