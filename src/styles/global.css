@@ -2021,6 +2021,9 @@ a:focus-visible {
   max-width: 34rem;
   margin-inline: auto;
 }
+.focus-health-result__body {
+  font-size: 0.86rem;
+}
 .focus-health-check__countdown {
   width: 116px;
   min-height: 116px;

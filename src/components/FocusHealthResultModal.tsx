@@ -19,12 +19,12 @@ export function FocusHealthResultModal({
       <h2 id="focus-health-result-title">
         {automatic ? '这一段专注，先停在这里' : '灯已收起'}
       </h2>
-      <p>
+      <p className="focus-health-result__body">
         {automatic && session.completed_at
           ? `两个小时已经走过，专注已于 ${formatLocalDateTime(session.completed_at, session.timezone_snapshot)} 自动结束。`
           : '这次专注已按你的选择结束。'}
       </p>
-      <p>
+      <p className="focus-health-result__body">
         本次共专注 {formatDuration(session.credited_focus_seconds ?? 0)}
         ，现在让自己休息一会儿吧。
       </p>
