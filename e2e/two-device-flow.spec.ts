@@ -66,6 +66,10 @@ test('two devices create, join, synchronize focus, and restore identity', async 
     await owner.getByRole('button', { name: '开始专注' }).click();
     await owner.getByLabel('任务名称').fill(taskName);
     await owner.getByRole('button', { name: '点亮台灯' }).click();
+    await expect(
+      owner.getByRole('button', { name: '知道了，点亮台灯' }),
+    ).toBeVisible();
+    await owner.getByRole('button', { name: '知道了，点亮台灯' }).click();
     await expect(owner.getByRole('heading', { name: taskName })).toBeVisible();
     await expect(member.getByText(taskName, { exact: true })).toBeVisible({
       timeout: 15_000,

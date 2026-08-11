@@ -27,6 +27,8 @@ import { useIntentKey } from '../hooks/useIntentKey';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
 import { FocusReminder } from '../components/FocusReminder';
+import { FocusHealthPolicyStep } from '../components/FocusHealthPolicyStep';
+import { FocusHealthCheckController } from '../components/FocusHealthCheckController';
 import {
   applyPersonalDailyGoal,
   type PersonalDailyGoalResult,
@@ -214,15 +216,48 @@ export function DailyGoalDrawer({
 function StartDrawer({
   onClose,
   onStart,
+  requiresPolicy,
   pending,
 }: {
   onClose: () => void;
-  onStart: (task: string, category: FocusCategory) => void;
+  onStart: (
+    task: string,
+    category: FocusCategory,
+    acknowledgePolicy: boolean,
+  ) => Promise<void>;
+  requiresPolicy: boolean;
   pending: boolean;
 }) {
   const [task, setTask] = useState('');
   const [category, setCategory] = useState<FocusCategory>('study');
+  const [reviewingPolicy, setReviewingPolicy] = useState(false);
+  const [policyError, setPolicyError] = useState<string>();
   const trimmed = task.trim();
+  if (reviewingPolicy) {
+    return (
+      <AccessibleModal
+        titleId="start-title"
+        onClose={() => setReviewingPolicy(false)}
+        closeOnBackdrop={!pending}
+      >
+        <FocusHealthPolicyStep
+          pending={pending}
+          error={policyError}
+          onBack={() => setReviewingPolicy(false)}
+          onConfirm={() => {
+            setPolicyError(undefined);
+            void onStart(trimmed, category, true).catch((error) =>
+              setPolicyError(
+                error instanceof Error
+                  ? error.message
+                  : '规则确认尚未保存，请重试。',
+              ),
+            );
+          }}
+        />
+      </AccessibleModal>
+    );
+  }
   return (
     <AccessibleModal
       titleId="start-title"
@@ -273,7 +308,10 @@ function StartDrawer({
         className="button button--primary button--full"
         type="button"
         disabled={!trimmed || pending}
-        onClick={() => onStart(trimmed, category)}
+        onClick={() => {
+          if (requiresPolicy) setReviewingPolicy(true);
+          else void onStart(trimmed, category, false);
+        }}
       >
         {pending ? '正在点亮…' : '点亮台灯'}
       </button>
@@ -408,9 +446,13 @@ function SettledNotice({
       ? '因暂停超过 15 分钟，本次已自动结束。'
       : reason === 'focus_limit'
         ? '本次已达到 6 小时上限并自动结束。长时间专注后请适当休息。'
-        : session.status === 'discarded'
-          ? '本次不足 5 分钟，记录已保留，但不会计入统计和打卡。'
-          : '这一段专注已经完成。';
+        : reason === 'health_check_accepted'
+          ? '两小时专注后，你主动收起了这一盏灯。'
+          : reason === 'health_check_timeout'
+            ? '两小时健康检查未收到选择，本次已自动结束。'
+            : session.status === 'discarded'
+              ? '本次不足 5 分钟，记录已保留，但不会计入统计和打卡。'
+              : '这一段专注已经完成。';
   return (
     <section className="result-card" aria-live="polite">
       <span className="result-card__icon">
@@ -441,7 +483,7 @@ function FocusPanel({
   pending,
   timezoneLabel,
 }: {
-  session: FocusSession | null;
+  session: FocusSession;
   now: number;
   connection: ConnectionState;
   onPause: () => void;
@@ -452,30 +494,6 @@ function FocusPanel({
   pending: boolean;
   timezoneLabel?: string;
 }) {
-  const [drawer, setDrawer] = useState(false);
-  if (!session)
-    return (
-      <>
-        <section className="focus-panel focus-panel--idle">
-          <Lamp />
-          <h2>留一段完整的时间给自己</h2>
-          <p>准备好后，点亮台灯开始专注。</p>
-          <button
-            className="button button--primary button--wide"
-            onClick={() => setDrawer(true)}
-          >
-            开始专注
-          </button>
-        </section>
-        {drawer && (
-          <StartDrawer
-            pending={false}
-            onClose={() => setDrawer(false)}
-            onStart={() => undefined}
-          />
-        )}
-      </>
-    );
   const seconds = calculateFocusSeconds(session, now);
   if (session.status === 'completed' || session.status === 'discarded')
     return <SettledNotice session={session} onDismiss={onDismiss} />;
@@ -805,7 +823,8 @@ export function HomePage() {
       </div>
     );
   const data = query.data.snapshot;
-  const session = localSettled ?? data.my_session;
+  const session =
+    localSettled ?? data.my_session ?? data.unseen_health_check_result ?? null;
   const timingAnnouncement = command.isPending
     ? '正在同步专注状态'
     : session?.status === 'focusing'
@@ -827,19 +846,37 @@ export function HomePage() {
       key: commandIntent.get(`${name}:${JSON.stringify(params)}`),
     });
   };
-  const start = (task: string, category: FocusCategory) => {
+  const start = async (
+    task: string,
+    category: FocusCategory,
+    acknowledgePolicy: boolean,
+  ) => {
     if (navigator.onLine === false) {
       setOfflineAction(true);
       setDrawer(false);
-      return;
+      throw new ApiError('NETWORK_UNCONFIRMED');
+    }
+    const policy = query.data?.snapshot.health_check_policy;
+    if (acknowledgePolicy) {
+      await rpc('acknowledge_focus_health_policy', {
+        policy_version: policy?.current_version ?? 1,
+      });
     }
     const timezone = getDeviceTimezone();
-    command.mutate(
+    await command.mutateAsync(
       {
         name: 'start_focus',
-        params: { space_id: spaceId, task_name: task, category, timezone },
+        params: {
+          space_id: spaceId,
+          task_name: task,
+          category,
+          timezone,
+          ...(policy?.enabled
+            ? { health_check_policy_version: policy.current_version }
+            : {}),
+        },
         key: commandIntent.get(
-          `start_focus:${spaceId}:${task}:${category}:${timezone}`,
+          `start_focus:${spaceId}:${task}:${category}:${timezone}:${policy?.enabled ? policy.current_version : 0}`,
         ),
       },
       { onSuccess: () => setDrawer(false) },
@@ -942,7 +979,24 @@ export function HomePage() {
             }
           />
           {(session.status === 'focusing' || session.status === 'paused') && (
-            <FocusReminder session={session} />
+            <>
+              <FocusReminder session={session} />
+              <FocusHealthCheckController
+                session={session}
+                now={now}
+                onSessionUpdate={updateSession}
+                onReconcile={() => void query.refetch()}
+              />
+            </>
+          )}
+          {(session.status === 'completed' ||
+            session.status === 'discarded') && (
+            <FocusHealthCheckController
+              session={session}
+              now={now}
+              onSessionUpdate={updateSession}
+              onReconcile={() => void query.refetch()}
+            />
           )}
         </>
       ) : (
@@ -1122,6 +1176,11 @@ export function HomePage() {
       {drawer && (
         <StartDrawer
           pending={command.isPending}
+          requiresPolicy={Boolean(
+            data.health_check_policy?.enabled &&
+            data.health_check_policy.acknowledged_version <
+              data.health_check_policy.current_version,
+          )}
           onClose={() => setDrawer(false)}
           onStart={start}
         />

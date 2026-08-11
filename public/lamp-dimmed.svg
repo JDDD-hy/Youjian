@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 32 134 126">
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f2ece2"/><stop offset="1" stop-color="#a99d90"/>
+    </linearGradient>
+    <linearGradient id="dim" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#efad45" stop-opacity=".48"/><stop offset="1" stop-color="#efad45" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-30%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <path d="M61 80h34l14 52H46Z" fill="url(#dim)" filter="url(#glow)"/>
+  <ellipse cx="77" cy="135" rx="34" ry="7" fill="#efad45" opacity=".24"/>
+  <ellipse cx="130" cy="147" rx="28" ry="7" fill="#8f8376"/>
+  <path d="M130 141V94L99 63" fill="none" stroke="#7f7469" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="130" cy="94" r="7" fill="#aaa094" stroke="#756a60" stroke-width="2"/>
+  <circle cx="99" cy="63" r="6" fill="#aaa094" stroke="#756a60" stroke-width="2"/>
+  <path d="M93 48H64c-6 0-10 4-11 10l-4 20h54l-4-20c-1-6-3-10-6-10Z" fill="url(#metal)" stroke="#766b61" stroke-width="2.5"/>
+  <path d="M48 78h56" stroke="#6f655c" stroke-width="4" stroke-linecap="round"/>
+  <rect x="70" y="41" width="18" height="9" rx="4.5" fill="#c9c0b5" stroke="#80756a" stroke-width="2"/>
+</svg>

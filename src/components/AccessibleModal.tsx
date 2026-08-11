@@ -14,12 +14,14 @@ export function AccessibleModal({
   kind = 'drawer',
   onClose,
   closeOnBackdrop = true,
+  closeOnEscape = true,
   children,
 }: PropsWithChildren<{
   titleId: string;
   kind?: 'drawer' | 'dialog';
   onClose: () => void;
   closeOnBackdrop?: boolean;
+  closeOnEscape?: boolean;
 }>) {
   const panel = useRef<HTMLElement>(null);
   const [returnFocus] = useState(() =>
@@ -41,7 +43,7 @@ export function AccessibleModal({
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        closeRef.current();
+        if (closeOnEscape) closeRef.current();
         return;
       }
       if (event.key !== 'Tab' || !element) return;
@@ -68,7 +70,7 @@ export function AccessibleModal({
       document.removeEventListener('keydown', keydown);
       returnFocus?.focus();
     };
-  }, [returnFocus]);
+  }, [closeOnEscape, returnFocus]);
   const backdrop = (event: MouseEvent<HTMLDivElement>) => {
     if (closeOnBackdrop && event.target === event.currentTarget) onClose();
   };

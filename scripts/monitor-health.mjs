@@ -67,14 +67,19 @@ const health = JSON.parse(
         (select count(*) from private.maintenance_runs where source='cron' and started_at>=now()-interval '24 hours' and duration_ms>50000)::int slow_cron_runs_24h,
         (select count(*) from public.focus_sessions where
           (status='paused' and paused_at+interval '15 minutes'<=now()) or
-          (status='focusing' and active_segment_started_at+make_interval(secs=>21600-accumulated_focus_seconds)<=now()))::int overdue_sessions,
+          (status='focusing' and active_segment_started_at+make_interval(secs=>21600-accumulated_focus_seconds)<=now()) or
+          (health_check_state='waiting' and status='focusing' and active_segment_started_at+make_interval(secs=>7200-accumulated_focus_seconds)<=now()) or
+          (health_check_state='pending' and status='focusing' and health_check_deadline_at<=now()) or
+          (health_check_state='pending' and status='paused' and paused_at+interval '5 minutes'<=now()))::int overdue_sessions,
         (select count(*) from public.focus_connection_intervals i join public.focus_sessions s on s.id=i.session_id where i.ended_at is null and s.status not in('focusing','paused'))::int orphan_open_intervals,
         (select count(*) from private.client_error_reports where occurred_at>=now()-interval '24 hours')::int client_errors_24h,
         (select count(*) from private.rpc_internal_errors where occurred_at>=now()-interval '24 hours')::int rpc_internal_errors_24h,
         (select count(*) from public.focus_commands where created_at>=now()-interval '24 hours')::int focus_commands_24h,
         (select count(*) from public.focus_commands where created_at>=now()-interval '24 hours' and result->>'ok'='false')::int focus_command_errors_24h,
         (select count(*) from public.focus_commands where created_at>=now()-interval '24 hours' and result#>>'{error,code}' in('SESSION_ALREADY_ACTIVE','SESSION_NOT_FOCUSING','SESSION_NOT_PAUSED','SESSION_NOT_FOUND','IDEMPOTENCY_KEY_REUSED'))::int state_conflicts_24h,
-        (select count(*) from public.focus_sessions where completed_at>=now()-interval '24 hours' and completion_reason in('pause_timeout','focus_limit'))::int automatic_settlements_24h,
+        (select count(*) from public.focus_sessions where completed_at>=now()-interval '24 hours' and completion_reason in('pause_timeout','focus_limit','health_check_timeout'))::int automatic_settlements_24h,
+        (select count(*) from public.focus_events where occurred_at>=now()-interval '24 hours' and event_type='health_check_triggered')::int health_checks_triggered_24h,
+        (select count(*) from public.focus_sessions where health_check_state='pending')::int pending_health_checks,
         (select coalesce(sum(request_count),0) from private.invite_preview_rate_buckets where bucket_kind='ip' and window_start>=date_bin(interval '5 minutes',now(),timestamptz '2000-01-01'))::int invite_preview_requests_current_window,
         (select count(*) from private.invite_preview_rate_buckets where bucket_kind='ip' and window_start>=date_bin(interval '5 minutes',now(),timestamptz '2000-01-01') and request_count>30)::int invite_rate_limited_ip_buckets,
         (select coalesce(jsonb_object_agg(error_code,total order by error_code),'{}'::jsonb) from(select error_code,count(*)::int total from private.client_error_reports where occurred_at>=now()-interval '24 hours' group by error_code)c) client_error_codes_24h,
@@ -103,6 +108,8 @@ const health = JSON.parse(
       'focus_command_errors_24h',focus_command_errors_24h,
       'state_conflicts_24h',state_conflicts_24h,
       'automatic_settlements_24h',automatic_settlements_24h,
+      'health_checks_triggered_24h',health_checks_triggered_24h,
+      'pending_health_checks',pending_health_checks,
       'settlement_reasons_24h',settlement_reasons_24h,
       'invite_preview_requests_current_window',invite_preview_requests_current_window,
       'invite_rate_limited_ip_buckets',invite_rate_limited_ip_buckets,
