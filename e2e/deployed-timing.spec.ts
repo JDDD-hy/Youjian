@@ -33,6 +33,10 @@ test('deployed timer advances, excludes pauses, and settles authoritatively', as
   await page.getByRole('button', { name: '开始专注' }).click();
   await page.getByLabel('任务名称').fill(taskName);
   await page.getByRole('button', { name: '点亮台灯' }).click();
+  await expect(
+    page.getByRole('button', { name: '知道了，点亮台灯' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: '知道了，点亮台灯' }).click();
 
   const timer = page.locator('.timer');
   await expect(timer).toHaveCount(1);
