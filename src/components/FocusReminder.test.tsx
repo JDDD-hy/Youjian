@@ -125,6 +125,27 @@ describe('FocusReminder', () => {
     expect(options?.requireInteraction).toBe(true);
   });
 
+  it('does not notify when the authoritative session has already stopped', async () => {
+    permission = 'granted';
+    localStorage.setItem('youjian:focus-reminder-enabled', 'true');
+    const validateActiveSession = vi.fn().mockResolvedValue(false);
+    render(
+      <FocusReminder
+        session={session}
+        validateActiveSession={validateActiveSession}
+      />,
+    );
+
+    visibility = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(FOCUS_REMINDER_DELAY_MS);
+    });
+
+    expect(validateActiveSession).toHaveBeenCalledWith(session.session_id);
+    expect(notification).not.toHaveBeenCalled();
+  });
+
   it('suppresses ordinary reminders once the health check is pending', async () => {
     permission = 'granted';
     localStorage.setItem('youjian:focus-reminder-enabled', 'true');
