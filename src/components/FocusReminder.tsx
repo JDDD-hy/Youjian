@@ -19,8 +19,15 @@ import {
   supportsFocusReminder,
 } from '../lib/focusReminder';
 
-export function FocusReminder({ session }: { session: FocusSession }) {
+export function FocusReminder({
+  session,
+  validateActiveSession,
+}: {
+  session: FocusSession;
+  validateActiveSession?: (sessionId: string) => Promise<boolean>;
+}) {
   const sessionRef = useRef(session);
+  const validateActiveSessionRef = useRef(validateActiveSession);
   const supported = supportsFocusReminder();
   const [enabled, setEnabled] = useState(readFocusReminderEnabled);
   const [permission, setPermission] = useState<
@@ -29,7 +36,8 @@ export function FocusReminder({ session }: { session: FocusSession }) {
 
   useEffect(() => {
     sessionRef.current = session;
-  }, [session]);
+    validateActiveSessionRef.current = validateActiveSession;
+  }, [session, validateActiveSession]);
 
   useEffect(() => {
     if (
@@ -159,23 +167,41 @@ export function FocusReminder({ session }: { session: FocusSession }) {
         }
         nextReminderIndex = reminderIndex + 1;
 
-        const token = reserveFocusReminder(sessionId, reminderIndex);
         schedule();
-        if (!token) return;
+        void (async () => {
+          const validator = validateActiveSessionRef.current;
+          const stillActive = validator
+            ? await validator(sessionId).catch(() => false)
+            : true;
+          const currentSession = sessionRef.current;
+          if (
+            !stillActive ||
+            !isAway() ||
+            awayStartedAt === undefined ||
+            currentSession.session_id !== sessionId ||
+            currentSession.status !== 'focusing' ||
+            currentSession.health_check?.state === 'pending' ||
+            currentSession.health_check?.state === 'continued'
+          ) {
+            resetAway();
+            void closeFocusReminder();
+            return;
+          }
 
-        const currentSession = sessionRef.current;
-        void showFocusReminder({
-          taskName: currentSession.task_name,
-          focusedSeconds: calculateFocusSeconds(currentSession, Date.now()),
-          awaySeconds: elapsed / 1000,
-          url: window.location.href,
-        }).then((shown) => {
+          const token = reserveFocusReminder(sessionId, reminderIndex);
+          if (!token) return;
+          const shown = await showFocusReminder({
+            taskName: currentSession.task_name,
+            focusedSeconds: calculateFocusSeconds(currentSession, Date.now()),
+            awaySeconds: elapsed / 1000,
+            url: window.location.href,
+          });
           if (!shown) {
             releaseFocusReminder(sessionId, token);
           } else if (!isAway()) {
             void closeFocusReminder();
           }
-        });
+        })();
       }, remaining);
     };
     const resetAway = (announce = true) => {

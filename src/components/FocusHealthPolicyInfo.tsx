@@ -13,7 +13,6 @@ export function FocusHealthPolicyInfo() {
         <li>临近两小时时暂停休息满五分钟，可视为已完成检查。</li>
         <li>桌面通知可以关闭，但健康检查规则仍会生效。</li>
       </ul>
-      <small>此规则只读，不提供永久关闭开关。</small>
     </section>
   );
 }

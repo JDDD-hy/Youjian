@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import type {
   FocusCategory,
@@ -608,6 +608,7 @@ export function HomePage() {
     queryKey: ['home', spaceId],
     queryFn: () => getSnapshot(spaceId),
     refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
   });
   const now = useServerClock(query.data?.serverNow, query.data?.receivedAt);
   const [drawer, setDrawer] = useState(false);
@@ -639,6 +640,20 @@ export function HomePage() {
       setLocalSettled(session);
     void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
   };
+  const validateActiveSession = useCallback(
+    async (sessionId: string) => {
+      const result = await query.refetch();
+      const authoritative = result.data?.snapshot.my_session;
+      return (
+        result.isSuccess &&
+        authoritative?.session_id === sessionId &&
+        authoritative.status === 'focusing' &&
+        authoritative.health_check?.state !== 'pending' &&
+        authoritative.health_check?.state !== 'continued'
+      );
+    },
+    [query],
+  );
   const command = useMutation({
     mutationFn: ({
       name,
@@ -980,7 +995,10 @@ export function HomePage() {
           />
           {(session.status === 'focusing' || session.status === 'paused') && (
             <>
-              <FocusReminder session={session} />
+              <FocusReminder
+                session={session}
+                validateActiveSession={validateActiveSession}
+              />
               <FocusHealthCheckController
                 session={session}
                 now={now}
