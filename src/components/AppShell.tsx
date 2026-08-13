@@ -62,7 +62,7 @@ export function AppShell() {
         <div className="side-nav__note">
           <p>在友间，自有间。</p>
           <a href={appPath('feature-contributors.html')}>
-            更多 Feature，等你来提 <span aria-hidden="true">→</span>
+            Contributors <span aria-hidden="true">→</span>
           </a>
         </div>
       </aside>
