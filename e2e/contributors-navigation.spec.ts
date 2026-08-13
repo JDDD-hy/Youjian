@@ -4,7 +4,7 @@ const spaceId = '11111111-1111-4111-8111-111111111111';
 
 test('contributors logo returns home with the persisted identity', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.addInitScript(() => {
     localStorage.setItem(
       'sb-127-auth-token',
@@ -101,10 +101,16 @@ test('contributors logo returns home with the persisted identity', async ({
   );
 
   await page.goto(`./space/${spaceId}`);
-  await expect(
-    page.locator('a[href$="feature-contributors.html"]'),
-  ).toBeVisible();
-  await page.locator('a[href$="feature-contributors.html"]').click();
+  const contributorsLink = page.locator('a[href$="feature-contributors.html"]');
+  if (testInfo.project.name === 'desktop-chromium') {
+    await expect(contributorsLink).toBeVisible();
+    await contributorsLink.click();
+  } else {
+    // The contributor entry lives in the desktop sidebar, which is hidden at
+    // mobile breakpoints. The logo return path itself must still work on every
+    // supported viewport, so enter the static page directly on mobile.
+    await page.goto('./feature-contributors.html');
+  }
   await expect(page).toHaveURL(/feature-contributors\.html$/);
 
   await page.locator('a[data-app-home]').click();
