@@ -5,6 +5,7 @@ import { Icon } from './Icons';
 import { BrandLogo } from './BrandLogo';
 import { useQuery } from '@tanstack/react-query';
 import { rpc } from '../lib/api';
+import { appPath } from '../lib/appBase';
 
 const items = [
   { suffix: '', label: '首页', icon: 'home' as const, end: true },
@@ -58,7 +59,12 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <p className="side-nav__note">在友间，自有间。</p>
+        <div className="side-nav__note">
+          <p>在友间，自有间。</p>
+          <a href={appPath('feature-contributors.html')}>
+            更多 Feature，等你来提 <span aria-hidden="true">→</span>
+          </a>
+        </div>
       </aside>
       <main className="app-content">
         <Suspense
