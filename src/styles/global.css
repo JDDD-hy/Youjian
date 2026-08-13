@@ -1888,6 +1888,16 @@ a:focus-visible {
     color: var(--muted);
     font-size: 0.72rem;
   }
+  .side-nav__note p {
+    margin: 0;
+  }
+  .side-nav__note a {
+    display: inline-block;
+    margin-top: 9px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-underline-offset: 4px;
+  }
   .bottom-nav {
     display: none;
   }

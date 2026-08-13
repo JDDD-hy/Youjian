@@ -60,6 +60,7 @@ export default defineConfig(({ mode }) => {
         workbox: {
           importScripts: ['notification-actions.js'],
           navigateFallback: `${base}index.html`,
+          navigateFallbackDenylist: [/\/feature-contributors\.html$/],
           cleanupOutdatedCaches: true,
           runtimeCaching: [
             {

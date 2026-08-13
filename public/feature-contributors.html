@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="友间功能和想法贡献者记录。独立、静态、手工维护。"
+    />
+    <title>友间 · 功能与贡献者</title>
+    <script src="./feature-contributors.js" defer></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #2c2a25;
+        --muted: #756f65;
+        --paper: #f7f3ea;
+        --surface: #fffdf8;
+        --line: #e8e0d3;
+        --gold: #f0c96d;
+        --coral: #d96f4e;
+        font-family:
+          Inter, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-width: 320px;
+        background: var(--paper);
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(
+            circle at 4% 0%,
+            rgba(240, 201, 109, 0.22),
+            transparent 25rem
+          ),
+          linear-gradient(135deg, #faf6ee 0%, var(--paper) 58%, #eee6d9 100%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        width: min(1120px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 28px 0 54px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        text-decoration: none;
+      }
+
+      .brand img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        border-radius: 12px;
+      }
+
+      .brand strong,
+      .brand small {
+        display: block;
+      }
+
+      .brand strong {
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+      }
+
+      .brand small {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.7rem;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .back-link {
+        color: var(--muted);
+        font-size: 0.82rem;
+        text-underline-offset: 4px;
+      }
+
+      .intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 0.38fr);
+        gap: 36px;
+        align-items: end;
+        padding: 64px 0 42px;
+      }
+
+      .eyebrow {
+        margin: 0 0 15px;
+        color: var(--coral);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      p {
+        overflow-wrap: anywhere;
+      }
+
+      h1 {
+        max-width: 720px;
+        margin: 0;
+        font-size: clamp(2.6rem, 7vw, 5.7rem);
+        font-weight: 800;
+        letter-spacing: -0.08em;
+        line-height: 0.98;
+      }
+
+      h1 span {
+        color: var(--coral);
+      }
+
+      .intro-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.85;
+      }
+
+      .table-card {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(255, 253, 248, 0.78);
+        box-shadow: 0 18px 45px rgba(66, 57, 39, 0.08);
+      }
+
+      .table-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 19px 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .table-heading h2 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: 0.02em;
+      }
+
+      .table-heading span {
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        min-width: 720px;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      th,
+      td {
+        padding: 17px 22px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+        line-height: 1.65;
+      }
+
+      th {
+        color: var(--muted);
+        background: #fbf7ef;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      th:first-child,
+      td:first-child {
+        width: 155px;
+        color: var(--coral);
+        white-space: nowrap;
+      }
+
+      th:last-child,
+      td:last-child {
+        width: 190px;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      tbody tr:hover {
+        background: rgba(240, 201, 109, 0.1);
+      }
+
+      .provider {
+        display: block;
+        min-height: 25px;
+        border-bottom: 1px dashed #b9b0a2;
+        color: var(--ink);
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding-top: 25px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      @media (max-width: 680px) {
+        .page {
+          width: min(100% - 24px, 1120px);
+          padding-top: 18px;
+        }
+
+        .header {
+          align-items: flex-start;
+        }
+
+        .back-link {
+          font-size: 0.75rem;
+        }
+
+        .intro {
+          display: block;
+          padding: 47px 0 30px;
+        }
+
+        .intro-copy {
+          max-width: 560px;
+          margin-top: 22px;
+        }
+
+        .table-heading {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        th,
+        td {
+          padding: 14px 16px;
+        }
+
+        .footer {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <a class="brand" href="./" data-app-home aria-label="返回友间首页">
+          <img src="./youjian-logo.png" alt="友间" />
+          <span>
+            <strong>友间 Youjian</strong>
+            <small>Features &amp; Contributors</small>
+          </span>
+        </a>
+        <a class="back-link" href="./" data-history-back>返回上一页</a>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow">A simple build record</p>
+            <h1 id="page-title">功能与<span>贡献者</span></h1>
+          </div>
+          <p class="intro-copy">
+            每一个功能，都是一次被认真接住的想法。更多 Feature，等你来提。
+          </p>
+        </section>
+
+        <section class="table-card" aria-labelledby="table-title">
+          <div class="table-heading">
+            <h2 id="table-title">友间功能改动记录</h2>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">日期</th>
+                  <th scope="col">改动</th>
+                  <th scope="col">Idea Provider</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>2026-07-27</td>
+                  <td>
+                    建立项目基础：前端、数据库、环境配置、路由、欢迎页、基础样式、CI
+                    和规格文档。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-07-30</td>
+                  <td>
+                    完成主体功能和首版发布基础设施：核心数据、访问控制、目标、成就、统计、实时状态、安全审计、性能与恢复脚本。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-07-30</td>
+                  <td>
+                    加入生产邀请链路、发布回归、移动端邀请分享、显式设备退出，以及等待加入流程。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-07-31</td>
+                  <td>
+                    迁移并公开项目源码，补齐页面访问、项目根路由、生产监控/发布流程和公开说明。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-07-31</td>
+                  <td>
+                    修复站点迁移后的品牌资源、深链接和身份迁移后的设备恢复。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-01</td>
+                  <td>修复邀请链接迁移，并允许自愿离开者重新加入。</td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-01</td>
+                  <td>
+                    增加共享专注任务编辑和任务历史，编辑结果可同步到其他客户端。
+                  </td>
+                  <td><span class="provider">Juuuu</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-01</td>
+                  <td>重做台灯资源和样式，修复构建后的资源使用。</td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-03</td>
+                  <td>
+                    引入可变空间、滚动目标和分级共享成就，并修复目标起始时间与成就层级展示。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-04</td>
+                  <td>
+                    增加个人每日专注目标：今日目标、未来默认值、服务器锁定、目标历史和连续统计。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-04</td>
+                  <td>
+                    增加个人专注成就和共享成就层级/条件展示，并将成就展示集中到目标页面。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-04 至 08-05</td>
+                  <td>
+                    扩展成就系列、通知和汇总；修复重复计数，并冻结已完成目标进度。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-04</td>
+                  <td>增加页面加载失败恢复和 WebKit 创建后导航稳定性。</td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-06</td>
+                  <td>删除旧的历史、设计和 API 文档，并简化成就卡片。</td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-08</td>
+                  <td>
+                    修正设备本地时区、生活火焰和按成员计算的每日目标语义。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-08</td>
+                  <td>增加统计分布可视化和详细数据接口。</td>
+                  <td><span class="provider">Juuuu, Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-08</td>
+                  <td>增加房主协助身份恢复和长期一次性恢复码。</td>
+                  <td><span class="provider">Jade, Claudia</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-09</td>
+                  <td>
+                    完善月度热力图、台灯/品牌/PWA 资源和统计请求的瞬时失败重试。
+                  </td>
+                  <td><span class="provider">Jade, Claudia</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-09</td>
+                  <td>
+                    加固身份恢复的数据归属、并发保护、目标身份校验和恢复审计。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-09 至 08-10</td>
+                  <td>
+                    增加专注数据 Markdown
+                    导出、隐私保护标识、原始时间线、完整性校验、部分周期标记和周选择器修复。
+                  </td>
+                  <td><span class="provider">Jade, Juuuu</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-10</td>
+                  <td>
+                    增加离开页面专注提醒、持续提醒和暂停自动结束前预警，并处理多标签页重复提醒。
+                  </td>
+                  <td><span class="provider">Claudia, Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-11</td>
+                  <td>
+                    增加服务端权威的两小时一次性专注健康检查，包括暂停豁免、选择窗口、超时结算和结果通知。
+                  </td>
+                  <td><span class="provider">Claudia, Jade</span></td>
+                </tr>
+                <tr>
+                  <td>2026-08-13</td>
+                  <td>
+                    使离开页面提醒在发送前重新确认当前会话，并简化健康检查策略文案。
+                  </td>
+                  <td><span class="provider">Jade</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>愿每一个好想法，都能在这里留下名字。</span>
+      </footer>
+    </div>
+  </body>
+</html>
