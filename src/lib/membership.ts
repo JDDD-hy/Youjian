@@ -15,6 +15,7 @@ export interface MembershipState {
 }
 
 const cachedMembershipKey = 'youjian:membership';
+const sessionRecoveryErrorCodes = new Set(['AUTH_REQUIRED', 'TRANSPORT_ERROR']);
 
 function persistMembership(state: MembershipState | null) {
   if (typeof window === 'undefined') return;
@@ -49,9 +50,8 @@ export function readCachedMembership(): MembershipState | undefined {
 }
 
 export async function loadMembership(): Promise<MembershipState | null> {
-  const { data, error } = await withRequestTimeout(
-    getSupabaseClient().auth.getSession(),
-  );
+  const supabase = getSupabaseClient();
+  const { data, error } = await withRequestTimeout(supabase.auth.getSession());
   if (error) throw error;
   if (!data.session) {
     return null;
@@ -59,12 +59,33 @@ export async function loadMembership(): Promise<MembershipState | null> {
   let state: MembershipState;
   try {
     state = (await rpc<MembershipState>('get_my_membership')).data;
-  } catch (error) {
-    if (isApiError(error) && error.code === 'AUTH_REQUIRED') {
-      await clearDeviceIdentity();
+  } catch (firstError) {
+    if (
+      !isApiError(firstError) ||
+      !sessionRecoveryErrorCodes.has(firstError.code)
+    ) {
+      throw firstError;
+    }
+
+    // A full navigation (for example, the contributors page logo) creates a
+    // new Supabase client. If the first RPC races the persisted-session
+    // refresh, retry once with a freshly rotated session before treating the
+    // identity as invalid. Do not erase the device identity on this first
+    // failure; doing so would turn a transient navigation race into data loss.
+    const refreshed = await withRequestTimeout(supabase.auth.refreshSession());
+    if (refreshed.error || !refreshed.data.session) {
       return null;
     }
-    throw error;
+
+    try {
+      state = (await rpc<MembershipState>('get_my_membership')).data;
+    } catch (secondError) {
+      if (isApiError(secondError) && secondError.code === 'AUTH_REQUIRED') {
+        await clearDeviceIdentity();
+        return null;
+      }
+      throw secondError;
+    }
   }
   persistMembership(state);
   return state;
