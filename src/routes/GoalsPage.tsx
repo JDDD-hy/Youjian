@@ -34,7 +34,6 @@ import {
   achievementTitle,
   achievementTier,
   isAchievementUnlocked,
-  isRepeatableAchievement,
   visibleAchievementEvents,
 } from '../domain/achievementTier';
 import { uniqueAchievementParticipantCount } from '../domain/achievementParticipants';
@@ -124,11 +123,9 @@ function AchievementCard({ item }: { item: Achievement }) {
   const eventGroups = visibleAchievementEvents(item).filter(
     (event) => event.participants?.length,
   );
-  const canUseParticipantSnapshot =
-    !isRepeatableAchievement(item) || eventGroups.length > 0;
   const participantCount = uniqueAchievementParticipantCount({
     ...item,
-    participants: canUseParticipantSnapshot ? participants : [],
+    participants,
     events: eventGroups,
   });
   const participantText = eventGroups.length
@@ -138,17 +135,15 @@ function AchievementCard({ item }: { item: Achievement }) {
             `${formatLocalDateTime(event.earned_at)}：${event.participants!.map((participant) => participant.display_name).join('、')}`,
         )
         .join('\n')
-    : canUseParticipantSnapshot
-      ? item.participants_recorded
-        ? participants
-            .map((participant) =>
-              participant.participation_days > 1
-                ? `${participant.display_name}（${participant.participation_days} 天）`
-                : participant.display_name,
-            )
-            .join('、')
-        : '早期成就的参与成员记录暂缺'
-      : '暂无可展示的解锁参与记录';
+    : item.participants_recorded
+      ? participants
+          .map((participant) =>
+            participant.participation_days > 1
+              ? `${participant.display_name}（${participant.participation_days} 天）`
+              : participant.display_name,
+          )
+          .join('、')
+      : '早期成就的参与成员记录暂缺';
   return (
     <article
       className={`achievement-card achievement-card--${tier}${!item.seen ? ' achievement--new' : ''}`}
