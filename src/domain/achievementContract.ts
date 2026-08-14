@@ -55,7 +55,7 @@ export const achievementSchema = z
     attained_stage: z.number().optional(),
     stage_key: z.string().optional(),
     event_id: z.string().optional(),
-    read_target: achievementReadTargetSchema.optional(),
+    read_target: achievementReadTargetSchema.nullable().optional(),
     tier: z.enum(['bronze', 'silver', 'gold', 'diamond']).optional(),
     earned_at: z.string(),
     repeatable: z.boolean().optional(),

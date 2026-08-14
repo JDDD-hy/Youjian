@@ -768,14 +768,14 @@ begin
     from public.achievements ac
     where ac.space_id=p_space_id and ac.achievement_type<>'together_lit'
   ), base as(
-    select r.*,c.* from raw r join private.achievement_strategy_catalog c on c.key=r.card_type
-    where c.scope='shared'
+    select r.*,c.* from raw r left join private.achievement_strategy_catalog c on c.key=r.card_type
+    where (c.scope='shared' or c.key is null)
       and not(r.achievement_type in('three_days_together','three_day_together') and exists(
         select 1 from raw x where x.card_type='together_streak' and x.achievement_type='together_streak'))
       and not(r.achievement_type='first_goal' and exists(
         select 1 from raw x where x.card_type='goal_milestone' and x.achievement_type='goal_milestone'))
-      and not(r.achievement_type=any(c.legacy_aliases) and r.legacy_rank>1)
-      and (c.metric<>'threshold_minutes' or private.achievement_stage(r.card_type,1,r.metadata)>0)
+      and (c.legacy_aliases is null or not(r.achievement_type=any(c.legacy_aliases) and r.legacy_rank>1))
+      and (c.metric is null or c.metric<>'threshold_minutes' or private.achievement_stage(r.card_type,1,r.metadata)>0)
   ), ranked as(
     select b.*,row_number() over(partition by b.card_type order by b.notification_eligible desc,
       b.earned_at desc,b.id desc) pick,
@@ -793,14 +793,15 @@ begin
     'achievement_id',cards.id::text,'achievement_type',cards.card_type,
     'card_key',cards.card_type,'raw_achievement_key',cards.achievement_type,
     'scope','shared','attained_stage',cards.attained_stage,
-    'stage_key',(select stage->>'stage_key' from jsonb_array_elements(cards.stage_thresholds) stage
+    'stage_key',(select stage->>'stage_key' from jsonb_array_elements(coalesce(cards.stage_thresholds,'[]'::jsonb)) stage
       where (stage->>'stage')::integer=cards.attained_stage limit 1),
     'tier',case when cards.attained_stage=0 then cards.tier
       else private.achievement_tier(cards.card_type,cards.attained_stage) end,
     'earned_at',cards.last_unlock_at,'first_earned_at',cards.first_at,'last_earned_at',cards.last_at,
     'last_unlocked_at',cards.last_unlock_at,'repeatable',cards.repeat_policy in('series','daily'),
     'count',cards.event_count,'metadata',cards.metadata,'participants_recorded',true,
-    'read_target',jsonb_build_object('kind','shared_card','key',cards.card_type),
+    'read_target',case when cards.key is null then null
+      else jsonb_build_object('kind','shared_card','key',cards.card_type) end,
     'seen',not exists(select 1 from base unread where unread.card_type=cards.card_type
       and unread.notification_eligible and not exists(
         select 1 from public.achievement_reads ar where ar.achievement_id=unread.id and ar.member_id=m)),
@@ -884,9 +885,9 @@ begin
     'personal',exists(select 1 from public.personal_achievements pa
       where pa.user_id=a and pa.last_unlocked_at>personal_seen),
     'shared',exists(select 1 from public.achievements ac
-      join private.achievement_strategy_catalog c on c.key=private.canonical_achievement_type(ac.achievement_type)
-      where ac.space_id=p_space_id and c.scope='shared' and ac.notification_eligible
-        and not(ac.achievement_type=any(c.legacy_aliases))
+      left join private.achievement_strategy_catalog c on c.key=private.canonical_achievement_type(ac.achievement_type)
+      where ac.space_id=p_space_id and (c.scope='shared' or c.key is null) and ac.notification_eligible
+        and (c.legacy_aliases is null or not(ac.achievement_type=any(c.legacy_aliases)))
         and not exists(select 1 from public.achievement_reads ar where ar.achievement_id=ac.id and ar.member_id=m)),
     'proposal',exists(select 1 from public.goal_proposal_members pm join public.goal_proposals p on p.id=pm.proposal_id
       where pm.member_id=m and pm.vote is null and p.status='pending')));
@@ -912,12 +913,13 @@ begin
       'tier',private.achievement_tier(ac.achievement_type,private.achievement_stage(ac.achievement_type,1,ac.metadata)),
       'earned_at',ac.earned_at,'metadata',ac.metadata,'event_id',ac.id::text,
       'notification_eligible',ac.notification_eligible,'is_unlock',ac.notification_eligible,
-      'read_target',jsonb_build_object('kind','shared_card','key',private.canonical_achievement_type(ac.achievement_type))
+      'read_target',case when c.key is null then null
+        else jsonb_build_object('kind','shared_card','key',private.canonical_achievement_type(ac.achievement_type)) end
     ) into shared
   from public.achievements ac
-  join private.achievement_strategy_catalog c on c.key=private.canonical_achievement_type(ac.achievement_type)
-  where ac.space_id=p_space_id and c.scope='shared' and ac.notification_eligible
-    and not(ac.achievement_type=any(c.legacy_aliases))
+  left join private.achievement_strategy_catalog c on c.key=private.canonical_achievement_type(ac.achievement_type)
+  where ac.space_id=p_space_id and (c.scope='shared' or c.key is null) and ac.notification_eligible
+    and (c.legacy_aliases is null or not(ac.achievement_type=any(c.legacy_aliases)))
     and not exists(select 1 from public.achievement_reads ar where ar.achievement_id=ac.id and ar.member_id=m)
   order by ac.earned_at,ac.id limit 1;
   result:=jsonb_set(result,'{data,unseen_achievement}',coalesce(shared,'null'::jsonb),true);

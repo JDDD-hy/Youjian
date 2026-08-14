@@ -231,7 +231,7 @@ export interface Achievement {
   attained_stage?: number;
   stage_key?: string;
   event_id?: string;
-  read_target?: AchievementReadTarget;
+  read_target?: AchievementReadTarget | null;
   tier?: 'bronze' | 'silver' | 'gold' | 'diamond';
   earned_at: string;
   /** Optional fields supplied by repeatable-achievement RPCs. */
