@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import type {
+  Achievement,
   FocusCategory,
   FocusSession,
   HomeSnapshot,
@@ -26,6 +27,9 @@ import { AccessibleModal } from '../components/AccessibleModal';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
+import { achievementTitle } from '../domain/achievementTier';
+import { achievementReadIntentKey } from '../domain/achievementCatalog';
+import { parseAchievement } from '../domain/achievementContract';
 import { FocusReminder } from '../components/FocusReminder';
 import { FocusHealthPolicyStep } from '../components/FocusHealthPolicyStep';
 import { FocusHealthCheckController } from '../components/FocusHealthCheckController';
@@ -60,9 +64,18 @@ async function getSnapshot(spaceId: string): Promise<SnapshotResult> {
   const result = await rpc<HomeSnapshot>('get_home_snapshot', {
     space_id: spaceId,
   });
-  assertRouteSpace(spaceId, result.data.space.id, 'home_snapshot_space');
+  const snapshot: HomeSnapshot = {
+    ...result.data,
+    unseen_achievement: result.data.unseen_achievement
+      ? parseAchievement(result.data.unseen_achievement)
+      : null,
+    unseen_personal_achievement: result.data.unseen_personal_achievement
+      ? parseAchievement(result.data.unseen_personal_achievement)
+      : null,
+  };
+  assertRouteSpace(spaceId, snapshot.space.id, 'home_snapshot_space');
   return {
-    snapshot: result.data,
+    snapshot,
     serverNow: result.serverNow,
     receivedAt: Date.now(),
   };
@@ -701,11 +714,27 @@ export function HomePage() {
       ? 'unconfirmed'
       : realtimeConnection;
   const markAchievement = useMutation({
-    mutationFn: (achievementId: string) =>
-      rpc('mark_achievement_seen', {
-        achievement_id: achievementId,
-        idempotency_key: seenIntent.get(achievementId),
-      }),
+    mutationFn: (item: Achievement) => {
+      const intentKey = achievementReadIntentKey(item);
+      const target = item.read_target;
+      if (target?.kind === 'shared_card' || target?.kind === 'shared_event') {
+        return rpc('mark_achievement_card_seen', {
+          space_id: spaceId,
+          card_key: target.key,
+          idempotency_key: seenIntent.get(intentKey),
+        });
+      }
+      if (target?.kind === 'personal_tab') {
+        return rpc('mark_achievement_tab_seen', {
+          space_id: spaceId,
+          tab: 'personal',
+        });
+      }
+      return rpc('mark_achievement_seen', {
+        achievement_id: item.achievement_id,
+        idempotency_key: seenIntent.get(intentKey),
+      });
+    },
     onSuccess: () => {
       seenIntent.clear();
       void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
@@ -743,11 +772,13 @@ export function HomePage() {
       void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
     },
   });
-  const unseenAchievementId =
-    query.data?.snapshot.unseen_achievement?.achievement_id;
-  useAutoAcknowledge(unseenAchievementId, (achievementId) =>
-    markAchievement.mutate(achievementId),
-  );
+  const unseenAchievement = query.data?.snapshot.unseen_achievement;
+  const unseenAchievementId = unseenAchievement
+    ? achievementReadIntentKey(unseenAchievement)
+    : undefined;
+  useAutoAcknowledge(unseenAchievementId, () => {
+    if (unseenAchievement) markAchievement.mutate(unseenAchievement);
+  });
   const unseenPersonalAchievement =
     query.data?.snapshot.unseen_personal_achievement;
   useAutoAcknowledge(
@@ -1168,9 +1199,7 @@ export function HomePage() {
           </span>
           <div>
             <small>获得共同成就</small>
-            <strong>
-              {achievementTitle(data.unseen_achievement.achievement_type)}
-            </strong>
+            <strong>{achievementTitle(data.unseen_achievement)}</strong>
           </div>
           <small>已记录，可在统计页查看</small>
         </section>
@@ -1183,9 +1212,7 @@ export function HomePage() {
           <div>
             <small>获得个人成就</small>
             <strong>
-              {achievementTitle(
-                data.unseen_personal_achievement.achievement_type,
-              )}
+              {achievementTitle(data.unseen_personal_achievement)}
             </strong>
           </div>
           <small>已记录，可在成就页查看</small>
@@ -1235,27 +1262,5 @@ function isFocusSession(value: unknown): value is FocusSession {
     typeof value === 'object' &&
     'session_id' in value &&
     'status' in value,
-  );
-}
-
-function achievementTitle(type: string) {
-  return (
-    (
-      {
-        together_lit: '同日亮灯',
-        three_days_together: '三日相伴',
-        first_goal: '第一个共同目标',
-        focus_milestone: '时光里程碑',
-        night_owl: '挑灯夜战',
-        dawn_walker: '破晓而行',
-        solo_focus: '孤军奋战',
-        unbroken_focus: '一气呵成',
-        double_focus: '梅开二度',
-        triple_focus: '三顾书桌',
-        three_categories: '六边形战士',
-        promise_keeper: '守约者',
-        return_after_break: '久别重逢',
-      } as Record<string, string>
-    )[type] ?? '共同的光'
   );
 }

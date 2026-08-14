@@ -40,6 +40,11 @@ import { uniqueAchievementParticipantCount } from '../domain/achievementParticip
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { loadResolvedGoalProposals } from '../lib/goalHistory';
 import { assertRouteSpace } from '../lib/spaceBoundary';
+import {
+  achievementReadIntentKey,
+  isPersonalAchievementType,
+} from '../domain/achievementCatalog';
+import { parseAchievementListResponse } from '../domain/achievementContract';
 
 interface GoalsSnapshot {
   space_id: string;
@@ -173,7 +178,7 @@ function AchievementCard({ item }: { item: Achievement }) {
         达成条件
         <span role="tooltip">{achievementCondition(item)}</span>
       </button>
-      {!isPersonalAchievement(item.achievement_type) && (
+      {!isPersonalAchievementType(item.achievement_type) && (
         <button
           type="button"
           className="achievement-tooltip-trigger"
@@ -253,12 +258,9 @@ export function GoalsPage() {
         limit: 30,
         cursor: pageParam,
       });
-      assertRouteSpace(
-        spaceId,
-        result.data.space_id,
-        'goal_achievements_space',
-      );
-      return result;
+      const data = parseAchievementListResponse(result.data);
+      assertRouteSpace(spaceId, data.space_id, 'goal_achievements_space');
+      return { ...result, data };
     },
     getNextPageParam: (last) => last.data.next_cursor ?? undefined,
     refetchInterval: 60_000,
@@ -276,12 +278,13 @@ export function GoalsPage() {
         limit: 30,
         cursor: pageParam,
       });
+      const data = parseAchievementListResponse(result.data);
       assertRouteSpace(
         spaceId,
-        result.data.space_id,
+        data.space_id,
         'goal_personal_achievements_space',
       );
-      return result;
+      return { ...result, data };
     },
     getNextPageParam: (last) => last.data.next_cursor ?? undefined,
     refetchInterval: 60_000,
@@ -349,11 +352,27 @@ export function GoalsPage() {
     },
   });
   const markSeen = useMutation({
-    mutationFn: (achievementId: string) =>
-      rpc('mark_achievement_seen', {
-        achievement_id: achievementId,
-        idempotency_key: seenIntent.get(achievementId),
-      }),
+    mutationFn: (item: Achievement) => {
+      const intentKey = achievementReadIntentKey(item);
+      const target = item.read_target;
+      if (target?.kind === 'shared_card' || target?.kind === 'shared_event') {
+        return rpc('mark_achievement_card_seen', {
+          space_id: spaceId,
+          card_key: target.key,
+          idempotency_key: seenIntent.get(intentKey),
+        });
+      }
+      if (target?.kind === 'personal_tab') {
+        return rpc('mark_achievement_tab_seen', {
+          space_id: spaceId,
+          tab: 'personal',
+        });
+      }
+      return rpc('mark_achievement_seen', {
+        achievement_id: item.achievement_id,
+        idempotency_key: seenIntent.get(intentKey),
+      });
+    },
     onSuccess: () => {
       seenIntent.clear();
       void queryClient.invalidateQueries({
@@ -398,11 +417,12 @@ export function GoalsPage() {
     personalAchievements.data?.pages
       .flatMap((page) => page.data.items)
       .filter(isAchievementUnlocked) ?? [];
-  const unseenAchievementId = achievementItems.find(
-    (item) => !item.seen,
-  )?.achievement_id;
-  useAutoAcknowledge(unseenAchievementId, (achievementId) => {
-    markSeen.mutate(achievementId);
+  const unseenAchievement = achievementItems.find((item) => !item.seen);
+  const unseenAchievementId = unseenAchievement
+    ? achievementReadIntentKey(unseenAchievement)
+    : undefined;
+  useAutoAcknowledge(unseenAchievementId, () => {
+    if (unseenAchievement) markSeen.mutate(unseenAchievement);
   });
   const proposalHistory = [
     ...resolvedProposals,
@@ -925,20 +945,4 @@ export function GoalsPage() {
       )}
     </div>
   );
-}
-
-const personalAchievementTypes = new Set([
-  'night_owl',
-  'dawn_walker',
-  'solo_focus',
-  'unbroken_focus',
-  'double_focus',
-  'triple_focus',
-  'three_categories',
-  'promise_keeper',
-  'return_after_break',
-]);
-
-function isPersonalAchievement(type: string) {
-  return personalAchievementTypes.has(type);
 }

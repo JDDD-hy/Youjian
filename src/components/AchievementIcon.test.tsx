@@ -25,7 +25,7 @@ function iconClass(item: Partial<Achievement>) {
 }
 
 describe('AchievementIcon', () => {
-  it('uses the approved personal achievement icons', () => {
+  it('preserves the approved personal achievement icons', () => {
     expect(iconClass({ achievement_type: 'night_owl' })).toContain(
       'lucide-moon-star',
     );
@@ -34,7 +34,7 @@ describe('AchievementIcon', () => {
     expect(iconClass({ count: 20 })).toContain('lucide-trees');
   });
 
-  it('uses distinct approved icons for shared tiers', () => {
+  it('preserves the approved shared achievement icons', () => {
     expect(
       iconClass({ achievement_type: 'together_streak', metadata: { days: 1 } }),
     ).toContain('lucide-lamp-desk');
@@ -47,9 +47,15 @@ describe('AchievementIcon', () => {
         metadata: { completed_goal_count: 10 },
       }),
     ).toContain('lucide-trophy');
+    expect(iconClass({ achievement_type: 'first_goal' })).toContain(
+      'lucide-target',
+    );
+    expect(iconClass({ achievement_type: 'three_days_together' })).toContain(
+      'lucide-lamp-desk',
+    );
   });
 
-  it('uses every approved extended Lucide mapping', () => {
+  it('preserves the approved extended Lucide mappings', () => {
     const expected = {
       dawn_walker: 'lucide-sunrise',
       unbroken_focus: 'lucide-move-right',
@@ -77,6 +83,32 @@ describe('AchievementIcon', () => {
         metadata: { stage: 5 },
       }),
     ).toContain('lucide-building-2');
+  });
+
+  it('uses the selected Lucide icons for the new achievements', () => {
+    const expected: Array<[string, string]> = [
+      ['global_timezones', 'lucide-plane'],
+      ['task_polisher', 'lucide-wand-sparkles'],
+      ['decisive_focus', 'lucide-gavel'],
+      ['restless_focus', 'lucide-circle-fading-arrow-up'],
+      ['work_diligence', 'lucide-briefcase-business'],
+      ['learning_seeker', 'lucide-notebook-pen'],
+      ['bookworm', 'lucide-worm'],
+      ['mystery_work', 'lucide-badge-question-mark'],
+      ['weekend_warrior', 'lucide-award'],
+      ['focus_10000_hours', 'lucide-wine'],
+      ['first_invitee', 'lucide-sofa'],
+      ['full_house', 'lucide-smile-plus'],
+    ];
+    for (const [achievement_type, className] of expected) {
+      expect(iconClass({ achievement_type })).toContain(className);
+    }
+    expect(iconClass({ achievement_type: 'unknown_unmapped_key' })).toContain(
+      'lucide-move-right',
+    );
+    expect(
+      iconClass({ achievement_type: 'global_timezones', attained_stage: 2 }),
+    ).toContain('lucide-earth');
   });
 
   it('uses diamond for the fourth promise stage', () => {

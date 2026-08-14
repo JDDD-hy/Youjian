@@ -1,0 +1,950 @@
+{
+  "version": "achievement-catalog-v1",
+  "strategies": [
+    {
+      "key": "night_owl",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "night_owl",
+          "title": "挑灯夜战"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "session_timezone",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "moon_star",
+      "series": null,
+      "condition": "本地时间 23:00—23:59 开始，跨越午夜，并累计至少 60 分钟有效专注；暂停时间不计入。"
+    },
+    {
+      "key": "solo_focus",
+      "scope": "personal",
+      "repeat_policy": "series",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "solo_focus",
+          "title": "孤军奋战"
+        },
+        {
+          "stage": 2,
+          "threshold": 5,
+          "stage_key": "solo_focus_5",
+          "title": "独行者"
+        },
+        {
+          "stage": 3,
+          "threshold": 20,
+          "stage_key": "solo_focus_20",
+          "title": "独木成林"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "bronze", "2": "silver", "3": "gold" }
+      },
+      "icon": "pointer",
+      "series": "独行者系列",
+      "condition": "单次会话累计至少 60 分钟有效专注，且有效专注片段不与同一空间其他成员重叠。"
+    },
+    {
+      "key": "promise_keeper",
+      "scope": "personal",
+      "repeat_policy": "series",
+      "event_unit": "local_day",
+      "metric": "stage_days",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "promise_keeper",
+          "title": "言出必行"
+        },
+        {
+          "stage": 2,
+          "threshold": 3,
+          "stage_key": "promise_keeper_3",
+          "title": "初守约定"
+        },
+        {
+          "stage": 3,
+          "threshold": 7,
+          "stage_key": "promise_keeper_7",
+          "title": "滴水穿石"
+        },
+        {
+          "stage": 4,
+          "threshold": 30,
+          "stage_key": "promise_keeper_30",
+          "title": "久久为功"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "owner",
+      "time_boundary": "user_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.local_goal",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "local_day_and_stage",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "bronze", "2": "silver", "3": "gold", "4": "diamond" }
+      },
+      "icon": "stamp",
+      "series": "守约者系列",
+      "condition": "完成当天锁定的个人专注目标，连续达成后逐级解锁。"
+    },
+    {
+      "key": "dawn_walker",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "dawn_walker",
+          "title": "破晓而行"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "session_timezone",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "sunrise",
+      "series": null,
+      "condition": "本地时间 05:00—06:59 开始，并累计至少 60 分钟有效专注。"
+    },
+    {
+      "key": "unbroken_focus",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "unbroken_focus",
+          "title": "一气呵成"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "move_right",
+      "series": null,
+      "condition": "整个会话从未暂停，并连续完成至少 60 分钟有效专注。"
+    },
+    {
+      "key": "double_focus",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "local_day",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "double_focus",
+          "title": "梅开二度"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "user_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.local_day",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "local_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "spline",
+      "series": null,
+      "condition": "同一本地自然日完成 2 次专注，每次至少 30 分钟，且均未跨日。"
+    },
+    {
+      "key": "triple_focus",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "local_day",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "triple_focus",
+          "title": "三顾书桌"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "user_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.local_day",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "local_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "ev_charger",
+      "series": null,
+      "condition": "同一本地自然日完成 3 次专注，每次至少 30 分钟，且均未跨日。"
+    },
+    {
+      "key": "three_categories",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "local_day",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "three_categories",
+          "title": "六边形战士"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "user_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.local_day",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "local_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "hexagon",
+      "series": null,
+      "condition": "同一本地自然日在 3 个不同最终任务类别中分别累计至少 30 分钟。"
+    },
+    {
+      "key": "return_after_break",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "local_day",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "return_after_break",
+          "title": "久别重逢"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "user_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.local_day",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "local_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "list_restart",
+      "series": null,
+      "condition": "连续 7 个完整本地自然日没有有效专注后，回归当天累计至少 60 分钟。"
+    },
+    {
+      "key": "together_streak",
+      "scope": "shared",
+      "repeat_policy": "series",
+      "event_unit": "local_day",
+      "metric": "days",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "together_streak_1",
+          "title": "1 日相伴"
+        },
+        {
+          "stage": 2,
+          "threshold": 3,
+          "stage_key": "together_streak_3",
+          "title": "3 日相伴"
+        },
+        {
+          "stage": 3,
+          "threshold": 7,
+          "stage_key": "together_streak_7",
+          "title": "7 日相伴"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "space_local_day",
+      "legacy_aliases": [
+        "three_days_together",
+        "three_day_together",
+        "together_lit"
+      ],
+      "evaluator_id": "shared.local_day",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "space_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "bronze", "2": "silver", "3": "gold" }
+      },
+      "icon": "lamp_desk",
+      "series": "相伴系列",
+      "condition": "空间内至少两名有效成员全部完成空间签到目标，连续达成后逐级解锁。"
+    },
+    {
+      "key": "goal_milestone",
+      "scope": "shared",
+      "repeat_policy": "series",
+      "event_unit": "goal",
+      "metric": "completed_goal_count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "goal_milestone_1",
+          "title": "完成 1 个共同目标"
+        },
+        {
+          "stage": 2,
+          "threshold": 3,
+          "stage_key": "goal_milestone_3",
+          "title": "完成 3 个共同目标"
+        },
+        {
+          "stage": 3,
+          "threshold": 10,
+          "stage_key": "goal_milestone_10",
+          "title": "完成 10 个共同目标"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "goal_participants",
+      "time_boundary": "none",
+      "legacy_aliases": ["first_goal"],
+      "evaluator_id": "shared.goal_completion",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "goal_id",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "bronze", "2": "silver", "3": "gold" }
+      },
+      "icon": "target",
+      "series": "共同目标系列",
+      "condition": "空间累计完成经成员投票通过的共同目标。"
+    },
+    {
+      "key": "focus_milestone",
+      "scope": "shared",
+      "repeat_policy": "series",
+      "event_unit": "session",
+      "metric": "threshold_minutes",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 600,
+          "stage_key": "focus_milestone_600",
+          "title": "累计专注 10 小时"
+        },
+        {
+          "stage": 2,
+          "threshold": 3000,
+          "stage_key": "focus_milestone_3000",
+          "title": "累计专注 50 小时"
+        },
+        {
+          "stage": 3,
+          "threshold": 6000,
+          "stage_key": "focus_milestone_6000",
+          "title": "累计专注 100 小时"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "shared.focus_total",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "bronze", "2": "silver", "3": "gold" }
+      },
+      "icon": "metronome",
+      "series": "时光里程碑",
+      "condition": "空间累计有效专注达到对应小时数。"
+    },
+    {
+      "key": "chance_encounter",
+      "scope": "shared",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "chance_encounter",
+          "title": "不期而遇"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "space_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "shared.focus_overlap",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "overlap_window",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "orbit",
+      "series": null,
+      "condition": "成员开始时间相邻不超过 3 分钟，并共同连续专注至少 30 分钟。"
+    },
+    {
+      "key": "fellow_travelers",
+      "scope": "shared",
+      "repeat_policy": "series",
+      "event_unit": "member_count",
+      "metric": "member_count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 3,
+          "stage_key": "fellow_travelers_3",
+          "title": "三人成行"
+        },
+        {
+          "stage": 2,
+          "threshold": 5,
+          "stage_key": "fellow_travelers_5",
+          "title": "万家灯火"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "space_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "shared.focus_overlap",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "overlap_window",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "silver", "2": "gold" }
+      },
+      "icon": "shapes",
+      "series": "同行者系列",
+      "condition": "至少 3 名成员连续共同专注 30 分钟。"
+    },
+    {
+      "key": "focus_relay",
+      "scope": "shared",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "focus_relay",
+          "title": "接力燃灯"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "space_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "shared.focus_relay",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "relay_pair_and_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "heart_handshake",
+      "series": null,
+      "condition": "一名成员完成至少 30 分钟后，另一名成员在 5 分钟内开始并完成至少 30 分钟。"
+    },
+    {
+      "key": "living_flame",
+      "scope": "shared",
+      "repeat_policy": "daily",
+      "event_unit": "local_day",
+      "metric": "qualified_member_count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 2,
+          "stage_key": "living_flame",
+          "title": "星火相传"
+        }
+      ],
+      "max_stage_behavior": "one_per_local_day",
+      "notification_policy": "first_unlock",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "space_local_day",
+      "legacy_aliases": [],
+      "evaluator_id": "shared.full_day_union",
+      "counter_scope": "space_local_day",
+      "event_key_policy": "space_day",
+      "activation_boundary": "extended_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "flame_kindling",
+      "series": null,
+      "condition": "按空间时区计算：至少两名合格成员，每名合格成员累计有效专注至少 30 分钟，且其有效专注片段并集完整覆盖当天 00:00 连续覆盖至次日 00:00；重叠部分只计算一次。"
+    },
+    {
+      "key": "global_timezones",
+      "scope": "shared",
+      "repeat_policy": "series",
+      "event_unit": "session",
+      "metric": "timezone_count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 2,
+          "stage_key": "global_timezones_2",
+          "title": "天涯共此时",
+          "icon": "plane"
+        },
+        {
+          "stage": 2,
+          "threshold": 4,
+          "stage_key": "global_timezones_4",
+          "title": "五湖四海",
+          "icon": "earth"
+        }
+      ],
+      "max_stage_behavior": "cap_and_store_repeats",
+      "notification_policy": "stage_upgrade",
+      "participant_policy": "qualifying_members",
+      "time_boundary": "session_timezone",
+      "legacy_aliases": [],
+      "evaluator_id": "shared.focus_timezone_overlap",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "shared_card",
+      "tier_policy": {
+        "kind": "stage",
+        "tiers": { "1": "silver", "2": "gold" }
+      },
+      "icon": "plane",
+      "series": "全球系列",
+      "condition": "同一共享专注事件中，同时有效专注成员来自至少对应数量的不同 IANA 时区。"
+    },
+    {
+      "key": "task_polisher",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "task_revision_count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 3,
+          "stage_key": "task_polisher",
+          "title": "精雕细琢"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.task_revision",
+      "counter_scope": "focus_session",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "wand_sparkles",
+      "series": null,
+      "condition": "同一个任务成功修改名称至少 3 次；无变化提交不计入。"
+    },
+    {
+      "key": "decisive_focus",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "decisive_focus",
+          "title": "一锤定音"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.session_no_task_revision",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "gavel",
+      "series": null,
+      "condition": "单次专注从开始到完成没有修改过任务名称，且有效专注时长至少 60 分钟；暂停允许。"
+    },
+    {
+      "key": "restless_focus",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 3,
+          "stage_key": "restless_focus",
+          "title": "如坐针毡"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.short_session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "circle_fading_arrow_up",
+      "series": null,
+      "condition": "累计 3 次有效专注时长大于 0 且少于 5 分钟的 session。"
+    },
+    {
+      "key": "work_diligence",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 10,
+          "stage_key": "work_diligence",
+          "title": "兢兢业业"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.category_session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "briefcase_business",
+      "series": null,
+      "condition": "完成 10 次最终类型为“工作”的有效专注 session。"
+    },
+    {
+      "key": "learning_seeker",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 10,
+          "stage_key": "learning_seeker",
+          "title": "学海无涯"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.category_session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "notebook_pen",
+      "series": null,
+      "condition": "完成 10 次最终类型为“学习”的有效专注 session。"
+    },
+    {
+      "key": "bookworm",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 10,
+          "stage_key": "bookworm",
+          "title": "书虫"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.category_session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "worm",
+      "series": null,
+      "condition": "完成 10 次最终类型为“阅读”的有效专注 session。"
+    },
+    {
+      "key": "mystery_work",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 10,
+          "stage_key": "mystery_work",
+          "title": "神秘事务"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.category_session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "badge_question_mark",
+      "series": null,
+      "condition": "完成 10 次最终类型为“其他”的有效专注 session。"
+    },
+    {
+      "key": "weekend_warrior",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "local_day",
+      "metric": "weekend_focus_minutes",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 240,
+          "stage_key": "weekend_warrior",
+          "title": "周末战士"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "user_local_weekend",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.weekend_window",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "local_weekend",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "award",
+      "series": null,
+      "condition": "在一个用户本地周末（周六 00:00 至周一 00:00）累计至少 240 分钟有效专注。"
+    },
+    {
+      "key": "focus_10000_hours",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "focus_minutes",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 600000,
+          "stage_key": "focus_10000_hours",
+          "title": "万时户"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.lifetime_total",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "diamond" },
+      "icon": "wine",
+      "series": null,
+      "condition": "个人累计有效专注达到 10,000 小时（600,000 分钟）。"
+    },
+    {
+      "key": "first_invitee",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "member_count",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 1,
+          "stage_key": "first_invitee",
+          "title": "虚左以待"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "space_owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "membership.first_new_member",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "membership_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "sofa",
+      "series": null,
+      "condition": "你邀请的第一位新成员成功加入友间。"
+    },
+    {
+      "key": "full_house",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "member_count",
+      "metric": "member_count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 5,
+          "stage_key": "full_house",
+          "title": "高朋满座"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "space_owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "membership.capacity_reached",
+      "counter_scope": "space_lifetime",
+      "event_key_policy": "space_capacity_reached",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "smile_plus",
+      "series": null,
+      "condition": "友间第一次达到成员上限，且当前成员至少 5 人。"
+    }
+  ]
+}

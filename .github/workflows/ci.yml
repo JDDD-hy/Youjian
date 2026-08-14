@@ -41,6 +41,7 @@ jobs:
           VITE_APP_ORIGIN="http://127.0.0.1:4173" \
           VITE_CSP_CONNECT_SRC="http://127.0.0.1:54321 ws://127.0.0.1:54321" \
           npm run build
+      - run: npm run test:achievement-e2e
       - run: npm run test:e2e
       - run: npm run db:lint
       - run: npm run db:test

@@ -224,6 +224,14 @@ export interface Goal {
 export interface Achievement {
   achievement_id: string;
   achievement_type: string;
+  /** Canonical display card key; raw legacy keys remain available separately. */
+  card_key?: string;
+  raw_achievement_key?: string;
+  scope?: 'personal' | 'shared';
+  attained_stage?: number;
+  stage_key?: string;
+  event_id?: string;
+  read_target?: AchievementReadTarget | null;
   tier?: 'bronze' | 'silver' | 'gold' | 'diamond';
   earned_at: string;
   /** Optional fields supplied by repeatable-achievement RPCs. */
@@ -234,7 +242,7 @@ export interface Achievement {
   last_unlocked_at?: string;
   unlock_at?: string;
   unlocked_at?: string;
-  metadata?: Record<string, string | number | boolean>;
+  metadata?: Record<string, string | number | boolean | string[]>;
   participants_recorded?: boolean;
   participants?: Array<{
     member_id: string;
@@ -250,10 +258,11 @@ export interface Achievement {
 
 export interface AchievementEvent {
   achievement_id?: string;
+  event_id?: string;
   earned_at: string;
   local_date?: string;
   source_space_id?: string;
-  metadata?: Record<string, string | number | boolean>;
+  metadata?: Record<string, string | number | boolean | string[]>;
   /** Optional event/unlock markers added by repeatability-aware RPCs. */
   is_unlock?: boolean;
   notification_eligible?: boolean;
@@ -286,3 +295,8 @@ export interface SpaceSettings {
     can_increase_member_limit: boolean;
   };
 }
+
+export type AchievementReadTarget =
+  | { kind: 'personal_tab'; key: 'personal' }
+  | { kind: 'shared_card'; key: string }
+  | { kind: 'shared_event'; key: string; ids: string[] };

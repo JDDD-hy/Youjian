@@ -1,9 +1,19 @@
 import {
   Anvil,
+  Award,
+  BookMarked,
+  BookOpen,
+  BadgeQuestionMark,
+  BriefcaseBusiness,
   Building2,
+  CircleFadingArrowUp,
   Droplet,
   EvCharger,
+  Earth,
   FlameKindling,
+  Gem,
+  Globe2,
+  Hammer,
   HeartHandshake,
   Hexagon,
   Hourglass,
@@ -16,9 +26,12 @@ import {
   MoveRight,
   MoonStar,
   Orbit,
+  Plane,
   PersonStanding,
   Pointer,
   Shapes,
+  SmilePlus,
+  Sparkles,
   Spline,
   Sprout,
   Stamp,
@@ -27,13 +40,24 @@ import {
   Timer,
   Trees,
   Trophy,
+  WandSparkles,
+  Wine,
+  Worm,
+  Gavel,
+  Sofa,
+  NotebookPen,
 } from 'lucide-react';
 import type { Achievement } from '../domain/types';
+import {
+  achievementIconKey,
+  canonicalAchievementType,
+} from '../domain/achievementCatalog';
 
 const iconProps = { 'aria-hidden': true as const, size: 32, strokeWidth: 1.8 };
 
 function sharedAchievementIcon(item: Achievement) {
-  if (item.achievement_type === 'together_streak') {
+  const type = canonicalAchievementType(item.achievement_type);
+  if (type === 'together_streak') {
     const days = Number(item.metadata?.days ?? 1);
     return days >= 7 ? (
       <LampCeiling {...iconProps} />
@@ -43,7 +67,7 @@ function sharedAchievementIcon(item: Achievement) {
       <LampDesk {...iconProps} />
     );
   }
-  if (item.achievement_type === 'goal_milestone') {
+  if (type === 'goal_milestone') {
     const goals = Number(item.metadata?.completed_goal_count ?? 1);
     return goals >= 10 ? (
       <Trophy {...iconProps} />
@@ -53,7 +77,7 @@ function sharedAchievementIcon(item: Achievement) {
       <Target {...iconProps} />
     );
   }
-  if (item.achievement_type === 'focus_milestone') {
+  if (type === 'focus_milestone') {
     const minutes = Number(item.metadata?.threshold_minutes ?? 0);
     return minutes >= 6000 ? (
       <Hourglass {...iconProps} />
@@ -63,7 +87,7 @@ function sharedAchievementIcon(item: Achievement) {
       <Metronome {...iconProps} />
     );
   }
-  if (item.achievement_type === 'fellow_travelers') {
+  if (type === 'fellow_travelers') {
     return Number(item.metadata?.stage ?? 3) >= 5 ? (
       <Building2 {...iconProps} />
     ) : (
@@ -71,26 +95,55 @@ function sharedAchievementIcon(item: Achievement) {
     );
   }
   const icons = {
-    dawn_walker: Sunrise,
-    unbroken_focus: MoveRight,
-    double_focus: Spline,
-    triple_focus: EvCharger,
-    three_categories: Hexagon,
-    promise_keeper: Stamp,
-    return_after_break: ListRestart,
-    chance_encounter: Orbit,
-    focus_relay: HeartHandshake,
-    living_flame: FlameKindling,
+    sunrise: Sunrise,
+    move_right: MoveRight,
+    spline: Spline,
+    ev_charger: EvCharger,
+    hexagon: Hexagon,
+    stamp: Stamp,
+    list_restart: ListRestart,
+    orbit: Orbit,
+    heart_handshake: HeartHandshake,
+    flame_kindling: FlameKindling,
+    globe: Globe2,
+    plane: Plane,
+    earth: Earth,
+    hammer: Hammer,
+    anvil: Anvil,
+    wand_sparkles: WandSparkles,
+    gavel: Gavel,
+    circle_fading_arrow_up: CircleFadingArrowUp,
+    metronome: Metronome,
+    briefcase: BriefcaseBusiness,
+    briefcase_business: BriefcaseBusiness,
+    book_open: BookOpen,
+    notebook_pen: NotebookPen,
+    book_marked: BookMarked,
+    worm: Worm,
+    sparkles: Sparkles,
+    badge_question_mark: BadgeQuestionMark,
+    award: Award,
+    trees: Trees,
+    gem: Gem,
+    wine: Wine,
+    person_standing: PersonStanding,
+    sofa: Sofa,
+    smile_plus: SmilePlus,
+    building: Building2,
   } as const;
-  const Icon = icons[item.achievement_type as keyof typeof icons] ?? Building2;
+  const Icon =
+    icons[
+      achievementIconKey(item.achievement_type, item) as keyof typeof icons
+    ] ?? MoveRight;
   return <Icon {...iconProps} />;
 }
 
 export function AchievementIcon({ item }: { item: Achievement }) {
-  if (item.achievement_type === 'night_owl') {
+  const type = canonicalAchievementType(item.achievement_type);
+  if (type === 'night_owl') {
     return <MoonStar {...iconProps} />;
   }
-  if (item.achievement_type === 'solo_focus') {
+  if (type === 'solo_focus') {
     const count = item.count ?? 1;
     return count >= 20 ? (
       <Trees {...iconProps} />
@@ -100,7 +153,7 @@ export function AchievementIcon({ item }: { item: Achievement }) {
       <Pointer {...iconProps} />
     );
   }
-  if (item.achievement_type === 'promise_keeper') {
+  if (type === 'promise_keeper') {
     const days = Number(item.metadata?.stage_days ?? 1);
     if (days >= 30) return <Anvil {...iconProps} />;
     if (days >= 7) return <Droplet {...iconProps} />;
