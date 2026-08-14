@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "test:e2e": "node scripts/run-e2e.mjs",
     "test:e2e:deployed": "node scripts/run-deployed-e2e.mjs",
+    "test:achievement-e2e": "node scripts/integration/achievement-decisive-focus-e2e.mjs",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
