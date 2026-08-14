@@ -51,9 +51,9 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000182',true);
 select is(public.propose_goal('10000000-0000-0000-0000-000000000181','group_total_minutes','daily',30,'30000000-0000-0000-0000-000000000189')#>>'{data,proposal,status}','pending','completed goal allows an immediate new proposal before its original end time');
 reset role;
-select is((select tier from public.achievements where space_id='10000000-0000-0000-0000-000000000181' and dedupe_key='goal-count:1'),'bronze','first completed goal earns bronze tier');
-select ok((select participants_recorded from public.achievements where space_id='10000000-0000-0000-0000-000000000181' and dedupe_key='goal-count:1'),'goal achievement freezes participant provenance');
-select is((select count(*)::int from public.achievement_participants ap join public.achievements a on a.id=ap.achievement_id where a.space_id='10000000-0000-0000-0000-000000000181' and a.dedupe_key='goal-count:1'),2,'goal achievement records the accepted participant snapshot');
+select is((select tier from public.achievements where space_id='10000000-0000-0000-0000-000000000181' and achievement_type='goal_milestone' and dedupe_key='goal:'||(select id::text from public.goals where space_id='10000000-0000-0000-0000-000000000181' and status='completed' order by completed_at desc limit 1)),'bronze','first completed goal earns bronze tier');
+select ok((select participants_recorded from public.achievements where space_id='10000000-0000-0000-0000-000000000181' and achievement_type='goal_milestone' and dedupe_key='goal:'||(select id::text from public.goals where space_id='10000000-0000-0000-0000-000000000181' and status='completed' order by completed_at desc limit 1)),'goal achievement freezes participant provenance');
+select is((select count(*)::int from public.achievement_participants ap join public.achievements a on a.id=ap.achievement_id where a.space_id='10000000-0000-0000-0000-000000000181' and a.achievement_type='goal_milestone' and a.dedupe_key='goal:'||(select id::text from public.goals where space_id='10000000-0000-0000-0000-000000000181' and status='completed' order by completed_at desc limit 1)),2,'goal achievement records the accepted participant snapshot');
 
 select * from finish();
 rollback;

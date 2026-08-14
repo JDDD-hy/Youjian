@@ -26,7 +26,16 @@ import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { Icon } from '../components/Icons';
 import { AchievementIcon } from '../components/AchievementIcon';
-import { achievementTier } from '../domain/achievementTier';
+import {
+  achievementCondition,
+  achievementDisplayDate,
+  achievementSeries,
+  achievementStages,
+  achievementTitle,
+  achievementTier,
+  isAchievementUnlocked,
+  visibleAchievementEvents,
+} from '../domain/achievementTier';
 import { uniqueAchievementParticipantCount } from '../domain/achievementParticipants';
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { loadResolvedGoalProposals } from '../lib/goalHistory';
@@ -111,9 +120,14 @@ function GoalCard({ goal }: { goal: Goal }) {
 function AchievementCard({ item }: { item: Achievement }) {
   const tier = achievementTier(item);
   const participants = item.participants ?? [];
-  const eventGroups =
-    item.events?.filter((event) => event.participants?.length) ?? [];
-  const participantCount = uniqueAchievementParticipantCount(item);
+  const eventGroups = visibleAchievementEvents(item).filter(
+    (event) => event.participants?.length,
+  );
+  const participantCount = uniqueAchievementParticipantCount({
+    ...item,
+    participants,
+    events: eventGroups,
+  });
   const participantText = eventGroups.length
     ? eventGroups
         .map(
@@ -150,7 +164,7 @@ function AchievementCard({ item }: { item: Achievement }) {
           已获得：{achievementStages(item)}
         </small>
       )}
-      <p>{formatLocalDateTime(item.earned_at)}</p>
+      <p>{formatLocalDateTime(achievementDisplayDate(item))}</p>
       <button
         type="button"
         className="achievement-condition"
@@ -377,9 +391,13 @@ export function GoalsPage() {
     snapshot?.active_goals.length,
   );
   const achievementItems =
-    achievements.data?.pages.flatMap((page) => page.data.items) ?? [];
+    achievements.data?.pages
+      .flatMap((page) => page.data.items)
+      .filter(isAchievementUnlocked) ?? [];
   const personalAchievementItems =
-    personalAchievements.data?.pages.flatMap((page) => page.data.items) ?? [];
+    personalAchievements.data?.pages
+      .flatMap((page) => page.data.items)
+      .filter(isAchievementUnlocked) ?? [];
   const unseenAchievementId = achievementItems.find(
     (item) => !item.seen,
   )?.achievement_id;
@@ -909,86 +927,6 @@ export function GoalsPage() {
   );
 }
 
-function achievementTitle(item: Achievement) {
-  const type = item.achievement_type;
-  if (type === 'night_owl') return '挑灯夜战';
-  if (type === 'solo_focus') {
-    const count = item.count ?? 1;
-    return count >= 20 ? '独木成林' : count >= 5 ? '独行者' : '孤军奋战';
-  }
-  return (
-    (
-      {
-        together_streak: `${item.metadata?.days ?? 1} 日相伴`,
-        goal_milestone: `完成 ${item.metadata?.completed_goal_count ?? 1} 个共同目标`,
-        focus_milestone: `累计专注 ${Number(item.metadata?.threshold_minutes ?? 0) / 60} 小时`,
-        dawn_walker: '破晓而行',
-        unbroken_focus: '一气呵成',
-        double_focus: '梅开二度',
-        triple_focus: '三顾书桌',
-        three_categories: '六边形战士',
-        promise_keeper:
-          Number(item.metadata?.stage_days ?? 1) >= 30
-            ? '久久为功'
-            : Number(item.metadata?.stage_days ?? 1) >= 7
-              ? '滴水穿石'
-              : Number(item.metadata?.stage_days ?? 1) >= 3
-                ? '初守约定'
-                : '言出必行',
-        return_after_break: '久别重逢',
-        chance_encounter: '不期而遇',
-        fellow_travelers:
-          Number(item.metadata?.stage ?? 3) >= 5 ? '万家灯火' : '三人成行',
-        focus_relay: '接力燃灯',
-        living_flame: '星火相传',
-      } as Record<string, string>
-    )[type] ?? '共同的光'
-  );
-}
-
-function achievementCondition(item: Achievement) {
-  if (item.achievement_type === 'night_owl') {
-    return '本地时间 23:00—23:59 开始，跨越午夜，并累计至少 60 分钟有效专注；暂停时间不计入。';
-  }
-  if (item.achievement_type === 'solo_focus') {
-    return '单次会话累计至少 60 分钟有效专注，且有效专注片段不与同一空间其他成员重叠。';
-  }
-  if (item.achievement_type === 'together_streak') {
-    return `空间内至少两名有效成员全部完成空间签到目标，连续达成 ${item.metadata?.days ?? 1} 天。`;
-  }
-  if (item.achievement_type === 'goal_milestone') {
-    return `空间累计完成 ${item.metadata?.completed_goal_count ?? 1} 个经成员投票通过的共同目标。`;
-  }
-  if (item.achievement_type === 'focus_milestone') {
-    return `空间累计有效专注达到 ${Number(item.metadata?.threshold_minutes ?? 0) / 60} 小时。`;
-  }
-  return (
-    (
-      {
-        dawn_walker: '本地时间 05:00—06:59 开始，并累计至少 60 分钟有效专注。',
-        unbroken_focus: '整个会话从未暂停，并连续完成至少 60 分钟有效专注。',
-        double_focus:
-          '同一本地自然日完成 2 次专注，每次至少 30 分钟，且均未跨日。',
-        triple_focus:
-          '同一本地自然日完成 3 次专注，每次至少 30 分钟，且均未跨日。',
-        three_categories:
-          '同一本地自然日在 3 个不同最终任务类别中分别累计至少 30 分钟。',
-        promise_keeper:
-          '完成当天锁定的个人专注目标；连续 1、3、7、30 天逐级解锁。',
-        return_after_break:
-          '连续 7 个完整本地自然日没有有效专注后，回归当天累计至少 60 分钟。',
-        chance_encounter:
-          '成员开始时间以相邻不超过 3 分钟形成一组，并共同连续专注至少 30 分钟。',
-        fellow_travelers: '至少 3 人连续共同专注 30 分钟；达到 5 人时升级。',
-        focus_relay:
-          '一名成员完成至少 30 分钟后，另一名成员在 5 分钟内开始并完成至少 30 分钟；同一无向成员组合每天最多计数一次。',
-        living_flame:
-          '按空间时区的当天计算：专注接续至少 1 小时，空档均不超过 30 分钟，且至少 3 人各完成 30 分钟。',
-      } as Record<string, string>
-    )[item.achievement_type] ?? '完成对应的共同成就要求。'
-  );
-}
-
 const personalAchievementTypes = new Set([
   'night_owl',
   'dawn_walker',
@@ -1003,58 +941,4 @@ const personalAchievementTypes = new Set([
 
 function isPersonalAchievement(type: string) {
   return personalAchievementTypes.has(type);
-}
-
-function achievementSeries(item: Achievement) {
-  return (
-    {
-      together_streak: '相伴系列',
-      goal_milestone: '共同目标系列',
-      focus_milestone: '时光里程碑',
-      solo_focus: '独行者系列',
-      promise_keeper: '守约者系列',
-      fellow_travelers: '同行者系列',
-    } as Record<string, string>
-  )[item.achievement_type];
-}
-
-function achievementStages(item: Achievement) {
-  const type = item.achievement_type;
-  if (type === 'together_streak')
-    return Number(item.metadata?.days ?? 1) >= 7
-      ? '1 日相伴、3 日相伴、7 日相伴'
-      : Number(item.metadata?.days ?? 1) >= 3
-        ? '1 日相伴、3 日相伴'
-        : '1 日相伴';
-  if (type === 'goal_milestone')
-    return Number(item.metadata?.completed_goal_count ?? 1) >= 10
-      ? '完成 1、3、10 个共同目标'
-      : Number(item.metadata?.completed_goal_count ?? 1) >= 3
-        ? '完成 1、3 个共同目标'
-        : '完成 1 个共同目标';
-  if (type === 'focus_milestone')
-    return Number(item.metadata?.threshold_minutes ?? 0) >= 6000
-      ? '累计专注 10、50、100 小时'
-      : Number(item.metadata?.threshold_minutes ?? 0) >= 3000
-        ? '累计专注 10、50 小时'
-        : '累计专注 10 小时';
-  if (type === 'solo_focus')
-    return (item.count ?? 1) >= 20
-      ? '孤军奋战、独行者、独木成林'
-      : (item.count ?? 1) >= 5
-        ? '孤军奋战、独行者'
-        : '孤军奋战';
-  if (type === 'promise_keeper')
-    return Number(item.metadata?.stage_days ?? 1) >= 30
-      ? '言出必行、初守约定、滴水穿石、久久为功'
-      : Number(item.metadata?.stage_days ?? 1) >= 7
-        ? '言出必行、初守约定、滴水穿石'
-        : Number(item.metadata?.stage_days ?? 1) >= 3
-          ? '言出必行、初守约定'
-          : '言出必行';
-  if (type === 'fellow_travelers')
-    return Number(item.metadata?.stage ?? 3) >= 5
-      ? '三人成行、万家灯火'
-      : '三人成行';
-  return undefined;
 }

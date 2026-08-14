@@ -226,6 +226,14 @@ export interface Achievement {
   achievement_type: string;
   tier?: 'bronze' | 'silver' | 'gold' | 'diamond';
   earned_at: string;
+  /** Optional fields supplied by repeatable-achievement RPCs. */
+  repeatable?: boolean;
+  is_unlock?: boolean;
+  notification_eligible?: boolean;
+  last_unlock_at?: string;
+  last_unlocked_at?: string;
+  unlock_at?: string;
+  unlocked_at?: string;
   metadata?: Record<string, string | number | boolean>;
   participants_recorded?: boolean;
   participants?: Array<{
@@ -237,17 +245,27 @@ export interface Achievement {
   first_earned_at?: string;
   last_earned_at?: string;
   count?: number;
-  events?: Array<{
-    achievement_id?: string;
-    earned_at: string;
-    local_date?: string;
-    source_space_id?: string;
-    metadata?: Record<string, string | number | boolean>;
-    participants?: Array<{
-      member_id: string;
-      display_name: string;
-      participation_days: number;
-    }>;
+  events?: AchievementEvent[];
+}
+
+export interface AchievementEvent {
+  achievement_id?: string;
+  earned_at: string;
+  local_date?: string;
+  source_space_id?: string;
+  metadata?: Record<string, string | number | boolean>;
+  /** Optional event/unlock markers added by repeatability-aware RPCs. */
+  is_unlock?: boolean;
+  notification_eligible?: boolean;
+  is_event?: boolean;
+  is_repeat_event?: boolean;
+  event_kind?: string;
+  event_type?: string;
+  kind?: string;
+  participants?: Array<{
+    member_id: string;
+    display_name: string;
+    participation_days: number;
   }>;
 }
 
