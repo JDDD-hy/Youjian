@@ -31,6 +31,10 @@ insert into public.space_members(id,space_id,user_id,display_name,role) values
   ('20000000-0000-0000-0000-000000000314','10000000-0000-0000-0000-000000000311','00000000-0000-0000-0000-000000000314','Four','member'),
   ('20000000-0000-0000-0000-000000000315','10000000-0000-0000-0000-000000000311','00000000-0000-0000-0000-000000000315','Five','member');
 
+create temporary table repeatability_source_sessions(
+  id uuid primary key
+) on commit drop;
+
 -- Source sessions make the foreign-key and same-session idempotency paths real.
 do $$
 declare sid uuid; i integer;
@@ -46,17 +50,18 @@ begin
       timestamptz '2026-08-01 00:00:00+00'+make_interval(days=>i),
       timestamptz '2026-08-01 01:00:00+00'+make_interval(days=>i),
       'manual_end',3600,timestamptz '2026-08-01 01:00:00+00'+make_interval(days=>i),'UTC'
-    );
+    ) returning id into sid;
+    insert into repeatability_source_sessions values(sid);
   end loop;
 end $$;
 
 select ok(private.record_personal_achievement_event(
   '00000000-0000-0000-0000-000000000301','night_owl','10000000-0000-0000-0000-000000000301',
-  (select id from public.focus_sessions order by id limit 1),'night-first','2026-08-02','2026-08-02 01:00:00+00','{}'
+  (select id from repeatability_source_sessions order by id limit 1),'night-first','2026-08-02','2026-08-02 01:00:00+00','{}'
 ),'one-time achievement accepts its first event');
 select ok(not private.record_personal_achievement_event(
   '00000000-0000-0000-0000-000000000301','night_owl','10000000-0000-0000-0000-000000000301',
-  (select id from public.focus_sessions order by id desc limit 1),'night-second','2026-08-03','2026-08-03 01:00:00+00','{}'
+  (select id from repeatability_source_sessions order by id desc limit 1),'night-second','2026-08-03','2026-08-03 01:00:00+00','{}'
 ),'one-time achievement blocks a later event even with a new key');
 select is((select count(*)::integer from public.personal_achievement_awards where user_id='00000000-0000-0000-0000-000000000301' and achievement_type='night_owl'),1,'one-time history remains one row');
 
@@ -64,7 +69,7 @@ do $$
 declare sid uuid; i integer;
 begin
   for i in 1..21 loop
-    select id into sid from public.focus_sessions order by created_at,id offset i-1 limit 1;
+    select id into sid from repeatability_source_sessions order by id offset i-1 limit 1;
     perform private.record_personal_achievement_event(
       '00000000-0000-0000-0000-000000000301','solo_focus','10000000-0000-0000-0000-000000000301',
       sid,'solo-'||i,'2026-08-01'::date+i,('2026-08-01 02:00:00+00'::timestamptz+make_interval(days=>i)),
@@ -83,17 +88,17 @@ select is((jsonb_path_query_first(public.list_personal_achievements('10000000-00
 reset role;
 select ok(not private.record_personal_achievement_event(
   '00000000-0000-0000-0000-000000000301','solo_focus','10000000-0000-0000-0000-000000000301',
-  (select id from public.focus_sessions order by id limit 1),'solo-1','2026-08-02','2026-08-02 02:00:00+00','{}'
+  (select id from repeatability_source_sessions order by id limit 1),'solo-1','2026-08-02','2026-08-02 02:00:00+00','{}'
 ),'same-session repeat is rejected by the existing unique source-session constraint');
 
 select ok(private.record_personal_achievement_event(
   '00000000-0000-0000-0000-000000000301','return_after_break','10000000-0000-0000-0000-000000000301',
-  (select id from public.focus_sessions order by id limit 1),'legacy-return','2026-08-02','2026-08-02 03:00:00+00','{}'
+  (select id from repeatability_source_sessions order by id limit 1),'legacy-return','2026-08-02','2026-08-02 03:00:00+00','{}'
 ),'legacy one-time row can be created');
 update public.personal_achievements set count=7 where user_id='00000000-0000-0000-0000-000000000301' and achievement_type='return_after_break';
 select ok(not private.record_personal_achievement_event(
   '00000000-0000-0000-0000-000000000301','return_after_break','10000000-0000-0000-0000-000000000301',
-  (select id from public.focus_sessions order by id desc limit 1),'legacy-return-repeat','2026-08-03','2026-08-03 03:00:00+00','{}'
+  (select id from repeatability_source_sessions order by id desc limit 1),'legacy-return-repeat','2026-08-03','2026-08-03 03:00:00+00','{}'
 ),'legacy one-time history blocks new events without recalculation');
 select is((select count from public.personal_achievements where user_id='00000000-0000-0000-0000-000000000301' and achievement_type='return_after_break'),7,'legacy count is preserved');
 
