@@ -30,6 +30,8 @@ const messages: Record<string, string> = {
   INVALID_DISPLAY_NAME: '昵称需要包含 1–20 个字符。',
   INVALID_SPACE_NAME: '友间名称需要包含 1–30 个字符。',
   INVALID_TIMEZONE: '请选择有效的时区。',
+  INVALID_DEADLINE_TITLE: '倒数日名称需要包含 1–40 个字。',
+  INVALID_DEADLINE_DATE: '倒数日日期不能早于今天。',
   INVALID_MEMBER_LIMIT: '成员上限需要在 2–12 人之间。',
   MEMBER_LIMIT_NOT_INCREASED: '新上限必须高于当前成员上限。',
   GOAL_ALREADY_OPEN: '当前已有待投票、待开始或进行中的共同目标。',
