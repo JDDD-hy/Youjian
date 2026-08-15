@@ -3,7 +3,9 @@
 -- six-hour cap that governed them when they started.
 
 alter table public.focus_sessions add column max_focus_seconds integer;
+alter table public.focus_sessions disable trigger settled_focus_sessions_are_immutable;
 update public.focus_sessions set max_focus_seconds=21600 where max_focus_seconds is null;
+alter table public.focus_sessions enable trigger settled_focus_sessions_are_immutable;
 alter table public.focus_sessions
   alter column max_focus_seconds set default 14400,
   alter column max_focus_seconds set not null,

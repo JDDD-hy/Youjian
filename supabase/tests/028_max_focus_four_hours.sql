@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 insert into auth.users(id) values ('00000000-0000-0000-0000-000000000281');
 insert into public.profiles(id,timezone) values ('00000000-0000-0000-0000-000000000281','UTC');
@@ -70,6 +70,7 @@ select is((select max_focus_seconds from public.focus_sessions where task_name='
 insert into public.focus_sessions(id,space_id,user_id,member_id,task_name,category,status,started_at,completed_at,completion_reason,accumulated_focus_seconds,last_seen_at,max_focus_seconds)
 values ('40000000-0000-0000-0000-000000000282','10000000-0000-0000-0000-000000000281','00000000-0000-0000-0000-000000000281','20000000-0000-0000-0000-000000000281','Historical six','study','completed',now()-interval '7 hours',now()-interval '1 hour','manual_end',21600,now()-interval '1 hour',21600);
 select is((select accumulated_focus_seconds from public.focus_sessions where task_name='Historical six'),21600,'historical six-hour records remain valid');
+select is((select tgenabled::text from pg_trigger where tgrelid='public.focus_sessions'::regclass and tgname='settled_focus_sessions_are_immutable'),'O','historical backfill leaves settled-session immutability enabled');
 
 select * from finish();
 rollback;
