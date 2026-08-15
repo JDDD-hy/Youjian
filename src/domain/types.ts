@@ -242,7 +242,7 @@ export interface Achievement {
   last_unlocked_at?: string;
   unlock_at?: string;
   unlocked_at?: string;
-  metadata?: Record<string, string | number | boolean | string[]>;
+  metadata?: Record<string, unknown>;
   participants_recorded?: boolean;
   participants?: Array<{
     member_id: string;
@@ -262,7 +262,7 @@ export interface AchievementEvent {
   earned_at: string;
   local_date?: string;
   source_space_id?: string;
-  metadata?: Record<string, string | number | boolean | string[]>;
+  metadata?: Record<string, unknown>;
   /** Optional event/unlock markers added by repeatability-aware RPCs. */
   is_unlock?: boolean;
   notification_eligible?: boolean;

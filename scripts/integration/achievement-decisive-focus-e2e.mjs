@@ -12,6 +12,7 @@ import {
 } from './achievement-fixture.mjs';
 
 const decisiveTitle = '\u4e00\u9524\u5b9a\u97f3';
+const sharedTitle = '\u5929\u6daf\u5171\u6b64\u65f6';
 const defaultBaseUrl = 'http://127.0.0.1:4173';
 
 async function waitForPreview(baseUrl) {
@@ -92,6 +93,40 @@ async function main() {
     'personal_tab',
   );
 
+  // Keep a known shared card alongside an unregistered historical row. The
+  // latter must remain readable by the RPC without making the whole shared
+  // tab fail its frontend response contract.
+  const sharedDedupeKey = `global-timezones-e2e-${randomKey()}`;
+  const legacyDedupeKey = `legacy-shared-e2e-${randomKey()}`;
+  assert.match(
+    superuserSql(
+      `insert into public.achievements(
+        space_id,achievement_type,dedupe_key,earned_at,metadata,tier,
+        participants_recorded,notification_eligible
+      ) values(
+        '${spaceId}'::uuid,'global_timezones','${sharedDedupeKey}',now(),
+        '{"timezone_count":2,"timezones":["Asia/Shanghai","Europe/Berlin"]}'::jsonb,
+        'silver',true,true
+      ) returning id`,
+    ),
+    /^[0-9a-f-]{36}$/i,
+    'known shared achievement fixture is created',
+  );
+  assert.match(
+    superuserSql(
+      `insert into public.achievements(
+        space_id,achievement_type,dedupe_key,earned_at,metadata,tier,
+        participants_recorded,notification_eligible
+      ) values(
+        '${spaceId}'::uuid,'legacy_shared_key','${legacyDedupeKey}',now(),
+        '{"legacy_payload":{"nested":true}}'::jsonb,
+        'bronze',false,true
+      ) returning id`,
+    ),
+    /^[0-9a-f-]{36}$/i,
+    'unregistered historical achievement fixture is created',
+  );
+
   // Complete the same production path in a real browser context. The
   // backend fixture only supplies the authenticated session and deterministic
   // data; the page, RPC reads, card rendering, tier class, icon, and tab-read
@@ -133,9 +168,14 @@ async function main() {
       { session: sessionResult.data.session },
     );
     const page = await context.newPage();
-    const tabSeenRequest = page.waitForRequest((request) =>
-      request.url().includes('/rest/v1/rpc/mark_achievement_tab_seen'),
-    );
+    const achievementTabRequests = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/rest/v1/rpc/')) {
+        if (request.url().includes('/rest/v1/rpc/mark_achievement_tab_seen')) {
+          achievementTabRequests.push(request.url());
+        }
+      }
+    });
     await page.goto(`/space/${spaceId}/goals`, {
       waitUntil: 'domcontentloaded',
     });
@@ -153,7 +193,34 @@ async function main() {
       1,
       'browser card renders the selected new icon',
     );
-    await tabSeenRequest;
+    assert.ok(
+      achievementTabRequests.length > 0,
+      'personal achievement tab read is sent by the browser',
+    );
+    await page.getByRole('tab', { name: '\u5171\u540c\u6210\u5c31' }).click();
+    const sharedCard = page
+      .locator('article.achievement-card')
+      .filter({ hasText: sharedTitle });
+    await sharedCard.waitFor({ state: 'visible', timeout: 30_000 });
+    assert.match(
+      (await sharedCard.getAttribute('class')) ?? '',
+      /achievement-card--silver/,
+      'shared card remains visible with the catalog tier',
+    );
+    assert.equal(
+      await sharedCard.locator('svg.lucide-plane').count(),
+      1,
+      'shared card renders the selected timezone icon',
+    );
+    assert.equal(
+      await page
+        .getByText('\u65e0\u6cd5\u52a0\u8f7d\u6210\u5c31\u8bb0\u5f55', {
+          exact: true,
+        })
+        .count(),
+      0,
+      'legacy shared metadata does not poison the shared achievement page',
+    );
     await context.close();
   } finally {
     await browser?.close();
