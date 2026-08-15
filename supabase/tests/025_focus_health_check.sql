@@ -11,9 +11,9 @@ insert into public.space_members(id,space_id,user_id,display_name,role) values
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000251',true);
-select is(public.start_focus('10000000-0000-0000-0000-000000000251','Needs policy','study','UTC',1,'30000000-0000-0000-0000-000000000251')#>>'{error,code}','HEALTH_POLICY_ACK_REQUIRED','policy-aware start requires acknowledgement');
-select is(public.acknowledge_focus_health_policy(1)#>>'{data,acknowledged_version}','1','policy v1 acknowledgement is stored');
-select is(public.start_focus('10000000-0000-0000-0000-000000000251','Continue choice','study','UTC',1,'30000000-0000-0000-0000-000000000252')#>>'{data,session,health_check,state}','waiting','new policy-aware session is eligible');
+select is(public.start_focus('10000000-0000-0000-0000-000000000251','Needs policy','study','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000251')#>>'{error,code}','HEALTH_POLICY_ACK_REQUIRED','policy-aware start requires acknowledgement');
+select is(public.acknowledge_focus_health_policy(2,'max_focus_seconds=14400')#>>'{data,acknowledged_version}','2','policy v2 acknowledgement is stored');
+select is(public.start_focus('10000000-0000-0000-0000-000000000251','Continue choice','study','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000252')#>>'{data,session,health_check,state}','waiting','new policy-aware session is eligible');
 reset role;
 
 update public.focus_sessions set active_segment_started_at=now()-interval '2 hours' where task_name='Continue choice';
@@ -27,7 +27,7 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000251'
 select is(public.respond_focus_health_check((select id from public.focus_sessions where task_name='Continue choice'),'continue','30000000-0000-0000-0000-000000000253')#>>'{data,session,health_check,state}','continued','continue resolves the check without ending focus');
 select is(public.end_focus((select id from public.focus_sessions where task_name='Continue choice'),'30000000-0000-0000-0000-000000000254')#>>'{data,session,completion_reason}','manual_end','continued session still ends normally');
 
-select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Timeout choice','work','UTC',1,'30000000-0000-0000-0000-000000000255')$$,'second eligible session starts');
+select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Timeout choice','work','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000255')$$,'second eligible session starts');
 reset role;
 update public.focus_sessions set active_segment_started_at=now()-interval '2 hours 1 minute 5 seconds' where task_name='Timeout choice';
 update public.focus_segments set started_at=now()-interval '2 hours 1 minute 5 seconds' where session_id=(select id from public.focus_sessions where task_name='Timeout choice') and ended_at is null;
@@ -39,7 +39,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000251',true);
 select is(public.respond_focus_health_check((select id from public.focus_sessions where task_name='Timeout choice'),'continue','30000000-0000-0000-0000-000000000256')#>>'{error,code}','SESSION_NOT_ACTIVE','late continue cannot revive a timed-out session');
 
-select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Recent rest','reading','UTC',1,'30000000-0000-0000-0000-000000000257')$$,'recent-rest scenario starts');
+select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Recent rest','reading','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000257')$$,'recent-rest scenario starts');
 reset role;
 update public.focus_sessions set active_segment_started_at=now()-interval '95 minutes' where task_name='Recent rest';
 update public.focus_segments set started_at=now()-interval '95 minutes' where session_id=(select id from public.focus_sessions where task_name='Recent rest') and ended_at is null;
@@ -62,7 +62,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000251',true);
 select lives_ok($$select public.end_focus((select id from public.focus_sessions where task_name='Recent rest'),'30000000-0000-0000-0000-000000000260')$$,'exempt session can end normally');
 
-select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Pending rest','study','UTC',1,'30000000-0000-0000-0000-000000000262')$$,'pending-rest scenario starts');
+select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Pending rest','study','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000262')$$,'pending-rest scenario starts');
 reset role;
 update public.focus_sessions set active_segment_started_at=now()-interval '2 hours' where task_name='Pending rest';
 update public.focus_segments set started_at=now()-interval '2 hours' where session_id=(select id from public.focus_sessions where task_name='Pending rest') and ended_at is null;
@@ -81,7 +81,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000251',true);
 select lives_ok($$select public.end_focus((select id from public.focus_sessions where task_name='Pending rest'),'30000000-0000-0000-0000-000000000264')$$,'pause-satisfied session can end normally');
 
-select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Short pending rest','study','UTC',1,'30000000-0000-0000-0000-000000000265')$$,'short pending-rest scenario starts');
+select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Short pending rest','study','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000265')$$,'short pending-rest scenario starts');
 reset role;
 update public.focus_sessions set active_segment_started_at=now()-interval '2 hours' where task_name='Short pending rest';
 update public.focus_segments set started_at=now()-interval '2 hours' where session_id=(select id from public.focus_sessions where task_name='Short pending rest') and ended_at is null;
@@ -103,7 +103,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000251',true);
 select lives_ok($$select public.respond_focus_health_check((select id from public.focus_sessions where task_name='Short pending rest'),'end','30000000-0000-0000-0000-000000000268')$$,'resumed pending check can be accepted');
 
-select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Emergency off','other','UTC',1,'30000000-0000-0000-0000-000000000261')$$,'emergency-switch scenario starts');
+select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000251','Emergency off','other','UTC',2,'max_focus_seconds=14400','30000000-0000-0000-0000-000000000261')$$,'emergency-switch scenario starts');
 reset role;
 update public.focus_sessions set active_segment_started_at=now()-interval '2 hours' where task_name='Emergency off';
 update public.focus_segments set started_at=now()-interval '2 hours' where session_id=(select id from public.focus_sessions where task_name='Emergency off') and ended_at is null;

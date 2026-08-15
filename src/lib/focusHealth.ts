@@ -56,7 +56,7 @@ export async function showFocusHealthResultNotification(
       ? '友间 · 灯已自动收起'
       : '友间 · 灯已收起';
   const body = continued
-    ? '已继续本次专注，之后不再进行休息询问，最长可继续至六小时。'
+    ? `已继续本次专注，之后不再进行休息询问，最长可继续至${formatDuration(session.max_focus_seconds ?? 14400)}。`
     : `${automatic ? '两个小时已经走过，本次专注已自动结束。\n' : ''}本次共专注 ${formatDuration(session.credited_focus_seconds ?? 0)}。`;
   await registration.showNotification(title, {
     body,

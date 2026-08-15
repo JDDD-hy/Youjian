@@ -50,7 +50,7 @@ jobs:
             'maintenance_last_age_seconds',(select extract(epoch from now()-started_at)::int from private.maintenance_runs where source='cron' order by started_at desc,id desc limit 1),
             'rpc_internal_errors_15m',(select count(*) from private.rpc_internal_errors where occurred_at>=now()-interval '15 minutes'),
             'client_errors_15m',(select count(*) from private.client_error_reports where occurred_at>=now()-interval '15 minutes'),
-            'overdue_sessions',(select count(*) from public.focus_sessions where (status='paused' and paused_at+interval '15 minutes'<=now()) or (status='focusing' and active_segment_started_at+make_interval(secs=>21600-accumulated_focus_seconds)<=now()))
+            'overdue_sessions',(select count(*) from public.focus_sessions where (status='paused' and paused_at+interval '15 minutes'<=now()) or (status='focusing' and active_segment_started_at+make_interval(secs=>max_focus_seconds-accumulated_focus_seconds)<=now()))
           ) as health
           """
           body = json.dumps({'query': query, 'read_only': True}).encode('utf-8')
