@@ -67,7 +67,7 @@ const health = JSON.parse(
         (select count(*) from private.maintenance_runs where source='cron' and started_at>=now()-interval '24 hours' and duration_ms>50000)::int slow_cron_runs_24h,
         (select count(*) from public.focus_sessions where
           (status='paused' and paused_at+interval '15 minutes'<=now()) or
-          (status='focusing' and active_segment_started_at+make_interval(secs=>21600-accumulated_focus_seconds)<=now()) or
+          (status='focusing' and active_segment_started_at+make_interval(secs=>max_focus_seconds-accumulated_focus_seconds)<=now()) or
           (health_check_state='waiting' and status='focusing' and active_segment_started_at+make_interval(secs=>7200-accumulated_focus_seconds)<=now()) or
           (health_check_state='pending' and status='focusing' and health_check_deadline_at<=now()) or
           (health_check_state='pending' and status='paused' and paused_at+interval '5 minutes'<=now()))::int overdue_sessions,

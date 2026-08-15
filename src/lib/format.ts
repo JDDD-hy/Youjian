@@ -28,7 +28,7 @@ export const periodLabels: Record<PeriodType, string> = {
 export const completionLabels: Record<CompletionReason, string> = {
   manual_end: '主动结束',
   pause_timeout: '暂停满 15 分钟自动结束',
-  focus_limit: '达到 6 小时上限自动结束',
+  focus_limit: '达到单次专注上限自动结束',
   member_disabled: '成员停用时结束',
   health_check_accepted: '两小时专注后主动结束',
   health_check_timeout: '两小时专注后自动结束',

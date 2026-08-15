@@ -59,16 +59,16 @@ select is((select result->>'ok' from manual_end_result),'true','manual end succe
 select is((select status::text from public.goals where id='60000000-0000-0000-0000-000000000115'),'completed','manual end recalculates and completes the active goal in the same transaction');
 select is((select actor_id from public.focus_events where session_id='40000000-0000-0000-0000-000000000115' and event_type='completed'),'00000000-0000-0000-0000-000000000111'::uuid,'manual completion event records the authenticated actor');
 
--- A connection interval detected after the precise six-hour cutoff must not remain open.
+-- A connection interval detected after the precise four-hour cutoff must not remain open.
 insert into public.focus_sessions(id,space_id,user_id,member_id,task_name,status,active_segment_started_at,started_at,last_seen_at) values
- ('40000000-0000-0000-0000-000000000114','10000000-0000-0000-0000-000000000111','00000000-0000-0000-0000-000000000111','20000000-0000-0000-0000-000000000111','Six hour cutoff','focusing',now()-interval '21610 seconds',now()-interval '21610 seconds',now()-interval '10 seconds');
+ ('40000000-0000-0000-0000-000000000114','10000000-0000-0000-0000-000000000111','00000000-0000-0000-0000-000000000111','20000000-0000-0000-0000-000000000111','Four hour cutoff','focusing',now()-interval '14410 seconds',now()-interval '14410 seconds',now()-interval '10 seconds');
 insert into public.focus_segments(session_id,started_at) values
- ('40000000-0000-0000-0000-000000000114',now()-interval '21610 seconds');
+ ('40000000-0000-0000-0000-000000000114',now()-interval '14410 seconds');
 insert into public.focus_connection_intervals(session_id,started_at,detected_from_last_seen_at) values
  ('40000000-0000-0000-0000-000000000114',now()-interval '5 seconds',now()-interval '10 seconds');
-select lives_ok($$select public.finish_focus_session('40000000-0000-0000-0000-000000000114',now(),'focus_limit')$$,'six-hour auto settlement accepts a post-cutoff open connection interval');
-select is((select accumulated_focus_seconds from public.focus_sessions where id='40000000-0000-0000-0000-000000000114'),21600,'six-hour settlement credits exactly the cap');
-select is((select count(*)::int from public.focus_connection_intervals where session_id='40000000-0000-0000-0000-000000000114' and ended_at is null),0,'six-hour settlement leaves no open connection interval');
+select lives_ok($$select public.finish_focus_session('40000000-0000-0000-0000-000000000114',now(),'focus_limit')$$,'four-hour auto settlement accepts a post-cutoff open connection interval');
+select is((select accumulated_focus_seconds from public.focus_sessions where id='40000000-0000-0000-0000-000000000114'),14400,'four-hour settlement credits exactly the cap');
+select is((select count(*)::int from public.focus_connection_intervals where session_id='40000000-0000-0000-0000-000000000114' and ended_at is null),0,'four-hour settlement leaves no open connection interval');
 
 -- A proposal accepted near expiry starts in the next period after approval, not creation.
 insert into public.goal_proposals(id,space_id,proposer_member_id,goal_type,period_type,target_value,status,expires_at,effective_period_start,created_at) values

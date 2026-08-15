@@ -43,11 +43,11 @@ select is((select accumulated_focus_seconds from public.focus_sessions where tas
 
 select lives_ok($$select public.start_focus('10000000-0000-0000-0000-000000000021','Limit','exercise','30000000-0000-0000-0000-000000000028')$$,'limit scenario starts');
 reset role;
-update public.focus_sessions set active_segment_started_at=now()-interval '21604 seconds' where status='focusing'; update public.focus_segments set started_at=now()-interval '21604 seconds' where ended_at is null;
+update public.focus_sessions set active_segment_started_at=now()-interval '14404 seconds' where status='focusing'; update public.focus_segments set started_at=now()-interval '14404 seconds' where ended_at is null;
 select lives_ok($$select public.run_minute_maintenance()$$,'late cron settles due focus');
-select is((select accumulated_focus_seconds from public.focus_sessions where task_name='Limit'),21600,'late cron caps focus at exactly six hours');
-select is((select completion_reason::text from public.focus_sessions where task_name='Limit'),'focus_limit','six-hour reason is authoritative');
-select is((select extract(epoch from(s.completed_at-g.started_at))::int from public.focus_sessions s join public.focus_segments g on g.session_id=s.id where s.task_name='Limit'),21600,'completion timestamp is exact cutoff, not cron time');
+select is((select accumulated_focus_seconds from public.focus_sessions where task_name='Limit'),14400,'late cron caps new focus at exactly four hours');
+select is((select completion_reason::text from public.focus_sessions where task_name='Limit'),'focus_limit','four-hour reason is authoritative');
+select is((select extract(epoch from(s.completed_at-g.started_at))::int from public.focus_sessions s join public.focus_segments g on g.session_id=s.id where s.task_name='Limit'),14400,'completion timestamp is exact cutoff, not cron time');
 set local role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000021',true);
 select is(public.end_focus((select id from public.focus_sessions where task_name='Limit'),'30000000-0000-0000-0000-000000000029')#>>'{data,session,completion_reason}','focus_limit','end after cron preserves final reason');
 select is((select count(*)::int from public.focus_events e join public.focus_sessions s on s.id=e.session_id where s.task_name='Limit' and e.event_type='completed'),1,'cron/end race leaves one completion event');

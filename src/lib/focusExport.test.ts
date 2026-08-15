@@ -199,4 +199,88 @@ describe('focus Markdown export', () => {
     expect(result.content).toContain('| effective_focus | 2 | 0:00:02 |');
     expect(result.content).not.toContain('\n+schema:');
   });
+
+  it('preserves mixed historical six-hour and new four-hour limit sessions', async () => {
+    const makeLimitSession = (
+      sessionId: string,
+      startedAt: string,
+      completedAt: string,
+      creditedSeconds: number,
+      maxFocusSeconds: number,
+    ): { history: HistoryItem; detail: FocusSessionDetail } => {
+      const limitHistory: HistoryItem = {
+        ...history,
+        session_id: sessionId,
+        started_at: startedAt,
+        completed_at: completedAt,
+        credited_focus_seconds: creditedSeconds,
+        completion_reason: 'focus_limit',
+      };
+      return {
+        history: limitHistory,
+        detail: {
+          ...detail,
+          session: {
+            ...detail.session,
+            session_id: sessionId,
+            started_at: startedAt,
+            completed_at: completedAt,
+            accumulated_focus_seconds: creditedSeconds,
+            credited_focus_seconds: creditedSeconds,
+            completion_reason: 'focus_limit',
+            max_focus_seconds: maxFocusSeconds,
+            task_history: [],
+          },
+          segments: [{ started_at: startedAt, ended_at: completedAt }],
+          settlement: { reason: 'focus_limit', counts_toward_stats: true },
+        },
+      };
+    };
+    const oldSixHour = makeLimitSession(
+      '00000000-0000-4000-8000-000000000010',
+      '2026-08-03T00:00:00Z',
+      '2026-08-03T06:00:00Z',
+      21600,
+      21600,
+    );
+    const newFourHour = makeLimitSession(
+      '00000000-0000-4000-8000-000000000011',
+      '2026-08-04T00:00:00Z',
+      '2026-08-04T04:00:00Z',
+      14400,
+      14400,
+    );
+    const result = await buildFocusExport({
+      period: 'weekly',
+      summary: {
+        ...summary,
+        credited_focus_seconds: 36000,
+        valid_session_count: 2,
+        days: [
+          {
+            local_date: '2026-08-03',
+            credited_focus_seconds: 21600,
+            checkin_completed: true,
+          },
+          {
+            local_date: '2026-08-04',
+            credited_focus_seconds: 14400,
+            checkin_completed: true,
+          },
+        ],
+      },
+      space: { id: detail.session.space_id, name: 'Research room' },
+      memberId: history.member.member_id,
+      sessions: [oldSixHour, newFourHour],
+      exportedAt: '2026-08-10T00:00:01Z',
+      dataUntil: '2026-08-10T00:00:01Z',
+    });
+
+    expect(result.content).toContain('schema_version: 1.1.0');
+    expect(result.content).toContain('calculation_version: 1');
+    expect(result.content).toContain('| effective_focus | 36000 | 10:00:00 |');
+    expect(result.content).toContain('focus_limit\t2');
+    expect(result.content).toContain('\t21600\t');
+    expect(result.content).toContain('\t14400\t');
+  });
 });

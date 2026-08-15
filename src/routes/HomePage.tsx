@@ -26,6 +26,13 @@ import { Lamp } from '../components/Lamp';
 import { AccessibleModal } from '../components/AccessibleModal';
 import { useIntentKey } from '../hooks/useIntentKey';
 import { assertRouteSpace } from '../lib/spaceBoundary';
+import {
+  FOCUS_POLICY_CONTRACT,
+  SUPPORTED_HEALTH_POLICY_VERSION,
+  focusPolicyAcknowledgementParams,
+  focusPolicyStartParams,
+  supportsHealthPolicy,
+} from '../lib/focusPolicy';
 import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
 import { achievementTitle } from '../domain/achievementTier';
 import { achievementReadIntentKey } from '../domain/achievementCatalog';
@@ -458,7 +465,7 @@ function SettledNotice({
     reason === 'pause_timeout'
       ? '因暂停超过 15 分钟，本次已自动结束。'
       : reason === 'focus_limit'
-        ? '本次已达到 6 小时上限并自动结束。长时间专注后请适当休息。'
+        ? '本次已达到单次专注上限并自动结束。长时间专注后请适当休息。'
         : reason === 'health_check_accepted'
           ? '两小时专注后，你主动收起了这一盏灯。'
           : reason === 'health_check_timeout'
@@ -591,7 +598,7 @@ function FocusPanel({
       {session.auto_settle_at &&
         Date.parse(session.auto_settle_at) - now <= 30 * 60 * 1000 && (
           <p className="limit-note">
-            距离 6 小时上限还有{' '}
+            距离本次专注上限还有{' '}
             {formatDuration((Date.parse(session.auto_settle_at) - now) / 1000)}
           </p>
         )}
@@ -903,10 +910,14 @@ export function HomePage() {
       throw new ApiError('NETWORK_UNCONFIRMED');
     }
     const policy = query.data?.snapshot.health_check_policy;
+    if (policy && !supportsHealthPolicy(policy.current_version)) {
+      throw new ApiError('CLIENT_UPDATE_REQUIRED');
+    }
     if (acknowledgePolicy) {
-      await rpc('acknowledge_focus_health_policy', {
-        policy_version: policy?.current_version ?? 1,
-      });
+      await rpc(
+        'acknowledge_focus_health_policy',
+        focusPolicyAcknowledgementParams(),
+      );
     }
     const timezone = getDeviceTimezone();
     await command.mutateAsync(
@@ -917,12 +928,10 @@ export function HomePage() {
           task_name: task,
           category,
           timezone,
-          ...(policy?.enabled
-            ? { health_check_policy_version: policy.current_version }
-            : {}),
+          ...focusPolicyStartParams(),
         },
         key: commandIntent.get(
-          `start_focus:${spaceId}:${task}:${category}:${timezone}:${policy?.enabled ? policy.current_version : 0}`,
+          `start_focus:${spaceId}:${task}:${category}:${timezone}:${SUPPORTED_HEALTH_POLICY_VERSION}:${FOCUS_POLICY_CONTRACT}`,
         ),
       },
       { onSuccess: () => setDrawer(false) },

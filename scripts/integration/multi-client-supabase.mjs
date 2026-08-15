@@ -504,7 +504,7 @@ async function main() {
   );
   const endRaceSessionId = endRaceStart.session.session_id;
   await setSessionTiming(endRaceSessionId, {
-    activeStartedAt: new Date(Date.now() - (6 * 60 + 1) * 60_000).toISOString(),
+    activeStartedAt: new Date(Date.now() - (4 * 60 + 1) * 60_000).toISOString(),
   });
   const [endRaceResult] = await Promise.all([
     rpc(memberTwo.supabase, 'end_focus', {
@@ -527,7 +527,7 @@ async function main() {
     'manual end versus maintenance caps duration and settles exactly once',
     endRaceFinal.data.status === 'completed' &&
       endRaceFinal.data.completion_reason === 'focus_limit' &&
-      endRaceFinal.data.accumulated_focus_seconds === 21600,
+      endRaceFinal.data.accumulated_focus_seconds === 14400,
   );
   const completionEvents = await memberTwo.supabase
     .from('focus_events')

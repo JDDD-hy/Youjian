@@ -61,6 +61,7 @@ const messages: Record<string, string> = {
   IDEMPOTENCY_KEY_REUSED: '请求标识已用于其他操作，请重新提交。',
   HEALTH_POLICY_ACK_REQUIRED: '请先阅读并确认两小时健康检查规则。',
   INVALID_POLICY_VERSION: '健康检查规则版本无效，请刷新后重试。',
+  CLIENT_UPDATE_REQUIRED: '健康检查规则已更新，请刷新页面后再开始专注。',
   INVALID_HEALTH_CHECK_CHOICE: '请选择结束或继续专注。',
   HEALTH_CHECK_NOT_PENDING: '健康检查状态已更新，正在同步服务器结果。',
 };

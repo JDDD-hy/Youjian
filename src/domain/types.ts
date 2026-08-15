@@ -56,6 +56,7 @@ export interface FocusSession {
   active_segment_started_at: string | null;
   paused_at: string | null;
   auto_settle_at: string | null;
+  max_focus_seconds?: number;
   completed_at: string | null;
   completion_reason: CompletionReason | null;
   health_check?: {
