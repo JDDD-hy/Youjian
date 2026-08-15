@@ -1070,6 +1070,22 @@ a:focus-visible {
 .deadline-editor__field:first-of-type input {
   padding-right: 54px;
 }
+.deadline-editor__date-input--empty {
+  color: transparent;
+}
+.deadline-editor__date-input--empty::-webkit-datetime-edit {
+  color: transparent;
+}
+.deadline-editor__date-placeholder {
+  position: absolute;
+  left: 14px;
+  bottom: 15px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+}
 .deadline-editor__error {
   margin: 0;
   color: #a3473f;

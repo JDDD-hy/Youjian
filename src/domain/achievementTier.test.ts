@@ -79,6 +79,14 @@ describe('achievement presentation rules', () => {
     ).toBeUndefined();
   });
 
+  it('does not show an earned label for a single-stage achievement', () => {
+    expect(
+      achievementStages(
+        achievement({ achievement_type: 'night_owl', attained_stage: 1 }),
+      ),
+    ).toBeUndefined();
+  });
+
   it('does not render a focus milestone before its first threshold', () => {
     expect(
       isAchievementUnlocked(

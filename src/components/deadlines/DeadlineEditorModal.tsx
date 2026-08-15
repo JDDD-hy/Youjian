@@ -111,12 +111,24 @@ export function DeadlineEditorModal({
           <input
             id="deadline-date-input"
             type="date"
+            aria-label="日期"
+            className={
+              targetDate ? undefined : 'deadline-editor__date-input--empty'
+            }
             value={targetDate}
             min={today}
             aria-invalid={Boolean(dateError)}
             aria-describedby={dateError ? 'deadline-date-error' : undefined}
             onChange={(event) => setTargetDate(event.target.value)}
           />
+          {!targetDate && (
+            <span
+              className="deadline-editor__date-placeholder"
+              aria-hidden="true"
+            >
+              yyyy/mm/dd
+            </span>
+          )}
           {dateError && (
             <small id="deadline-date-error" className="deadline-editor__error">
               {dateError}

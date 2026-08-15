@@ -26,6 +26,7 @@ describe('DeadlineEditorModal', () => {
     );
     const save = screen.getByRole('button', { name: '保存倒数日' });
     expect(screen.getByPlaceholderText('例如：你的Deadline')).toHaveValue('');
+    expect(screen.getByText('yyyy/mm/dd')).toBeInTheDocument();
     expect(save).toBeDisabled();
     await user.type(screen.getByRole('textbox', { name: /目标/ }), '  法考  ');
     const today = localDateValue();

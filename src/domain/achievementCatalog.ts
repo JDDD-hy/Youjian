@@ -159,7 +159,7 @@ export function achievementStagesFor(
   item: Achievement,
   strategy = achievementStrategy(item.achievement_type),
 ) {
-  if (!strategy) return undefined;
+  if (!strategy || strategy.repeat_policy !== 'series') return undefined;
   const stage = attainedAchievementStage(item, strategy);
   if (stage === 0) return undefined;
   const titles = strategy.stage_thresholds
