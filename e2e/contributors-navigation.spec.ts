@@ -112,6 +112,10 @@ test('contributors logo returns home with the persisted identity', async ({
     await page.goto('./feature-contributors.html');
   }
   await expect(page).toHaveURL(/feature-contributors\.html$/);
+  const deadlineContributorRow = page
+    .locator('tbody tr')
+    .filter({ hasText: 'DDL Reminder' });
+  await expect(deadlineContributorRow).toContainText('Juuuu, Jade');
 
   await page.locator('a[data-app-home]').click();
   await expect(page).toHaveURL(/\/$/);
