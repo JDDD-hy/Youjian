@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { BrandLogo } from '../components/BrandLogo';
 import { loadMembership, readCachedMembership } from '../lib/membership';
 import { ErrorState } from '../components/AsyncState';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { getPwaInstallSnapshot } from '../lib/pwaInstall';
 
 export function WelcomePage() {
   const membership = useQuery({
@@ -14,6 +15,9 @@ export function WelcomePage() {
   const online = useOnlineStatus();
   const active = membership.data?.membership;
   const cached = readCachedMembership()?.membership;
+  if (active && getPwaInstallSnapshot().installed) {
+    return <Navigate to={`/space/${active.space_id}`} replace />;
+  }
   return (
     <main className="welcome-shell">
       <section className="welcome-card" aria-labelledby="welcome-title">

@@ -10,6 +10,15 @@ export async function rotateRecoveryCodes() {
   return rpc<RecoveryCodeSet>('rotate_identity_recovery_codes');
 }
 
+export function normalizeRecoveryCredentialInput(value: string) {
+  return value
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
+    .replace(/^\d+\s*[.)、]\s*/, '')
+    .replace(/\s+/g, '');
+}
+
 export function recoveryCodesText(
   codes: string[],
   displayName: string,
