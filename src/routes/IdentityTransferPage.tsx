@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TurnstileField } from '../components/TurnstileField';
 import { Icon } from '../components/Icons';
+import { normalizeRecoveryCredentialInput } from '../lib/recoveryCodes';
 import { ensureAnonymousSession, rpc } from '../lib/api';
 import { loadMembership } from '../lib/membership';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -30,7 +31,7 @@ export function IdentityTransferPage() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            const transferCode = code.trim();
+            const transferCode = normalizeRecoveryCredentialInput(code);
             const isTransferCode = /^[A-Za-z0-9_-]{32}$/.test(transferCode);
             const isRecoveryCode = /^[A-Za-z0-9_-]{22}$/.test(transferCode);
             if (!isTransferCode && !isRecoveryCode) {
@@ -73,12 +74,15 @@ export function IdentityTransferPage() {
             <input
               autoFocus
               autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
               inputMode="text"
-              maxLength={32}
+              maxLength={64}
+              spellCheck={false}
               value={code}
-              onChange={(event) => setCode(event.target.value.trim())}
+              onChange={(event) => setCode(event.target.value)}
               aria-invalid={Boolean(error)}
-              placeholder="32 位一次性身份码"
+              placeholder="22 位恢复码或 32 位一次性身份码"
             />
           </label>
           <TurnstileField onToken={setCaptchaToken} />

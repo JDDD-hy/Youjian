@@ -1719,6 +1719,7 @@ a:focus-visible {
   font-weight: 700;
 }
 .stats-export-picker {
+  position: relative;
   width: 100%;
   min-height: 64px;
   padding: 0 16px 0 18px;
@@ -1742,7 +1743,7 @@ a:focus-visible {
   border-color: #cfc2af;
   background: #f2ede5;
 }
-.stats-export-picker:focus-visible {
+.stats-export-picker:focus-within {
   border-color: #c6a65b;
   outline: 0;
   box-shadow: 0 0 0 3px rgb(198 166 91 / 14%);
@@ -1763,13 +1764,12 @@ a:focus-visible {
   color: #8d8171;
 }
 .stats-export-picker__input {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 .stats-export-note {
   margin: 22px 0 0;
