@@ -14,6 +14,7 @@ import {
   formatLocalDateTime,
   getDeviceTimezone,
 } from '../lib/format';
+import { focusTimezoneLabel } from '../lib/focusTimezoneLabel';
 import { calculateFocusSeconds, useServerClock } from '../hooks/useServerClock';
 import {
   type ConnectionState,
@@ -834,11 +835,10 @@ export function HomePage() {
                 queryKey: ['home', spaceId],
               });
             }}
-            timezoneLabel={
-              session.timezone_snapshot !== data.space.timezone
-                ? `当地 ${session.timezone_snapshot}`
-                : undefined
-            }
+            timezoneLabel={focusTimezoneLabel(
+              session.timezone_snapshot,
+              data.space.timezone,
+            )}
           />
           {(session.status === 'focusing' || session.status === 'paused') && (
             <>
@@ -929,7 +929,7 @@ export function HomePage() {
                       <h3>{member.display_name}</h3>
                       {member.timezone_snapshot !== data.space.timezone && (
                         <span className="member-card__timezone">
-                          当地 {member.timezone_snapshot}
+                          {member.timezone_snapshot}
                         </span>
                       )}
                     </div>

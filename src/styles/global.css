@@ -2122,6 +2122,7 @@ a:focus-visible {
   font-size: 0.64rem;
   font-weight: 600;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 .focus-panel__status-line,
 .member-card__name-line {
