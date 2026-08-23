@@ -76,4 +76,22 @@ describe('central achievement strategy catalog', () => {
     expect(achievementReadIntentKey(item)).toBe('shared_card:global_timezones');
     expect(isSharedAchievementReadTarget(item)).toBe(true);
   });
+
+  it('defines the entertainment focus achievement consistently', () => {
+    const strategy = achievementStrategy('joyful_pursuit');
+    expect(strategy).toMatchObject({
+      evaluator_id: 'focus.category_session',
+      icon: 'gamepad_2',
+      repeat_policy: 'once',
+      tier_policy: { kind: 'fixed', tier: 'gold' },
+    });
+    expect(strategy?.stage_thresholds).toEqual([
+      {
+        stage: 1,
+        threshold: 10,
+        stage_key: 'joyful_pursuit',
+        title: '乐在其中',
+      },
+    ]);
+  });
 });

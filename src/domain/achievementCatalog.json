@@ -797,6 +797,36 @@
       "condition": "完成 10 次最终类型为“阅读”的有效专注 session。"
     },
     {
+      "key": "joyful_pursuit",
+      "scope": "personal",
+      "repeat_policy": "once",
+      "event_unit": "session",
+      "metric": "count",
+      "stage_thresholds": [
+        {
+          "stage": 1,
+          "threshold": 10,
+          "stage_key": "joyful_pursuit",
+          "title": "乐在其中"
+        }
+      ],
+      "max_stage_behavior": "ignore_after_unlock",
+      "notification_policy": "first_unlock",
+      "participant_policy": "owner",
+      "time_boundary": "none",
+      "legacy_aliases": [],
+      "evaluator_id": "focus.category_session",
+      "counter_scope": "user_lifetime",
+      "event_key_policy": "focus_session_id",
+      "activation_boundary": "catalog_v1",
+      "display_policy": "attained_stage_only",
+      "read_target": "personal_tab",
+      "tier_policy": { "kind": "fixed", "tier": "gold" },
+      "icon": "gamepad_2",
+      "series": null,
+      "condition": "完成 10 次最终类型为“娱乐”的有效专注 session。"
+    },
+    {
       "key": "mystery_work",
       "scope": "personal",
       "repeat_policy": "once",

@@ -121,7 +121,7 @@ export function FocusPanel({
       <section className="focus-panel focus-panel--paused">
         <div className="pause-stage">
           <div className="focus-panel__lamp-zone">
-            <Lamp state="paused" />
+            <Lamp state="paused" category={session.category} />
             {lampOverlay}
           </div>
           <div className="focus-panel__task-zone">
@@ -175,7 +175,7 @@ export function FocusPanel({
   return (
     <section className="focus-panel focus-panel--active">
       <div className="focus-panel__lamp-zone">
-        <Lamp state="focusing" />
+        <Lamp state="focusing" category={session.category} />
         {lampOverlay}
       </div>
       <div className="focus-panel__task-zone">

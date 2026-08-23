@@ -52,4 +52,43 @@ describe('FocusPanel', () => {
     expect(taskZone).toHaveTextContent('00:02:00');
     expect(taskZone).not.toContainElement(screen.getByTestId('lamp-overlay'));
   });
+
+  it('switches the entertainment lamp with the authoritative session state', () => {
+    const props = {
+      now: Date.parse('2026-08-15T08:01:00.000Z'),
+      connection: 'connected' as const,
+      pending: false,
+      onPause: vi.fn(),
+      onResume: vi.fn(),
+      onEnd: vi.fn(),
+      onEdit: vi.fn(),
+      onDismiss: vi.fn(),
+    };
+    const entertainment = {
+      ...session,
+      category: 'entertainment' as const,
+    };
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <FocusPanel session={entertainment} {...props} />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('.lamp')).toHaveAttribute(
+      'data-lamp-variant',
+      'entertainment-focusing',
+    );
+
+    rerender(
+      <MemoryRouter>
+        <FocusPanel
+          session={{ ...entertainment, status: 'paused' }}
+          {...props}
+        />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('.lamp')).toHaveAttribute(
+      'data-lamp-variant',
+      'paused',
+    );
+  });
 });

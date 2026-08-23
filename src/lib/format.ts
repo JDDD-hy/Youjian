@@ -10,6 +10,7 @@ export const categoryLabels: Record<FocusCategory, string> = {
   work: '工作',
   reading: '阅读',
   exercise: '运动',
+  entertainment: '娱乐',
   other: '其他',
 };
 

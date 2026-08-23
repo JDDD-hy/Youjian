@@ -1,5 +1,6 @@
 export type MemberRole = 'owner' | 'member';
-export type FocusCategory = 'study' | 'work' | 'reading' | 'exercise' | 'other';
+export type FocusCategory =
+  'study' | 'work' | 'reading' | 'exercise' | 'entertainment' | 'other';
 export type FocusStatus = 'focusing' | 'paused' | 'completed' | 'discarded';
 export type CompletionReason =
   | 'manual_end'

@@ -46,6 +46,7 @@ import {
   applyPersonalDailyGoal,
   type PersonalDailyGoalResult,
 } from '../lib/personalDailyGoal';
+import { applyAuthoritativeFocusSession } from '../domain/homeFocusSession';
 
 const connectionCopy: Partial<Record<ConnectionState, string>> = {
   realtime_degraded: '实时更新暂时中断，正在重连',
@@ -465,6 +466,14 @@ export function HomePage() {
   const updateSession = (session: FocusSession) => {
     if (session.status === 'completed' || session.status === 'discarded')
       setLocalSettled(session);
+    queryClient.setQueryData<SnapshotResult>(['home', spaceId], (current) =>
+      current
+        ? {
+            ...current,
+            snapshot: applyAuthoritativeFocusSession(current.snapshot, session),
+          }
+        : current,
+    );
     void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
   };
   const validateActiveSession = useCallback(
@@ -923,7 +932,7 @@ export function HomePage() {
               .slice(0, showAllFriends ? undefined : 4)
               .map((member) => (
                 <article className="member-card" key={member.member_id}>
-                  <Lamp state="focusing" compact />
+                  <Lamp state="focusing" category={member.category} compact />
                   <div>
                     <div className="member-card__name-line">
                       <h3>{member.display_name}</h3>
