@@ -1,6 +1,12 @@
 export type MemberRole = 'owner' | 'member';
 export type FocusCategory =
-  'study' | 'work' | 'reading' | 'exercise' | 'entertainment' | 'other';
+  | 'study'
+  | 'work'
+  | 'reading'
+  | 'exercise'
+  | 'life'
+  | 'entertainment'
+  | 'other';
 export type FocusStatus = 'focusing' | 'paused' | 'completed' | 'discarded';
 export type CompletionReason =
   | 'manual_end'

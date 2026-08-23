@@ -85,6 +85,44 @@ const summary: StatsSummary = {
 };
 
 describe('focus Markdown export', () => {
+  it('exports life and entertainment categories in the task dictionary', async () => {
+    const categorizedDetail: FocusSessionDetail = {
+      ...detail,
+      session: {
+        ...detail.session,
+        category: 'entertainment',
+        task_history: [
+          {
+            task_name: 'Tidy room',
+            category: 'life',
+            changed_at: '2026-08-03T00:30:00Z',
+          },
+        ],
+      },
+    };
+    const result = await buildFocusExport({
+      period: 'weekly',
+      summary,
+      space: { id: detail.session.space_id, name: 'Research room' },
+      memberId: history.member.member_id,
+      sessions: [
+        {
+          history: {
+            ...history,
+            task_name: 'Play a game',
+            category: 'entertainment',
+          },
+          detail: categorizedDetail,
+        },
+      ],
+      exportedAt: '2026-08-10T00:00:01Z',
+      dataUntil: '2026-08-10T00:00:01Z',
+    });
+
+    expect(result.content).toMatch(/\tlife\tTidy room/);
+    expect(result.content).toMatch(/\tentertainment\tPlay a game/);
+  });
+
   it('builds a compact English, self-contained and privacy-scoped report', async () => {
     const result = await buildFocusExport({
       period: 'weekly',

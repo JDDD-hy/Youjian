@@ -25,6 +25,11 @@ function iconClass(item: Partial<Achievement>) {
 }
 
 describe('AchievementIcon', () => {
+  it('renders the life category achievement as a cog', () => {
+    expect(iconClass({ achievement_type: 'orderly_living' })).toContain(
+      'lucide-cog',
+    );
+  });
   it('renders the entertainment category achievement as a gamepad', () => {
     expect(iconClass({ achievement_type: 'joyful_pursuit' })).toContain(
       'lucide-gamepad-2',

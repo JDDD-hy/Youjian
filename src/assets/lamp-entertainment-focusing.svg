@@ -12,7 +12,7 @@
     <linearGradient id="purple" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#aa87cb" stop-opacity=".38"/><stop offset="1" stop-color="#aa87cb" stop-opacity=".04"/></linearGradient>
     <clipPath id="sphere"><circle cx="95" cy="68" r="34"/></clipPath>
   </defs>
-  <path d="M95 0v29" stroke="#9f9589" stroke-width="4" stroke-linecap="round"/>
+  <path d="M95 8v21" stroke="#9f9589" stroke-width="4" stroke-linecap="round"/>
   <rect x="89" y="25" width="12" height="10" rx="4" fill="#b8aea1"/>
   <path d="M71 91 25 151h30l30-57Z" fill="url(#red)"/>
   <path d="M82 94 52 158h31l12-64Z" fill="url(#gold)"/>
