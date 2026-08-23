@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(15);
 insert into auth.users(id) values('00000000-0000-0000-0000-000000000051'),('00000000-0000-0000-0000-000000000052');
 insert into public.profiles(id,timezone) values('00000000-0000-0000-0000-000000000051','UTC'),('00000000-0000-0000-0000-000000000052','UTC');
 insert into public.spaces(id,name,owner_id,timezone,invite_token_hash) values('10000000-0000-0000-0000-000000000051','Home','00000000-0000-0000-0000-000000000051','UTC','home');
@@ -10,9 +10,11 @@ insert into public.space_members(id,space_id,user_id,display_name,role) values
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000051',true);
 select is(public.start_focus('10000000-0000-0000-0000-000000000051','Deep work','work','30000000-0000-0000-0000-000000000051')#>>'{data,session,status}','focusing','owner starts focus');
 update public.focus_sessions set last_seen_at=now()-interval '130 seconds' where task_name='Deep work';
+update public.focus_sessions set timezone_snapshot='Europe/Paris' where task_name='Deep work';
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000052',true);
 select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,space,active_member_count}','2','home returns active member count');
 select is(jsonb_array_length(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>'{data,focusing_members}'),1,'friend sees focusing owner');
+select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,focusing_members,0,timezone_snapshot}','Europe/Paris','friend sees the focusing member session timezone');
 select is(public.get_home_snapshot('10000000-0000-0000-0000-000000000051')#>>'{data,focusing_members,0,connection,status}','unconfirmed','stale heartbeat is unconfirmed');
 select is((select count(*)::int from public.focus_connection_intervals where ended_at is null and session_id=(select id from public.focus_sessions where task_name='Deep work' and space_id='10000000-0000-0000-0000-000000000051')),1,'snapshot maintenance opens one unconfirmed interval');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000051',true);
