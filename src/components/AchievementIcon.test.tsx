@@ -25,6 +25,11 @@ function iconClass(item: Partial<Achievement>) {
 }
 
 describe('AchievementIcon', () => {
+  it('renders the entertainment category achievement as a gamepad', () => {
+    expect(iconClass({ achievement_type: 'joyful_pursuit' })).toContain(
+      'lucide-gamepad-2',
+    );
+  });
   it('preserves the approved personal achievement icons', () => {
     expect(iconClass({ achievement_type: 'night_owl' })).toContain(
       'lucide-moon-star',

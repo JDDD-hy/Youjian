@@ -80,7 +80,7 @@ test('two devices create, join, synchronize focus, and restore identity', async 
     await editDialog
       .getByRole('textbox', { name: /任务名称/ })
       .fill(revisedTaskName);
-    await editDialog.getByRole('radio', { name: '阅读' }).check();
+    await editDialog.getByRole('radio', { name: '娱乐' }).check();
     await editDialog.getByRole('button', { name: '保存修改' }).click();
     await expect(
       owner.getByRole('heading', { name: revisedTaskName }),
@@ -88,6 +88,15 @@ test('two devices create, join, synchronize focus, and restore identity', async 
     await expect(
       member.getByText(revisedTaskName, { exact: true }),
     ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      owner.locator('[data-lamp-variant="entertainment-focusing"]'),
+    ).toBeVisible();
+    const memberCard = member.locator('article').filter({
+      has: member.getByText(revisedTaskName, { exact: true }),
+    });
+    await expect(
+      memberCard.locator('[data-lamp-variant="entertainment-focusing"]'),
+    ).toBeVisible();
     const memberHistory = member.getByRole('button', { name: /查看旧任务/ });
     await memberHistory.click();
     await expect(member.getByText(taskName, { exact: true })).toBeVisible();
@@ -96,6 +105,7 @@ test('two devices create, join, synchronize focus, and restore identity', async 
 
     await owner.getByRole('button', { name: '暂停' }).click();
     await expect(owner.getByRole('button', { name: '继续专注' })).toBeVisible();
+    await expect(owner.locator('[data-lamp-variant="paused"]')).toBeVisible();
     await expect(member.getByText(revisedTaskName, { exact: true })).toBeHidden(
       { timeout: 15_000 },
     );
@@ -104,6 +114,17 @@ test('two devices create, join, synchronize focus, and restore identity', async 
     await expect(
       member.getByText(revisedTaskName, { exact: true }),
     ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      owner.locator('[data-lamp-variant="entertainment-focusing"]'),
+    ).toBeVisible();
+    await expect(
+      memberCard.locator('[data-lamp-variant="entertainment-focusing"]'),
+    ).toBeVisible();
+
+    await owner.reload();
+    await expect(
+      owner.locator('[data-lamp-variant="entertainment-focusing"]'),
+    ).toBeVisible();
 
     await owner.getByRole('button', { name: '结束本次' }).click();
     await owner.getByRole('button', { name: '确认结束' }).click();
