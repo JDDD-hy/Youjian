@@ -1,6 +1,7 @@
 {
   "name": "youjian",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE.md",
   "version": "0.4.0",
   "type": "module",
   "description": "友间——面向固定好友的小型共享专注空间。",

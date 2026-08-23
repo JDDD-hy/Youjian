@@ -114,3 +114,13 @@ Achievement icons are provided by [Lucide](https://lucide.dev/) under the [ISC L
 ---
 
 *友间是面向小圈子的轻量工具，不是公开平台。欢迎把它推荐给你想一起专注的朋友。*
+
+---
+
+## License
+
+Copyright © 2026 JDDD-hy.
+
+The original code in this repository is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md). Commercial use is not permitted without separate written permission from the copyright holder.
+
+Third-party components remain subject to their respective licenses.
