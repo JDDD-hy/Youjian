@@ -5,6 +5,7 @@ describe('resolveLampVariant', () => {
   it.each([
     ['idle', 'entertainment', 'idle'],
     ['focusing', 'study', 'focusing'],
+    ['focusing', 'life', 'focusing'],
     ['focusing', 'entertainment', 'entertainment-focusing'],
     ['paused', 'entertainment', 'paused'],
     ['paused', 'study', 'paused'],

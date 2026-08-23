@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { isoDateInTimezone, splitSegmentsByLocalDate } from './format';
+import {
+  categoryLabels,
+  isoDateInTimezone,
+  splitSegmentsByLocalDate,
+} from './format';
+
+describe('focus category labels', () => {
+  it('includes life and entertainment as exportable focus categories', () => {
+    expect(categoryLabels.life).toBe('生活');
+    expect(categoryLabels.entertainment).toBe('娱乐');
+  });
+});
 
 describe('isoDateInTimezone', () => {
   it('derives the local date in the selected backend timezone', () => {

@@ -94,4 +94,22 @@ describe('central achievement strategy catalog', () => {
       },
     ]);
   });
+
+  it('defines the life focus achievement consistently', () => {
+    const strategy = achievementStrategy('orderly_living');
+    expect(strategy).toMatchObject({
+      evaluator_id: 'focus.category_session',
+      icon: 'cog',
+      repeat_policy: 'once',
+      tier_policy: { kind: 'fixed', tier: 'gold' },
+    });
+    expect(strategy?.stage_thresholds).toEqual([
+      {
+        stage: 1,
+        threshold: 10,
+        stage_key: 'orderly_living',
+        title: '井井有条',
+      },
+    ]);
+  });
 });

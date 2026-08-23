@@ -8,7 +8,7 @@ select ok(
 );
 select is(
   (select count(*)::integer from private.achievement_strategy_catalog),
-  29,
+  30,
   'catalog includes the entertainment achievement'
 );
 select is(

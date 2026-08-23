@@ -4,7 +4,7 @@ select plan(28);
 
 select is(
   (select count(*)::integer from private.achievement_strategy_catalog),
-  29,
+  30,
   'catalog contains the existing and newly-added strategies'
 );
 select is(

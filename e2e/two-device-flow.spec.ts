@@ -10,6 +10,7 @@ test('two devices create, join, synchronize focus, and restore identity', async 
   const spaceName = `双设备友间-${suffix}`;
   const taskName = `同步任务-${suffix}`;
   const revisedTaskName = `修改后的任务-${suffix}`;
+  const lifeTaskName = `生活任务-${suffix}`;
   const memberName = `成员-${suffix}`;
 
   await owner.goto('./create');
@@ -126,11 +127,32 @@ test('two devices create, join, synchronize focus, and restore identity', async 
       owner.locator('[data-lamp-variant="entertainment-focusing"]'),
     ).toBeVisible();
 
+    await owner.getByRole('button', { name: '修改任务' }).click();
+    const lifeDialog = owner.getByRole('dialog', { name: '修改当前任务' });
+    await lifeDialog
+      .getByRole('textbox', { name: /任务名称/ })
+      .fill(lifeTaskName);
+    await lifeDialog.getByRole('radio', { name: '生活' }).check();
+    await lifeDialog.getByRole('button', { name: '保存修改' }).click();
+    await expect(
+      owner.getByRole('heading', { name: lifeTaskName }),
+    ).toBeVisible();
+    await expect(member.getByText(lifeTaskName, { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(owner.locator('[data-lamp-variant="focusing"]')).toBeVisible();
+    const lifeMemberCard = member.locator('article').filter({
+      has: member.getByText(lifeTaskName, { exact: true }),
+    });
+    await expect(
+      lifeMemberCard.locator('[data-lamp-variant="focusing"]'),
+    ).toBeVisible();
+
     await owner.getByRole('button', { name: '结束本次' }).click();
     await owner.getByRole('button', { name: '确认结束' }).click();
-    await expect(member.getByText(revisedTaskName, { exact: true })).toBeHidden(
-      { timeout: 15_000 },
-    );
+    await expect(member.getByText(lifeTaskName, { exact: true })).toBeHidden({
+      timeout: 15_000,
+    });
 
     await owner.reload();
     await member.reload();
