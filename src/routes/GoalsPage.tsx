@@ -38,88 +38,21 @@ import {
 } from '../domain/achievementTier';
 import { uniqueAchievementParticipantCount } from '../domain/achievementParticipants';
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
-import { loadResolvedGoalProposals } from '../lib/goalHistory';
 import { assertRouteSpace } from '../lib/spaceBoundary';
 import {
   achievementReadIntentKey,
   isPersonalAchievementType,
 } from '../domain/achievementCatalog';
 import { parseAchievementListResponse } from '../domain/achievementContract';
+import { GoalCard } from '../components/goals/GoalCard';
+import { GoalHistorySection } from '../components/goals/GoalHistorySection';
+import { ProposalHistorySection } from '../components/goals/ProposalHistorySection';
 
 interface GoalsSnapshot {
   space_id: string;
   active_goals: Goal[];
   scheduled_goals: Goal[];
   pending_proposals: GoalProposal[];
-  history: Goal[];
-  proposal_history?: GoalProposal[];
-}
-
-function GoalCard({ goal }: { goal: Goal }) {
-  const credited = goal.progress.credited_value;
-  const percent =
-    credited === null
-      ? null
-      : Math.min(100, Math.round((credited / goal.target_value) * 100));
-  const unit = goal.goal_type === 'shared_checkin_days' ? '天' : '分钟';
-  const statusLabel =
-    goal.status === 'scheduled'
-      ? '即将生效'
-      : goal.status === 'failed'
-        ? '未达成'
-        : goal.status === 'completed' || goal.progress.completed
-          ? '已完成'
-          : percent === null
-            ? '按成员计算'
-            : `${percent}%`;
-  return (
-    <article className={`goal-card goal-card--${goal.status}`}>
-      <div className="goal-card__top">
-        <span className="pill">{periodLabels[goal.period_type]}</span>
-        <span>{statusLabel}</span>
-      </div>
-      <h3>{goalTypeLabels[goal.goal_type]}</h3>
-      {credited === null ? (
-        <p>
-          每位成员每天至少完成 {goal.target_value} {unit}
-        </p>
-      ) : (
-        <p>
-          {credited} / {goal.target_value} {unit}
-        </p>
-      )}
-      {percent !== null && (
-        <progress
-          className="progress-track"
-          value={percent}
-          max={100}
-          aria-label={`目标完成进度 ${percent}%`}
-        >
-          {percent}%
-        </progress>
-      )}
-      {goal.progress.members && (
-        <div className="goal-members">
-          {goal.progress.members.map((member) => (
-            <div key={member.member_id}>
-              <span>{member.display_name}</span>
-              <span>
-                {goal.goal_type === 'per_member_minutes' &&
-                member.required_days !== undefined
-                  ? `已达标 ${member.completed_days ?? 0} / ${member.required_days} 天 · 当天 ${member.current_day_credited_minutes ?? 0} / ${goal.target_value} 分钟`
-                  : `${member.credited_value ?? 0} / ${goal.target_value} ${unit}`}{' '}
-                {member.completed && <Icon name="check" />}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-      <small>
-        {formatLocalDateTime(goal.starts_at)} —{' '}
-        {formatLocalDateTime(goal.ends_at)}
-      </small>
-    </article>
-  );
 }
 
 function AchievementCard({ item }: { item: Achievement }) {
@@ -205,9 +138,6 @@ export function GoalsPage() {
   const [rejectProposal, setRejectProposal] = useState<GoalProposal | null>(
     null,
   );
-  const [resolvedProposals, setResolvedProposals] = useState<GoalProposal[]>(
-    [],
-  );
   const [goalType, setGoalType] = useState<GoalType>('group_total_minutes');
   const [periodType, setPeriodType] = useState<PeriodType>('weekly');
   const [target, setTarget] = useState(1200);
@@ -289,14 +219,10 @@ export function GoalsPage() {
     getNextPageParam: (last) => last.data.next_cursor ?? undefined,
     refetchInterval: 60_000,
   });
-  const resolvedHistory = useQuery({
-    queryKey: ['goal-proposal-history', spaceId],
-    queryFn: () => loadResolvedGoalProposals(spaceId),
-    refetchInterval: 60_000,
-  });
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['goals', spaceId] });
     void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
+    void queryClient.invalidateQueries({ queryKey: ['goal-history', spaceId] });
     void queryClient.invalidateQueries({
       queryKey: ['goal-proposal-history', spaceId],
     });
@@ -335,18 +261,8 @@ export function GoalsPage() {
         vote: value,
         idempotency_key: voteIntent.get(`${proposalId}:${value}`),
       }),
-    onSuccess: ({ data }: { data: { proposal: GoalProposal } }) => {
+    onSuccess: () => {
       voteIntent.clear();
-      if (
-        data.proposal.status === 'rejected' ||
-        data.proposal.status === 'expired'
-      )
-        setResolvedProposals((items) => [
-          data.proposal,
-          ...items.filter(
-            (item) => item.proposal_id !== data.proposal.proposal_id,
-          ),
-        ]);
       setRejectProposal(null);
       refresh();
     },
@@ -424,15 +340,6 @@ export function GoalsPage() {
   useAutoAcknowledge(unseenAchievementId, () => {
     if (unseenAchievement) markSeen.mutate(unseenAchievement);
   });
-  const proposalHistory = [
-    ...resolvedProposals,
-    ...(resolvedHistory.data ?? []),
-    ...(snapshot?.proposal_history ?? []),
-  ].filter(
-    (proposal, index, items) =>
-      items.findIndex((item) => item.proposal_id === proposal.proposal_id) ===
-      index,
-  );
   return (
     <div className="page goals-page">
       <header className="page-header">
@@ -563,47 +470,14 @@ export function GoalsPage() {
               <p className="quiet-copy">没有等待投票的提案。</p>
             )}
           </section>
-          {snapshot.history.length > 0 && (
-            <section className="section">
-              <div className="section-heading">
-                <h2>过往目标</h2>
-              </div>
-              {snapshot.history.map((goal) => (
-                <GoalCard key={goal.goal_id} goal={goal} />
-              ))}
-            </section>
-          )}
-          {proposalHistory.length > 0 && (
-            <section className="section">
-              <div className="section-heading">
-                <h2>已结束提案</h2>
-              </div>
-              <div className="proposal-list">
-                {proposalHistory.map((proposal) => (
-                  <article className="proposal-card" key={proposal.proposal_id}>
-                    <span className="pill">
-                      {proposal.status === 'rejected' ? '已拒绝' : '已过期'}
-                    </span>
-                    <h3>
-                      {proposalSentence(
-                        proposal.goal_type,
-                        proposal.period_type,
-                        proposal.target_value,
-                      )}
-                    </h3>
-                    <small>发起人：{proposal.proposer.display_name}</small>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-          {resolvedHistory.error && (
-            <ErrorState
-              title="无法加载已结束提案"
-              message="被拒绝和已过期的提案尚未完整加载。"
-              onRetry={() => void resolvedHistory.refetch()}
-            />
-          )}
+          <GoalHistorySection
+            spaceId={spaceId}
+            maintenanceVersion={goals.dataUpdatedAt}
+          />
+          <ProposalHistorySection
+            spaceId={spaceId}
+            maintenanceVersion={goals.dataUpdatedAt}
+          />
           <section className="section achievement-section">
             <div className="section-heading">
               <h2>成就</h2>
