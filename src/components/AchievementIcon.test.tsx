@@ -35,6 +35,11 @@ describe('AchievementIcon', () => {
       'lucide-gamepad-2',
     );
   });
+  it('renders the exercise category achievement as a dumbbell', () => {
+    expect(iconClass({ achievement_type: 'exercise_vitality' })).toContain(
+      'lucide-dumbbell',
+    );
+  });
   it('preserves the approved personal achievement icons', () => {
     expect(iconClass({ achievement_type: 'night_owl' })).toContain(
       'lucide-moon-star',

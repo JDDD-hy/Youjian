@@ -112,4 +112,22 @@ describe('central achievement strategy catalog', () => {
       },
     ]);
   });
+
+  it('defines the exercise focus achievement consistently', () => {
+    const strategy = achievementStrategy('exercise_vitality');
+    expect(strategy).toMatchObject({
+      evaluator_id: 'focus.category_session',
+      icon: 'dumbbell',
+      repeat_policy: 'once',
+      tier_policy: { kind: 'fixed', tier: 'gold' },
+    });
+    expect(strategy?.stage_thresholds).toEqual([
+      {
+        stage: 1,
+        threshold: 10,
+        stage_key: 'exercise_vitality',
+        title: '生龙活虎',
+      },
+    ]);
+  });
 });

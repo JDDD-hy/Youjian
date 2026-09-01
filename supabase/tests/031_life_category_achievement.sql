@@ -3,7 +3,7 @@ create extension if not exists pgtap with schema extensions;
 select plan(15);
 
 select ok('life'=any(enum_range(null::public.focus_category)::text[]),'life is a supported focus category');
-select is((select count(*)::integer from private.achievement_strategy_catalog),30,'catalog includes the life achievement');
+select is((select count(*)::integer from private.achievement_strategy_catalog),31,'catalog includes the life achievement');
 select is((select stage_thresholds#>>'{0,title}' from private.achievement_strategy_catalog where key='orderly_living'),'井井有条','life achievement has the approved title');
 select is((select stage_thresholds#>>'{0,threshold}' from private.achievement_strategy_catalog where key='orderly_living'),'10','life achievement unlocks at ten sessions');
 select is((select icon from private.achievement_strategy_catalog where key='orderly_living'),'cog','life achievement uses Cog');
