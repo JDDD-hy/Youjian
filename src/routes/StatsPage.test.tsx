@@ -145,7 +145,10 @@ describe('StatsPage session detail', () => {
     });
     expect(within(dialog).getByText('7/13 ~ 7/19')).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: '月' }));
-    expect(within(dialog).getByText('2026年8月')).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText('选择月份'), {
+      target: { value: '2026-09' },
+    });
+    expect(within(dialog).getByText('2026年9月')).toBeInTheDocument();
     expect(
       within(dialog).getByRole('button', { name: '导出 Markdown' }),
     ).toBeInTheDocument();
