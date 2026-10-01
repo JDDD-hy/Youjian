@@ -84,9 +84,14 @@ async function main() {
     p_space_id: spaceId,
   });
   assert.equal(home.ok, true, 'home snapshot RPC succeeds');
-  assert.equal(
-    home.data.unseen_personal_achievement.achievement_type,
-    'decisive_focus',
+  // Time-based achievements can unlock alongside decisive_focus.
+  assert.ok(
+    personal.data.items.some(
+      (item) =>
+        item.achievement_type ===
+        home.data.unseen_personal_achievement?.achievement_type,
+    ),
+    'home notification refers to an earned personal achievement',
   );
   assert.equal(
     home.data.unseen_personal_achievement.read_target.kind,

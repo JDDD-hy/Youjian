@@ -1,3 +1,4 @@
+import { Presence } from './Presence';
 import { Suspense } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { PageLoader } from './AsyncState';
@@ -50,12 +51,14 @@ export function AppShell() {
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
-              {item.suffix === '/goals' && hasGoalNotice && (
-                <span
-                  className="nav-notification-dot"
-                  aria-label="有新的成就或提案"
-                />
-              )}
+              <Presence>
+                {item.suffix === '/goals' && hasGoalNotice && (
+                  <span
+                    className="nav-notification-dot"
+                    aria-label="有新的成就或提案"
+                  />
+                )}
+              </Presence>
             </NavLink>
           ))}
         </nav>
@@ -89,12 +92,14 @@ export function AppShell() {
           >
             <Icon name={item.icon} />
             <span>{item.label}</span>
-            {item.suffix === '/goals' && hasGoalNotice && (
-              <span
-                className="nav-notification-dot"
-                aria-label="有新的成就或提案"
-              />
-            )}
+            <Presence>
+              {item.suffix === '/goals' && hasGoalNotice && (
+                <span
+                  className="nav-notification-dot"
+                  aria-label="有新的成就或提案"
+                />
+              )}
+            </Presence>
           </NavLink>
         ))}
       </nav>

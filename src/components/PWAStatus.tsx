@@ -1,3 +1,4 @@
+import { Presence } from './Presence';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { registerSW } from 'virtual:pwa-register';
@@ -115,61 +116,71 @@ export function PWAStatus() {
   };
   return (
     <div className="app-status">
-      {!online && (
-        <div className="app-status__bar">
-          当前离线。已缓存的应用外壳仍可使用，业务数据不会离线写入。
-        </div>
-      )}
-      {offlineReady && online && (
-        <div className="app-status__prompt">
-          <span>离线应用外壳已准备好。</span>
-          <button
-            aria-label="关闭离线提示"
-            onClick={() => setOfflineReady(false)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-      {installState.promptEvent && !installState.installed && (
-        <div className="app-status__prompt">
-          <span>将友间安装到设备，打开更方便。</span>
-          <button onClick={() => void installApp()}>安装</button>
-          <button
-            aria-label="暂不安装"
-            onClick={() => setInstallPrompt(undefined)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-      {updateReady && (
-        <div className="app-status__prompt">
-          <span>
-            {activeFocus
-              ? '新版本已准备好，当前专注结束后即可更新。'
-              : '新版本已准备好。'}
-          </span>
-          <button
-            disabled={activeFocus || checkingFocus || focusGuard.isError}
-            onClick={() => void applyUpdate()}
-          >
-            {checkingFocus ? '正在确认…' : '更新'}
-          </button>
-          <button aria-label="稍后更新" onClick={() => setUpdateReady(false)}>
-            ×
-          </button>
-        </div>
-      )}
-      {(updateError || (updateReady && focusGuard.isError)) && (
-        <div className="app-status__bar" role="alert">
-          {updateError === 'registration'
-            ? '离线应用服务注册失败；在线功能仍可使用。'
-            : updateError === 'apply'
-              ? '新版本安装失败，当前版本仍可继续使用。'
-              : '暂时无法确认专注状态，更新尚未执行。'}
-        </div>
-      )}
+      <Presence>
+        {!online && (
+          <div className="app-status__bar">
+            当前离线。已缓存的应用外壳仍可使用，业务数据不会离线写入。
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {offlineReady && online && (
+          <div className="app-status__prompt">
+            <span>离线应用外壳已准备好。</span>
+            <button
+              aria-label="关闭离线提示"
+              onClick={() => setOfflineReady(false)}
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {installState.promptEvent && !installState.installed && (
+          <div className="app-status__prompt">
+            <span>将友间安装到设备，打开更方便。</span>
+            <button onClick={() => void installApp()}>安装</button>
+            <button
+              aria-label="暂不安装"
+              onClick={() => setInstallPrompt(undefined)}
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {updateReady && (
+          <div className="app-status__prompt">
+            <span>
+              {activeFocus
+                ? '新版本已准备好，当前专注结束后即可更新。'
+                : '新版本已准备好。'}
+            </span>
+            <button
+              disabled={activeFocus || checkingFocus || focusGuard.isError}
+              onClick={() => void applyUpdate()}
+            >
+              {checkingFocus ? '正在确认…' : '更新'}
+            </button>
+            <button aria-label="稍后更新" onClick={() => setUpdateReady(false)}>
+              ×
+            </button>
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {(updateError || (updateReady && focusGuard.isError)) && (
+          <div className="app-status__bar" role="alert">
+            {updateError === 'registration'
+              ? '离线应用服务注册失败；在线功能仍可使用。'
+              : updateError === 'apply'
+                ? '新版本安装失败，当前版本仍可继续使用。'
+                : '暂时无法确认专注状态，更新尚未执行。'}
+          </div>
+        )}
+      </Presence>
     </div>
   );
 }

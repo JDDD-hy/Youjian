@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { usePersonalDeadline } from '../../hooks/usePersonalDeadline';
 import { DeadlineCurtain } from './DeadlineCurtain';
 import { DeadlineEditorModal } from './DeadlineEditorModal';
+import { Presence } from '../Presence';
 
 /** Owns deadline data and interaction so route components only mount one overlay. */
 export function PersonalDeadlineCurtain() {
@@ -25,16 +26,19 @@ export function PersonalDeadlineCurtain() {
           setEditing(true);
         }}
       />
-      {editing &&
-        createPortal(
-          <DeadlineEditorModal
-            deadline={deadline.deadline}
-            pending={deadline.isSaving}
-            onSave={deadline.save}
-            onClose={() => setEditing(false)}
-          />,
-          document.body,
-        )}
+      {createPortal(
+        <Presence>
+          {editing && (
+            <DeadlineEditorModal
+              deadline={deadline.deadline}
+              pending={deadline.isSaving}
+              onSave={deadline.save}
+              onClose={() => setEditing(false)}
+            />
+          )}
+        </Presence>,
+        document.body,
+      )}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { Presence } from '../Presence';
 import { ErrorState } from '../AsyncState';
 import { useGoalProposalHistory } from '../../hooks/useGoalHistories';
 import { proposalSentence } from '../../lib/goalPreview';
@@ -27,27 +28,34 @@ export function ProposalHistorySection({
         />
       ) : (
         <>
-          {history.error && (
-            <div className="inline-notice inline-notice--warning" role="status">
-              更多已结束提案暂时没有加载，当前记录仍可查看。
-            </div>
-          )}
+          <Presence>
+            {history.error && (
+              <div
+                className="inline-notice inline-notice--warning"
+                role="status"
+              >
+                更多已结束提案暂时没有加载，当前记录仍可查看。
+              </div>
+            )}
+          </Presence>
           <div className="proposal-list">
-            {items.map((proposal) => (
-              <article className="proposal-card" key={proposal.proposal_id}>
-                <span className="pill">
-                  {proposal.status === 'rejected' ? '已拒绝' : '已过期'}
-                </span>
-                <h3>
-                  {proposalSentence(
-                    proposal.goal_type,
-                    proposal.period_type,
-                    proposal.target_value,
-                  )}
-                </h3>
-                <small>发起人：{proposal.proposer.display_name}</small>
-              </article>
-            ))}
+            <Presence>
+              {items.map((proposal) => (
+                <article className="proposal-card" key={proposal.proposal_id}>
+                  <span className="pill">
+                    {proposal.status === 'rejected' ? '已拒绝' : '已过期'}
+                  </span>
+                  <h3>
+                    {proposalSentence(
+                      proposal.goal_type,
+                      proposal.period_type,
+                      proposal.target_value,
+                    )}
+                  </h3>
+                  <small>发起人：{proposal.proposer.display_name}</small>
+                </article>
+              ))}
+            </Presence>
           </div>
           {history.hasNextPage && (
             <button

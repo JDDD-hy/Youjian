@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { usePresence } from '../hooks/usePresence';
 
 const focusable =
   'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -23,6 +24,7 @@ export function AccessibleModal({
   closeOnBackdrop?: boolean;
   closeOnEscape?: boolean;
 }>) {
+  const present = usePresence();
   const panel = useRef<HTMLElement>(null);
   const [returnFocus] = useState(() =>
     document.activeElement instanceof HTMLElement
@@ -34,6 +36,7 @@ export function AccessibleModal({
     closeRef.current = onClose;
   }, [onClose]);
   useEffect(() => {
+    if (!present) return;
     const element = panel.current;
     const initial =
       element?.querySelector<HTMLElement>('[data-autofocus]') ??
@@ -49,7 +52,7 @@ export function AccessibleModal({
       if (event.key !== 'Tab' || !element) return;
       const nodes = Array.from(
         element.querySelectorAll<HTMLElement>(focusable),
-      ).filter((node) => !node.hidden);
+      ).filter((node) => !node.hidden && !node.closest('[inert]'));
       if (!nodes.length) {
         event.preventDefault();
         element.focus();
@@ -70,7 +73,7 @@ export function AccessibleModal({
       document.removeEventListener('keydown', keydown);
       returnFocus?.focus();
     };
-  }, [closeOnEscape, returnFocus]);
+  }, [closeOnEscape, present, returnFocus]);
   const backdrop = (event: MouseEvent<HTMLDivElement>) => {
     if (closeOnBackdrop && event.target === event.currentTarget) onClose();
   };

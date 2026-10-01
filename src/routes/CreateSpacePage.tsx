@@ -1,3 +1,4 @@
+import { Presence } from '../components/Presence';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -125,9 +126,11 @@ export function CreateSpacePage() {
               }
               aria-invalid={Boolean(errors.displayName)}
             />
-            {errors.displayName && (
-              <small className="field-error">{errors.displayName}</small>
-            )}
+            <Presence>
+              {errors.displayName && (
+                <small className="field-error">{errors.displayName}</small>
+              )}
+            </Presence>
           </label>
           <label className="field">
             <span>友间名称</span>
@@ -139,9 +142,11 @@ export function CreateSpacePage() {
               }
               aria-invalid={Boolean(errors.spaceName)}
             />
-            {errors.spaceName && (
-              <small className="field-error">{errors.spaceName}</small>
-            )}
+            <Presence>
+              {errors.spaceName && (
+                <small className="field-error">{errors.spaceName}</small>
+              )}
+            </Presence>
           </label>
           <div className="form-grid">
             <label className="field">
@@ -153,9 +158,11 @@ export function CreateSpacePage() {
                 }
                 aria-invalid={Boolean(errors.timezone)}
               />
-              {errors.timezone && (
-                <small className="field-error">{errors.timezone}</small>
-              )}
+              <Presence>
+                {errors.timezone && (
+                  <small className="field-error">{errors.timezone}</small>
+                )}
+              </Presence>
             </label>
             <label className="field">
               <span>人数上限</span>
@@ -188,13 +195,17 @@ export function CreateSpacePage() {
               数据后将无法恢复，历史记录也不能转移。
             </span>
           </label>
-          {errors.consent && <p className="field-error">{errors.consent}</p>}
+          <Presence>
+            {errors.consent && <p className="field-error">{errors.consent}</p>}
+          </Presence>
           <TurnstileField onToken={setCaptchaToken} />
-          {mutation.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {mutation.error.message}
-            </div>
-          )}
+          <Presence>
+            {mutation.error && (
+              <div className="inline-notice inline-notice--error" role="alert">
+                {mutation.error.message}
+              </div>
+            )}
+          </Presence>
           <button
             className="button button--primary button--full"
             disabled={mutation.isPending || !online}

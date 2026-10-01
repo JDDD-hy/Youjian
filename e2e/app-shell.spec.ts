@@ -4,11 +4,40 @@ const spaceId = '11111111-1111-4111-8111-111111111111';
 
 test('idle room renders the authoritative snapshot without viewport overflow', async ({
   page,
-}) => {
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   let savedGoal: Record<string, unknown> | null = null;
   let todayTarget = 60;
   let futureDefaultTarget = 60;
+  let focusingMembers = Array.from({ length: 6 }, (_, index) => ({
+    member_id: `friend-${index}`,
+    display_name: `小友 ${index + 1}`,
+    task_name: '阅读论文',
+    category: 'reading',
+    timezone_snapshot: 'Asia/Shanghai',
+    accumulated_focus_seconds: 600,
+    active_segment_started_at: '2026-07-27T12:00:00.000Z',
+    task_history: [
+      {
+        task_name: '整理笔记',
+        category: 'study',
+        changed_at: '2026-07-27T11:50:00.000Z',
+      },
+    ],
+    connection: { status: 'confirmed' },
+  }));
   await page.addInitScript(() => {
+    document.addEventListener('animationend', (event) => {
+      if (
+        event.animationName === 'presence-out' &&
+        event.target instanceof HTMLElement &&
+        event.target.classList.contains('modal-backdrop')
+      ) {
+        document.documentElement.dataset.modalExits = String(
+          Number(document.documentElement.dataset.modalExits ?? 0) + 1,
+        );
+      }
+    });
     localStorage.setItem(
       'sb-127-auth-token',
       JSON.stringify({
@@ -61,8 +90,8 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
             id: spaceId,
             name: '我们的友间',
             timezone: 'Asia/Shanghai',
-            active_member_count: 2,
-            member_limit: 3,
+            active_member_count: 7,
+            member_limit: 8,
             daily_checkin_target_minutes: 60,
           },
           me: {
@@ -72,7 +101,7 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
             profile_timezone: 'Asia/Shanghai',
           },
           my_session: null,
-          focusing_members: [],
+          focusing_members: focusingMembers,
           today: {
             local_date: '2026-07-27',
             credited_focus_seconds: 2280,
@@ -111,8 +140,10 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
     savedGoal = route.request().postDataJSON() as Record<string, unknown>;
     const scope = savedGoal.p_scope as 'today' | 'future_default';
     const targetMinutes = savedGoal.p_target_minutes as number;
-    if (scope === 'today') todayTarget = targetMinutes;
-    else futureDefaultTarget = targetMinutes;
+    if (scope === 'today') {
+      todayTarget = targetMinutes;
+      focusingMembers = [];
+    } else futureDefaultTarget = targetMinutes;
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -131,14 +162,48 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
   await page.goto(`./space/${spaceId}`);
   await expect(page.getByRole('heading', { name: '我们的友间' })).toBeVisible();
   await expect(page.getByRole('button', { name: '开始专注' })).toBeVisible();
+  await expect(page.locator('.member-card')).toHaveCount(4);
+  await page.getByRole('button', { name: '查看全部 6 人' }).click();
+  await expect(page.locator('.member-card')).toHaveCount(6);
+  await page.getByRole('button', { name: '收起好友' }).click();
+  await expect(page.locator('.member-card')).toHaveCount(4);
+  const historyToggle = page
+    .getByRole('button', { name: /查看旧任务/ })
+    .first();
+  await historyToggle.click();
+  await expect(
+    page.getByText('整理笔记', { exact: true }).first(),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /收起旧任务/ }).click();
+  await expect(
+    page.getByText('整理笔记', { exact: true }).first(),
+  ).toBeHidden();
   await page.getByRole('button', { name: '修改我的目标 · 60 分钟' }).click();
   const goalDialog = page.getByRole('dialog', {
     name: '修改我的每日专注目标',
   });
   await expect(goalDialog).toBeVisible();
+  expect(
+    await page
+      .locator('.modal-backdrop')
+      .evaluate((element) => getComputedStyle(element).animationName),
+  ).toBe('presence-in');
+  await page.screenshot({
+    path: testInfo.outputPath('motion-dialog.png'),
+    animations: 'disabled',
+  });
+  // A delayed frame must not let the fallback cut the exit animation short.
+  await page.locator('.modal-backdrop').evaluate((element) => {
+    element.style.animationDelay = '120ms';
+  });
   await goalDialog.getByLabel('目标时长（分钟）').fill('45');
   await goalDialog.getByRole('button', { name: '保存目标' }).click();
   await expect(goalDialog).toBeHidden();
+  await expect(page.locator('html')).toHaveAttribute('data-modal-exits', '1');
+  await expect(page.locator('.member-card')).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: '现在还没有人亮灯' }),
+  ).toBeVisible();
   expect(savedGoal).toMatchObject({ p_scope: 'today', p_target_minutes: 45 });
   await expect(
     page.getByRole('button', { name: '修改我的目标 · 45 分钟' }),
@@ -164,6 +229,16 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
   await expect(
     page.getByRole('dialog', { name: '这次想专注什么？' }),
   ).toBeHidden();
+  await expect(page.locator('.modal-backdrop')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: '开始专注' }).click();
+  expect(
+    await page
+      .locator('.modal-backdrop')
+      .evaluate((element) => getComputedStyle(element).animationName),
+  ).toBe('none');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.modal-backdrop')).toHaveCount(0);
   const coarsePointer = await page.evaluate(
     () => window.matchMedia('(pointer: coarse)').matches,
   );

@@ -1,3 +1,4 @@
+import { Presence } from '../components/Presence';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TurnstileField } from '../components/TurnstileField';
@@ -82,7 +83,7 @@ export function IdentityTransferPage() {
             />
           </label>
           <TurnstileField onToken={setCaptchaToken} />
-          {error && <p className="field-error">{error}</p>}
+          <Presence>{error && <p className="field-error">{error}</p>}</Presence>
           <button
             className="button button--primary button--full"
             disabled={pending || !online || (captchaRequired && !captchaToken)}

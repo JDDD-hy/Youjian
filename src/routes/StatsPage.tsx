@@ -1,3 +1,4 @@
+import { Presence } from '../components/Presence';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -364,20 +365,25 @@ export function StatsPage() {
         />
       ) : (
         <>
-          {(home.error || summary.error) && (
-            <div className="inline-notice inline-notice--warning" role="status">
-              部分统计暂时没有更新，正在显示上次成功加载的数据。
-              <button
-                type="button"
-                onClick={() => {
-                  void home.refetch();
-                  void summary.refetch();
-                }}
+          <Presence>
+            {(home.error || summary.error) && (
+              <div
+                className="inline-notice inline-notice--warning"
+                role="status"
               >
-                重新加载
-              </button>
-            </div>
-          )}
+                部分统计暂时没有更新，正在显示上次成功加载的数据。
+                <button
+                  type="button"
+                  onClick={() => {
+                    void home.refetch();
+                    void summary.refetch();
+                  }}
+                >
+                  重新加载
+                </button>
+              </div>
+            )}
+          </Presence>
           <section className="metric-grid">
             <article>
               <small>专注时间</small>
@@ -406,45 +412,51 @@ export function StatsPage() {
                 数据导出
               </button>
             </div>
-            {history.error && items.length > 0 && (
-              <div
-                className="inline-notice inline-notice--warning"
-                role="status"
-              >
-                新的历史记录暂时没有加载，当前列表仍可查看。
-              </div>
-            )}
+            <Presence>
+              {history.error && items.length > 0 && (
+                <div
+                  className="inline-notice inline-notice--warning"
+                  role="status"
+                >
+                  新的历史记录暂时没有加载，当前列表仍可查看。
+                </div>
+              )}
+            </Presence>
             {history.isLoading ? (
               <PageLoader />
             ) : items.length ? (
               <>
                 <div className="history-list">
-                  {items.map((item) => (
-                    <button
-                      className="history-row"
-                      key={item.session_id}
-                      onClick={() => setDetail(item)}
-                    >
-                      <span className="history-row__date">
-                        {formatLocalDateTime(item.started_at, range.timezone)}
-                      </span>
-                      <span className="history-row__main">
-                        <strong>{item.task_name}</strong>
-                        <small>
-                          {view === 'space'
-                            ? `${item.member.display_name} · `
-                            : ''}
-                          {categoryLabels[item.category]}
-                          {item.unconfirmed_connection_seconds > 0
-                            ? ' · 含连接不可确认区间'
-                            : ''}
-                        </small>
-                      </span>
-                      <span className={item.counts_toward_stats ? '' : 'muted'}>
-                        {formatDuration(item.credited_focus_seconds)}
-                      </span>
-                    </button>
-                  ))}
+                  <Presence>
+                    {items.map((item) => (
+                      <button
+                        className="history-row"
+                        key={item.session_id}
+                        onClick={() => setDetail(item)}
+                      >
+                        <span className="history-row__date">
+                          {formatLocalDateTime(item.started_at, range.timezone)}
+                        </span>
+                        <span className="history-row__main">
+                          <strong>{item.task_name}</strong>
+                          <small>
+                            {view === 'space'
+                              ? `${item.member.display_name} · `
+                              : ''}
+                            {categoryLabels[item.category]}
+                            {item.unconfirmed_connection_seconds > 0
+                              ? ' · 含连接不可确认区间'
+                              : ''}
+                          </small>
+                        </span>
+                        <span
+                          className={item.counts_toward_stats ? '' : 'muted'}
+                        >
+                          {formatDuration(item.credited_focus_seconds)}
+                        </span>
+                      </button>
+                    ))}
+                  </Presence>
                 </div>
                 {history.hasNextPage && (
                   <button
@@ -470,259 +482,282 @@ export function StatsPage() {
           </section>
         </>
       )}
-      {detail && (
-        <AccessibleModal titleId="detail-title" onClose={() => setDetail(null)}>
-          <span className="drawer__handle" />
-          <p className="eyebrow">专注记录</p>
-          <h2 id="detail-title">{detail.task_name}</h2>
-          <dl className="detail-list">
-            <div>
-              <dt>成员</dt>
-              <dd>{detail.member.display_name}</dd>
-            </div>
-            <div>
-              <dt>分类</dt>
-              <dd>{categoryLabels[detail.category]}</dd>
-            </div>
-            <div>
-              <dt>实际专注</dt>
-              <dd>{formatDuration(detail.credited_focus_seconds)}</dd>
-            </div>
-            <div>
-              <dt>开始</dt>
-              <dd>{formatLocalDateTime(detail.started_at, range?.timezone)}</dd>
-            </div>
-            <div>
-              <dt>结束</dt>
-              <dd>
-                {formatLocalDateTime(detail.completed_at, range?.timezone)}
-              </dd>
-            </div>
-            <div>
-              <dt>结算</dt>
-              <dd>{completionLabels[detail.completion_reason]}</dd>
-            </div>
-            {!detail.counts_toward_stats && (
+      <Presence>
+        {detail && (
+          <AccessibleModal
+            titleId="detail-title"
+            onClose={() => setDetail(null)}
+          >
+            <span className="drawer__handle" />
+            <p className="eyebrow">专注记录</p>
+            <h2 id="detail-title">{detail.task_name}</h2>
+            <dl className="detail-list">
               <div>
-                <dt>统计</dt>
-                <dd>少于 5 分钟，不计入统计</dd>
+                <dt>成员</dt>
+                <dd>{detail.member.display_name}</dd>
               </div>
-            )}
-            {detail.unconfirmed_connection_seconds > 0 && (
               <div>
-                <dt>连接</dt>
+                <dt>分类</dt>
+                <dd>{categoryLabels[detail.category]}</dd>
+              </div>
+              <div>
+                <dt>实际专注</dt>
+                <dd>{formatDuration(detail.credited_focus_seconds)}</dd>
+              </div>
+              <div>
+                <dt>开始</dt>
                 <dd>
-                  约 {formatDuration(detail.unconfirmed_connection_seconds)}
-                  不可确认
+                  {formatLocalDateTime(detail.started_at, range?.timezone)}
                 </dd>
               </div>
-            )}
-          </dl>
-          {sessionDetail.error && sessionDetail.data && (
-            <div className="inline-notice inline-notice--warning" role="status">
-              记录详情暂时没有更新，当前内容仍可查看。
-              <button
-                type="button"
-                onClick={() => void sessionDetail.refetch()}
-              >
-                重新加载
-              </button>
-            </div>
-          )}
-          {sessionDetail.isLoading ? (
-            <PageLoader />
-          ) : sessionDetail.data ? (
-            <>
-              <section aria-labelledby="segments-title">
-                <h3 id="segments-title">专注分段</h3>
-                {sessionDetail.data.data.segments.length ? (
-                  <ol className="detail-timeline">
-                    {sessionDetail.data.data.segments.map((segment, index) => (
-                      <li key={`${segment.started_at}:${index}`}>
-                        {formatLocalDateTime(
-                          segment.started_at,
-                          range?.timezone,
-                        )}
-                        {' — '}
-                        {segment.ended_at
-                          ? formatLocalDateTime(
-                              segment.ended_at,
+              <div>
+                <dt>结束</dt>
+                <dd>
+                  {formatLocalDateTime(detail.completed_at, range?.timezone)}
+                </dd>
+              </div>
+              <div>
+                <dt>结算</dt>
+                <dd>{completionLabels[detail.completion_reason]}</dd>
+              </div>
+              {!detail.counts_toward_stats && (
+                <div>
+                  <dt>统计</dt>
+                  <dd>少于 5 分钟，不计入统计</dd>
+                </div>
+              )}
+              {detail.unconfirmed_connection_seconds > 0 && (
+                <div>
+                  <dt>连接</dt>
+                  <dd>
+                    约 {formatDuration(detail.unconfirmed_connection_seconds)}
+                    不可确认
+                  </dd>
+                </div>
+              )}
+            </dl>
+            <Presence>
+              {sessionDetail.error && sessionDetail.data && (
+                <div
+                  className="inline-notice inline-notice--warning"
+                  role="status"
+                >
+                  记录详情暂时没有更新，当前内容仍可查看。
+                  <button
+                    type="button"
+                    onClick={() => void sessionDetail.refetch()}
+                  >
+                    重新加载
+                  </button>
+                </div>
+              )}
+            </Presence>
+            {sessionDetail.isLoading ? (
+              <PageLoader />
+            ) : sessionDetail.data ? (
+              <>
+                <section aria-labelledby="segments-title">
+                  <h3 id="segments-title">专注分段</h3>
+                  {sessionDetail.data.data.segments.length ? (
+                    <ol className="detail-timeline">
+                      {sessionDetail.data.data.segments.map(
+                        (segment, index) => (
+                          <li key={`${segment.started_at}:${index}`}>
+                            {formatLocalDateTime(
+                              segment.started_at,
                               range?.timezone,
-                            )
-                          : '尚未结束'}
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <p className="quiet-copy">没有可显示的专注分段。</p>
-                )}
-              </section>
-              <section aria-labelledby="date-attribution-title">
-                <h3 id="date-attribution-title">按日期归属</h3>
-                {range?.timezone ? (
-                  <dl className="detail-list">
-                    {splitSegmentsByLocalDate(
-                      sessionDetail.data.data.segments,
-                      range.timezone,
-                    ).map((item) => (
-                      <div key={item.local_date}>
-                        <dt>{item.local_date}</dt>
-                        <dd>{formatDuration(item.credited_focus_seconds)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : (
-                  <p className="quiet-copy">统计时区尚未确认。</p>
-                )}
-              </section>
-              <section aria-labelledby="connection-title">
-                <h3 id="connection-title">连接不可确认区间</h3>
-                {sessionDetail.data.data.connection_unconfirmed_intervals
-                  .length ? (
-                  <ol className="detail-timeline">
-                    {sessionDetail.data.data.connection_unconfirmed_intervals.map(
-                      (interval, index) => (
-                        <li key={`${interval.started_at}:${index}`}>
-                          {formatLocalDateTime(
-                            interval.started_at,
-                            range?.timezone,
-                          )}
-                          {' — '}
-                          {interval.ended_at
-                            ? formatLocalDateTime(
-                                interval.ended_at,
-                                range?.timezone,
-                              )
-                            : '尚未确认'}
-                        </li>
-                      ),
-                    )}
-                  </ol>
-                ) : (
-                  <p className="quiet-copy">本次记录没有连接不可确认区间。</p>
-                )}
-              </section>
-            </>
-          ) : sessionDetail.error ? (
-            <ErrorState
-              title="无法加载记录详情"
-              message="分段与连接区间尚未加载。"
-              onRetry={() => void sessionDetail.refetch()}
-            />
-          ) : null}
-          <button
-            data-autofocus
-            className="button button--secondary button--full"
-            onClick={() => setDetail(null)}
-          >
-            关闭
-          </button>
-        </AccessibleModal>
-      )}
-      {exportOpen && (
-        <AccessibleModal
-          titleId="focus-export-title"
-          onClose={() => !exporting && setExportOpen(false)}
-        >
-          <span className="drawer__handle" />
-          <p className="eyebrow">专注数据</p>
-          <h2 id="focus-export-title">数据导出</h2>
-          <div
-            className="segmented stats-export-period-tabs"
-            aria-label="导出周期"
-          >
-            {(
-              [
-                ['weekly', '周'],
-                ['monthly', '月'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                className={exportPeriod === value ? 'active' : ''}
-                aria-pressed={exportPeriod === value}
-                disabled={exporting}
-                onClick={() => {
-                  setExportPeriod(value);
-                  if (anchor)
-                    setExportSelection(
-                      value === 'weekly'
-                        ? isoWeekValue(anchor)
-                        : anchor.slice(0, 7),
-                    );
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="stats-export-picker-group">
-            <span className="stats-export-picker-label">
-              {exportPeriod === 'weekly' ? '选择周' : '选择月'}
-            </span>
+                            )}
+                            {' — '}
+                            {segment.ended_at
+                              ? formatLocalDateTime(
+                                  segment.ended_at,
+                                  range?.timezone,
+                                )
+                              : '尚未结束'}
+                          </li>
+                        ),
+                      )}
+                    </ol>
+                  ) : (
+                    <p className="quiet-copy">没有可显示的专注分段。</p>
+                  )}
+                </section>
+                <section aria-labelledby="date-attribution-title">
+                  <h3 id="date-attribution-title">按日期归属</h3>
+                  {range?.timezone ? (
+                    <dl className="detail-list">
+                      {splitSegmentsByLocalDate(
+                        sessionDetail.data.data.segments,
+                        range.timezone,
+                      ).map((item) => (
+                        <div key={item.local_date}>
+                          <dt>{item.local_date}</dt>
+                          <dd>{formatDuration(item.credited_focus_seconds)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="quiet-copy">统计时区尚未确认。</p>
+                  )}
+                </section>
+                <section aria-labelledby="connection-title">
+                  <h3 id="connection-title">连接不可确认区间</h3>
+                  {sessionDetail.data.data.connection_unconfirmed_intervals
+                    .length ? (
+                    <ol className="detail-timeline">
+                      {sessionDetail.data.data.connection_unconfirmed_intervals.map(
+                        (interval, index) => (
+                          <li key={`${interval.started_at}:${index}`}>
+                            {formatLocalDateTime(
+                              interval.started_at,
+                              range?.timezone,
+                            )}
+                            {' — '}
+                            {interval.ended_at
+                              ? formatLocalDateTime(
+                                  interval.ended_at,
+                                  range?.timezone,
+                                )
+                              : '尚未确认'}
+                          </li>
+                        ),
+                      )}
+                    </ol>
+                  ) : (
+                    <p className="quiet-copy">本次记录没有连接不可确认区间。</p>
+                  )}
+                </section>
+              </>
+            ) : sessionDetail.error ? (
+              <ErrorState
+                title="无法加载记录详情"
+                message="分段与连接区间尚未加载。"
+                onRetry={() => void sessionDetail.refetch()}
+              />
+            ) : null}
             <button
               data-autofocus
-              type="button"
-              className="stats-export-picker"
-              aria-label={`${exportPeriod === 'weekly' ? '选择周' : '选择月'}：${exportPeriodLabel(exportPeriod, exportSelection)}`}
-              disabled={exporting}
-              onClick={openExportPicker}
+              className="button button--secondary button--full"
+              onClick={() => setDetail(null)}
             >
-              <span className="stats-export-picker__date">
-                {exportPeriodLabel(exportPeriod, exportSelection)}
-              </span>
-              <span className="stats-export-picker__icon">
-                <Icon name="calendar" width={20} height={20} />
-              </span>
+              关闭
             </button>
-            <input
-              ref={exportPicker}
-              className="stats-export-picker__input"
-              aria-label={exportPeriod === 'weekly' ? '选择周日期' : '选择月份'}
-              type={exportPeriod === 'weekly' ? 'date' : 'month'}
-              value={exportPickerValue}
-              max={exportPickerMax}
-              disabled={exporting}
-              onChange={(event) =>
-                setExportSelection(
-                  !event.target.value
-                    ? ''
-                    : exportPeriod === 'weekly'
-                      ? isoWeekValue(event.target.value)
-                      : event.target.value,
-                )
-              }
-            />
-          </div>
-          <p className="quiet-copy stats-export-note">
-            仅导出你本人在当前友间的数据。文件内容使用英语，空周期也可导出。
-          </p>
-          {exportError && (
-            <div className="inline-notice inline-notice--warning" role="alert">
-              {exportError}
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {exportOpen && (
+          <AccessibleModal
+            titleId="focus-export-title"
+            onClose={() => !exporting && setExportOpen(false)}
+          >
+            <span className="drawer__handle" />
+            <p className="eyebrow">专注数据</p>
+            <h2 id="focus-export-title">数据导出</h2>
+            <div
+              className="segmented stats-export-period-tabs"
+              aria-label="导出周期"
+            >
+              {(
+                [
+                  ['weekly', '周'],
+                  ['monthly', '月'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={exportPeriod === value ? 'active' : ''}
+                  aria-pressed={exportPeriod === value}
+                  disabled={exporting}
+                  onClick={() => {
+                    setExportPeriod(value);
+                    if (anchor)
+                      setExportSelection(
+                        value === 'weekly'
+                          ? isoWeekValue(anchor)
+                          : anchor.slice(0, 7),
+                      );
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          )}
-          <div className="stats-export-actions">
-            <button
-              type="button"
-              className="button button--secondary"
-              disabled={exporting}
-              onClick={() => setExportOpen(false)}
-            >
-              取消
-            </button>
-            <button
-              type="button"
-              className="button button--primary"
-              disabled={exporting || !exportSelection}
-              onClick={() => void runExport()}
-            >
-              {exporting ? '正在导出…' : '导出 Markdown'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
+            <div className="stats-export-picker-group">
+              <span className="stats-export-picker-label">
+                {exportPeriod === 'weekly' ? '选择周' : '选择月'}
+              </span>
+              <button
+                data-autofocus
+                type="button"
+                className="stats-export-picker"
+                aria-label={`${exportPeriod === 'weekly' ? '选择周' : '选择月'}：${exportPeriodLabel(exportPeriod, exportSelection)}`}
+                disabled={exporting}
+                onClick={openExportPicker}
+              >
+                <span className="stats-export-picker__date">
+                  {exportPeriodLabel(exportPeriod, exportSelection)}
+                </span>
+                <span className="stats-export-picker__icon">
+                  <Icon name="calendar" width={20} height={20} />
+                </span>
+              </button>
+              <input
+                ref={exportPicker}
+                className="stats-export-picker__input"
+                aria-label={
+                  exportPeriod === 'weekly' ? '选择周日期' : '选择月份'
+                }
+                type={exportPeriod === 'weekly' ? 'date' : 'month'}
+                value={exportPickerValue}
+                max={exportPickerMax}
+                disabled={exporting}
+                onChange={(event) =>
+                  setExportSelection(
+                    !event.target.value
+                      ? ''
+                      : exportPeriod === 'weekly'
+                        ? isoWeekValue(event.target.value)
+                        : event.target.value,
+                  )
+                }
+              />
+            </div>
+            <p className="quiet-copy stats-export-note">
+              仅导出你本人在当前友间的数据。文件内容使用英语，空周期也可导出。
+            </p>
+            <Presence>
+              {exportError && (
+                <div
+                  className="inline-notice inline-notice--warning"
+                  role="alert"
+                >
+                  {exportError}
+                </div>
+              )}
+            </Presence>
+            <div className="stats-export-actions">
+              <button
+                type="button"
+                className="button button--secondary"
+                disabled={exporting}
+                onClick={() => setExportOpen(false)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button button--primary"
+                disabled={exporting || !exportSelection}
+                onClick={() => void runExport()}
+              >
+                {exporting ? '正在导出…' : '导出 Markdown'}
+              </button>
+            </div>
+          </AccessibleModal>
+        )}
+      </Presence>
     </div>
   );
 }
