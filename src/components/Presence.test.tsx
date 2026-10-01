@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe('Presence', () => {
-  it('keeps removed rows inert until exit finishes, without changing list markup', async () => {
+  it('keeps removed rows inert through delayed frames and cleans up cancelled exits', async () => {
     motion(true);
     vi.useFakeTimers();
     const list = (keys: string[]) => (
@@ -40,6 +40,8 @@ describe('Presence', () => {
     expect(first).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     await act(() => vi.advanceTimersByTime(250));
+    expect(first).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTime(750));
     expect(first).not.toBeInTheDocument();
     expect(screen.getByText('c')).toBeInTheDocument();
   });
@@ -59,7 +61,7 @@ describe('Presence', () => {
         <button key="item">After</button>
       </Presence>,
     );
-    await act(() => vi.advanceTimersByTime(250));
+    await act(() => vi.advanceTimersByTime(1000));
     expect(screen.getByRole('button', { name: 'After' })).toBe(button);
     expect(button).not.toHaveAttribute('inert');
     expect(button).not.toHaveAttribute('aria-hidden');
@@ -99,7 +101,7 @@ describe('Presence', () => {
     expect(trigger).toHaveFocus();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(close).not.toHaveBeenCalled();
-    await act(() => vi.advanceTimersByTime(250));
+    await act(() => vi.advanceTimersByTime(1000));
     expect(dialog).not.toBeInTheDocument();
     trigger.remove();
   });

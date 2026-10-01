@@ -32,8 +32,8 @@ function PresenceItem({
   const visible = usePresence() && present;
   useEffect(() => {
     if (present) return;
-    // Also clean up when a tab is hidden or an animation is cancelled.
-    const timer = window.setTimeout(() => onExit(element.key), 220);
+    // Allow delayed frames to finish; still clean up cancelled animations.
+    const timer = window.setTimeout(() => onExit(element.key), 1000);
     return () => window.clearTimeout(timer);
   }, [present, onExit, element.key]);
 

@@ -192,6 +192,10 @@ test('idle room renders the authoritative snapshot without viewport overflow', a
     path: testInfo.outputPath('motion-dialog.png'),
     animations: 'disabled',
   });
+  // A delayed frame must not let the fallback cut the exit animation short.
+  await page.locator('.modal-backdrop').evaluate((element) => {
+    element.style.animationDelay = '120ms';
+  });
   await goalDialog.getByLabel('目标时长（分钟）').fill('45');
   await goalDialog.getByRole('button', { name: '保存目标' }).click();
   await expect(goalDialog).toBeHidden();
