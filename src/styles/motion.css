@@ -40,6 +40,12 @@
     animation: presence-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
   }
 
+  .presence-item[data-presence='present'] > .achievement-card {
+    animation:
+      presence-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards,
+      achievement-breathe 3.6s ease-in-out infinite;
+  }
+
   [data-presence='exiting']:not(.presence-item),
   .presence-item[data-presence='exiting'] > * {
     animation: presence-out 160ms ease-in both;

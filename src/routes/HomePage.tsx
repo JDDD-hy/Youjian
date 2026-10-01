@@ -841,7 +841,7 @@ export function HomePage() {
         <Presence>
           {session ? (
             <FocusPanel
-              key={`${session.session_id}:${session.status}`}
+              key={`${session.session_id}:${session.status === 'paused' ? 'focusing' : session.status}`}
               session={session}
               now={now}
               connection={connection}
