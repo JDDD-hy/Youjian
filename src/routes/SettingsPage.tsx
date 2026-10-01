@@ -1,3 +1,4 @@
+import { Presence } from '../components/Presence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useSyncExternalStore } from 'react';
 import { useParams } from 'react-router-dom';
@@ -292,14 +293,19 @@ export function SettingsPage() {
         <ErrorState onRetry={() => void settings.refetch()} />
       ) : (
         <>
-          {settings.error && (
-            <div className="inline-notice inline-notice--warning" role="status">
-              设置暂时没有更新，正在显示上次成功加载的数据。
-              <button type="button" onClick={() => void settings.refetch()}>
-                重新加载
-              </button>
-            </div>
-          )}
+          <Presence>
+            {settings.error && (
+              <div
+                className="inline-notice inline-notice--warning"
+                role="status"
+              >
+                设置暂时没有更新，正在显示上次成功加载的数据。
+                <button type="button" onClick={() => void settings.refetch()}>
+                  重新加载
+                </button>
+              </div>
+            )}
+          </Presence>
           <section className="settings-card">
             <div className="section-heading">
               <h2>{data.space.name}</h2>
@@ -382,14 +388,16 @@ export function SettingsPage() {
                   {shared ? '已打开分享' : '分享邀请链接'}
                 </button>
               )}
-              {copyError && (
-                <div
-                  className="inline-notice inline-notice--error"
-                  role="alert"
-                >
-                  无法访问剪贴板，请检查浏览器权限后重试。
-                </div>
-              )}
+              <Presence>
+                {copyError && (
+                  <div
+                    className="inline-notice inline-notice--error"
+                    role="alert"
+                  >
+                    无法访问剪贴板，请检查浏览器权限后重试。
+                  </div>
+                )}
+              </Presence>
               {invite && (
                 <button
                   className="button button--text button--full"
@@ -412,62 +420,64 @@ export function SettingsPage() {
             </div>
             {data.members.length ? (
               <div className="settings-members">
-                {data.members.map((member) => (
-                  <div key={member.member_id}>
-                    <span className={`avatar avatar--${member.status}`}>
-                      {member.display_name.slice(0, 1)}
-                    </span>
-                    <div>
-                      <strong>{member.display_name}</strong>
-                      <small>
-                        {member.role === 'owner'
-                          ? '房主'
-                          : member.status === 'active'
-                            ? '成员'
-                            : '已停用'}
-                      </small>
+                <Presence>
+                  {data.members.map((member) => (
+                    <div key={member.member_id}>
+                      <span className={`avatar avatar--${member.status}`}>
+                        {member.display_name.slice(0, 1)}
+                      </span>
+                      <div>
+                        <strong>{member.display_name}</strong>
+                        <small>
+                          {member.role === 'owner'
+                            ? '房主'
+                            : member.status === 'active'
+                              ? '成员'
+                              : '已停用'}
+                        </small>
+                      </div>
+                      {data.owner_actions.can_disable_members &&
+                        member.role !== 'owner' &&
+                        member.status === 'active' && (
+                          <button
+                            className="button button--text-danger"
+                            onClick={() => {
+                              disable.reset();
+                              setDisableTarget(member);
+                            }}
+                          >
+                            停用
+                          </button>
+                        )}
+                      {data.me.role === 'owner' &&
+                        member.role !== 'owner' &&
+                        member.status === 'active' && (
+                          <button
+                            className="button button--text"
+                            disabled={createMemberRecoveryCode.isPending}
+                            onClick={() =>
+                              createMemberRecoveryCode.mutate(member)
+                            }
+                          >
+                            协助恢复
+                          </button>
+                        )}
+                      {data.me.role === 'owner' &&
+                        member.role !== 'owner' &&
+                        member.status === 'active' && (
+                          <button
+                            className="button button--text"
+                            onClick={() => {
+                              transfer.reset();
+                              setTransferTarget(member);
+                            }}
+                          >
+                            转让房主
+                          </button>
+                        )}
                     </div>
-                    {data.owner_actions.can_disable_members &&
-                      member.role !== 'owner' &&
-                      member.status === 'active' && (
-                        <button
-                          className="button button--text-danger"
-                          onClick={() => {
-                            disable.reset();
-                            setDisableTarget(member);
-                          }}
-                        >
-                          停用
-                        </button>
-                      )}
-                    {data.me.role === 'owner' &&
-                      member.role !== 'owner' &&
-                      member.status === 'active' && (
-                        <button
-                          className="button button--text"
-                          disabled={createMemberRecoveryCode.isPending}
-                          onClick={() =>
-                            createMemberRecoveryCode.mutate(member)
-                          }
-                        >
-                          协助恢复
-                        </button>
-                      )}
-                    {data.me.role === 'owner' &&
-                      member.role !== 'owner' &&
-                      member.status === 'active' && (
-                        <button
-                          className="button button--text"
-                          onClick={() => {
-                            transfer.reset();
-                            setTransferTarget(member);
-                          }}
-                        >
-                          转让房主
-                        </button>
-                      )}
-                  </div>
-                ))}
+                  ))}
+                </Presence>
               </div>
             ) : (
               <EmptyState icon="people" title="没有成员">
@@ -502,11 +512,16 @@ export function SettingsPage() {
                 当前浏览器尚未提供安装入口；可在浏览器菜单中查找“安装应用”。
               </p>
             )}
-            {installError && (
-              <div className="inline-notice inline-notice--error" role="alert">
-                安装提示未能打开，请通过浏览器菜单重试。
-              </div>
-            )}
+            <Presence>
+              {installError && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  安装提示未能打开，请通过浏览器菜单重试。
+                </div>
+              )}
+            </Presence>
             <small>应用版本 {packageInfo.version}</small>
           </section>
           <FocusHealthPolicyInfo />
@@ -536,16 +551,26 @@ export function SettingsPage() {
                 ? '正在生成…'
                 : '生成长期身份恢复码'}
             </button>
-            {createRecoveryCodes.error && (
-              <div className="inline-notice inline-notice--error" role="alert">
-                {createRecoveryCodes.error.message}
-              </div>
-            )}
-            {createTransferCode.error && (
-              <div className="inline-notice inline-notice--error" role="alert">
-                {createTransferCode.error.message}
-              </div>
-            )}
+            <Presence>
+              {createRecoveryCodes.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {createRecoveryCodes.error.message}
+                </div>
+              )}
+            </Presence>
+            <Presence>
+              {createTransferCode.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {createTransferCode.error.message}
+                </div>
+              )}
+            </Presence>
             <button
               className="button button--text-danger button--full"
               onClick={() => {
@@ -578,457 +603,519 @@ export function SettingsPage() {
           </section>
         </>
       )}
-      {editingName && data && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="rename-space-title"
-          onClose={() => {
-            if (!renameSpace.isPending) setEditingName(false);
-          }}
-          closeOnBackdrop={!renameSpace.isPending}
-        >
-          <h2 id="rename-space-title">修改友间名称</h2>
-          <label className="field">
-            <span>新名称</span>
-            <input
-              autoFocus
-              maxLength={30}
-              value={spaceName}
-              onChange={(event) => setSpaceName(event.target.value)}
-            />
-          </label>
-          {renameSpace.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {renameSpace.error.message}
+      <Presence>
+        {editingName && data && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="rename-space-title"
+            onClose={() => {
+              if (!renameSpace.isPending) setEditingName(false);
+            }}
+            closeOnBackdrop={!renameSpace.isPending}
+          >
+            <h2 id="rename-space-title">修改友间名称</h2>
+            <label className="field">
+              <span>新名称</span>
+              <input
+                autoFocus
+                maxLength={30}
+                value={spaceName}
+                onChange={(event) => setSpaceName(event.target.value)}
+              />
+            </label>
+            <Presence>
+              {renameSpace.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {renameSpace.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                className="button button--secondary"
+                disabled={renameSpace.isPending}
+                onClick={() => setEditingName(false)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--primary"
+                disabled={
+                  renameSpace.isPending ||
+                  !spaceName.trim() ||
+                  spaceName.trim() === data.space.name
+                }
+                onClick={() => renameSpace.mutate(spaceName)}
+              >
+                {renameSpace.isPending ? '正在保存…' : '保存名称'}
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              className="button button--secondary"
-              disabled={renameSpace.isPending}
-              onClick={() => setEditingName(false)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--primary"
-              disabled={
-                renameSpace.isPending ||
-                !spaceName.trim() ||
-                spaceName.trim() === data.space.name
-              }
-              onClick={() => renameSpace.mutate(spaceName)}
-            >
-              {renameSpace.isPending ? '正在保存…' : '保存名称'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {memberLimitTarget !== null && data && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="member-limit-title"
-          onClose={() => {
-            if (!increaseLimit.isPending) setMemberLimitTarget(null);
-          }}
-          closeOnBackdrop={!increaseLimit.isPending}
-        >
-          <h2 id="member-limit-title">提高成员上限</h2>
-          <label className="field">
-            <span>新上限</span>
-            <select
-              autoFocus
-              value={memberLimitTarget}
-              onChange={(event) =>
-                setMemberLimitTarget(Number(event.target.value))
-              }
-            >
-              {Array.from(
-                { length: 12 - data.space.member_limit },
-                (_, index) => data.space.member_limit + index + 1,
-              ).map((limit) => (
-                <option value={limit} key={limit}>
-                  {limit} 人
-                </option>
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {memberLimitTarget !== null && data && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="member-limit-title"
+            onClose={() => {
+              if (!increaseLimit.isPending) setMemberLimitTarget(null);
+            }}
+            closeOnBackdrop={!increaseLimit.isPending}
+          >
+            <h2 id="member-limit-title">提高成员上限</h2>
+            <label className="field">
+              <span>新上限</span>
+              <select
+                autoFocus
+                value={memberLimitTarget}
+                onChange={(event) =>
+                  setMemberLimitTarget(Number(event.target.value))
+                }
+              >
+                {Array.from(
+                  { length: 12 - data.space.member_limit },
+                  (_, index) => data.space.member_limit + index + 1,
+                ).map((limit) => (
+                  <option value={limit} key={limit}>
+                    {limit} 人
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p>
+              将从 {data.space.member_limit} 人提高到 {memberLimitTarget}{' '}
+              人。保存后不能调低，现有邀请链接继续有效。
+            </p>
+            <Presence>
+              {increaseLimit.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {increaseLimit.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                className="button button--secondary"
+                disabled={increaseLimit.isPending}
+                onClick={() => setMemberLimitTarget(null)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--primary"
+                disabled={increaseLimit.isPending}
+                onClick={() => increaseLimit.mutate(memberLimitTarget)}
+              >
+                {increaseLimit.isPending ? '正在保存…' : '确认提高'}
+              </button>
+            </div>
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {confirmRotate && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="rotate-title"
+            onClose={() => {
+              if (!rotate.isPending) setConfirmRotate(false);
+            }}
+            closeOnBackdrop={!rotate.isPending}
+          >
+            <h2 id="rotate-title">生成新的邀请链接？</h2>
+            <p>旧链接会立即失效，已经加入的成员不受影响。</p>
+            <Presence>
+              {rotate.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {rotate.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                autoFocus
+                className="button button--secondary"
+                disabled={rotate.isPending}
+                onClick={() => setConfirmRotate(false)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--danger"
+                disabled={rotate.isPending}
+                onClick={() => rotate.mutate()}
+              >
+                {rotate.isPending ? '正在生成…' : '确认轮换'}
+              </button>
+            </div>
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {transferCode && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="identity-transfer-title"
+            onClose={() => setTransferCode(null)}
+          >
+            <h2 id="identity-transfer-title">身份迁移码</h2>
+            <p>
+              请在 10
+              分钟内到新设备的“迁移已有身份”页面输入。成功后，本设备会立即失去访问权。
+            </p>
+            <output aria-label="一次性身份迁移码" className="transfer-code">
+              {transferCode.value}
+            </output>
+            <small>
+              有效期至{' '}
+              {formatLocalDateTime(
+                transferCode.expiresAt,
+                data?.space.timezone ?? 'UTC',
+              )}
+            </small>
+            <div className="dialog__actions">
+              <button
+                className="button button--secondary"
+                onClick={() => setTransferCode(null)}
+              >
+                关闭
+              </button>
+              <button
+                autoFocus
+                className="button button--primary"
+                onClick={() => {
+                  void navigator.clipboard
+                    .writeText(transferCode.value)
+                    .then(() => setTransferCodeCopied(true));
+                }}
+              >
+                {transferCodeCopied ? '已复制' : '复制迁移码'}
+              </button>
+            </div>
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {memberRecoveryCode && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="member-recovery-title"
+            onClose={() => setMemberRecoveryCode(null)}
+          >
+            <h2 id="member-recovery-title">
+              恢复 {memberRecoveryCode.memberName} 的身份
+            </h2>
+            <p>
+              将此一次性恢复码私下发送给该成员。对方在欢迎页进入“恢复已有身份”并输入；成功后会恢复原成员、历史记录和加入顺序，旧登录凭证立即失效。
+            </p>
+            <output aria-label="成员身份恢复码" className="transfer-code">
+              {memberRecoveryCode.value}
+            </output>
+            <small>
+              有效期至{' '}
+              {formatLocalDateTime(
+                memberRecoveryCode.expiresAt,
+                data?.space.timezone ?? 'UTC',
+              )}
+            </small>
+            <div className="dialog__actions">
+              <button
+                className="button button--secondary"
+                onClick={() => setMemberRecoveryCode(null)}
+              >
+                关闭
+              </button>
+              <button
+                autoFocus
+                className="button button--primary"
+                onClick={() => {
+                  void navigator.clipboard
+                    .writeText(memberRecoveryCode.value)
+                    .then(() => setMemberRecoveryCodeCopied(true));
+                }}
+              >
+                {memberRecoveryCodeCopied ? '已复制' : '复制恢复码'}
+              </button>
+            </div>
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {recoveryCodeSet && data && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="recovery-codes-title"
+            onClose={() => setRecoveryCodeSet(null)}
+          >
+            <h2 id="recovery-codes-title">长期身份恢复码</h2>
+            <p>
+              这是恢复当前身份的唯一长期凭证。每个码只能使用一次；重新生成后旧码全部失效。请下载并保存到密码管理器、个人云盘或离线介质。
+            </p>
+            <ol className="recovery-code-list">
+              {recoveryCodeSet.codes.map((code) => (
+                <li key={code}>
+                  <code>{code}</code>
+                </li>
               ))}
-            </select>
-          </label>
-          <p>
-            将从 {data.space.member_limit} 人提高到 {memberLimitTarget}{' '}
-            人。保存后不能调低，现有邀请链接继续有效。
-          </p>
-          {increaseLimit.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {increaseLimit.error.message}
+            </ol>
+            <div className="dialog__actions">
+              <button
+                className="button button--secondary"
+                onClick={() => setRecoveryCodeSet(null)}
+              >
+                关闭
+              </button>
+              <button
+                autoFocus
+                className="button button--primary"
+                onClick={() =>
+                  downloadRecoveryCodes(
+                    recoveryCodeSet.codes,
+                    data.me.display_name,
+                    recoveryCodeSet.generated_at,
+                  )
+                }
+              >
+                下载 .txt
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              className="button button--secondary"
-              disabled={increaseLimit.isPending}
-              onClick={() => setMemberLimitTarget(null)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--primary"
-              disabled={increaseLimit.isPending}
-              onClick={() => increaseLimit.mutate(memberLimitTarget)}
-            >
-              {increaseLimit.isPending ? '正在保存…' : '确认提高'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {confirmRotate && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="rotate-title"
-          onClose={() => {
-            if (!rotate.isPending) setConfirmRotate(false);
-          }}
-          closeOnBackdrop={!rotate.isPending}
-        >
-          <h2 id="rotate-title">生成新的邀请链接？</h2>
-          <p>旧链接会立即失效，已经加入的成员不受影响。</p>
-          {rotate.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {rotate.error.message}
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {confirmExit && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="exit-device-title"
+            onClose={() => {
+              if (!exiting) setConfirmExit(false);
+            }}
+            closeOnBackdrop={!exiting}
+          >
+            <h2 id="exit-device-title">退出当前设备？</h2>
+            <p>
+              这个匿名身份无法再次登录。退出后，本设备上的邀请和身份缓存会被清除；友间中的历史记录仍会保留。
+            </p>
+            <p>若正在专注，请先结束本次专注再退出。</p>
+            <Presence>
+              {exitError && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  无法清除当前身份，请检查连接后重试。
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                autoFocus
+                className="button button--secondary"
+                disabled={exiting}
+                onClick={() => setConfirmExit(false)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--danger"
+                disabled={exiting}
+                onClick={() => void exitCurrentDevice()}
+              >
+                {exiting ? '正在退出…' : '确认退出'}
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              autoFocus
-              className="button button--secondary"
-              disabled={rotate.isPending}
-              onClick={() => setConfirmRotate(false)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--danger"
-              disabled={rotate.isPending}
-              onClick={() => rotate.mutate()}
-            >
-              {rotate.isPending ? '正在生成…' : '确认轮换'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {transferCode && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="identity-transfer-title"
-          onClose={() => setTransferCode(null)}
-        >
-          <h2 id="identity-transfer-title">身份迁移码</h2>
-          <p>
-            请在 10
-            分钟内到新设备的“迁移已有身份”页面输入。成功后，本设备会立即失去访问权。
-          </p>
-          <output aria-label="一次性身份迁移码" className="transfer-code">
-            {transferCode.value}
-          </output>
-          <small>
-            有效期至{' '}
-            {formatLocalDateTime(
-              transferCode.expiresAt,
-              data?.space.timezone ?? 'UTC',
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {confirmLeave && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="leave-space-title"
+            onClose={() => {
+              if (!leave.isPending) setConfirmLeave(false);
+            }}
+            closeOnBackdrop={!leave.isPending}
+          >
+            <h2 id="leave-space-title">主动退出友间？</h2>
+            <p>
+              退出后会立即失去访问权并保留历史记录；之后可凭当前有效邀请重新加入。
+            </p>
+            {data?.me.role === 'owner' && (
+              <p>房主需要先转让房主，或改为解散友间。</p>
             )}
-          </small>
-          <div className="dialog__actions">
-            <button
-              className="button button--secondary"
-              onClick={() => setTransferCode(null)}
-            >
-              关闭
-            </button>
-            <button
-              autoFocus
-              className="button button--primary"
-              onClick={() => {
-                void navigator.clipboard
-                  .writeText(transferCode.value)
-                  .then(() => setTransferCodeCopied(true));
-              }}
-            >
-              {transferCodeCopied ? '已复制' : '复制迁移码'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {memberRecoveryCode && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="member-recovery-title"
-          onClose={() => setMemberRecoveryCode(null)}
-        >
-          <h2 id="member-recovery-title">
-            恢复 {memberRecoveryCode.memberName} 的身份
-          </h2>
-          <p>
-            将此一次性恢复码私下发送给该成员。对方在欢迎页进入“恢复已有身份”并输入；成功后会恢复原成员、历史记录和加入顺序，旧登录凭证立即失效。
-          </p>
-          <output aria-label="成员身份恢复码" className="transfer-code">
-            {memberRecoveryCode.value}
-          </output>
-          <small>
-            有效期至{' '}
-            {formatLocalDateTime(
-              memberRecoveryCode.expiresAt,
-              data?.space.timezone ?? 'UTC',
-            )}
-          </small>
-          <div className="dialog__actions">
-            <button
-              className="button button--secondary"
-              onClick={() => setMemberRecoveryCode(null)}
-            >
-              关闭
-            </button>
-            <button
-              autoFocus
-              className="button button--primary"
-              onClick={() => {
-                void navigator.clipboard
-                  .writeText(memberRecoveryCode.value)
-                  .then(() => setMemberRecoveryCodeCopied(true));
-              }}
-            >
-              {memberRecoveryCodeCopied ? '已复制' : '复制恢复码'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {recoveryCodeSet && data && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="recovery-codes-title"
-          onClose={() => setRecoveryCodeSet(null)}
-        >
-          <h2 id="recovery-codes-title">长期身份恢复码</h2>
-          <p>
-            这是恢复当前身份的唯一长期凭证。每个码只能使用一次；重新生成后旧码全部失效。请下载并保存到密码管理器、个人云盘或离线介质。
-          </p>
-          <ol className="recovery-code-list">
-            {recoveryCodeSet.codes.map((code) => (
-              <li key={code}>
-                <code>{code}</code>
-              </li>
-            ))}
-          </ol>
-          <div className="dialog__actions">
-            <button
-              className="button button--secondary"
-              onClick={() => setRecoveryCodeSet(null)}
-            >
-              关闭
-            </button>
-            <button
-              autoFocus
-              className="button button--primary"
-              onClick={() =>
-                downloadRecoveryCodes(
-                  recoveryCodeSet.codes,
-                  data.me.display_name,
-                  recoveryCodeSet.generated_at,
-                )
-              }
-            >
-              下载 .txt
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {confirmExit && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="exit-device-title"
-          onClose={() => {
-            if (!exiting) setConfirmExit(false);
-          }}
-          closeOnBackdrop={!exiting}
-        >
-          <h2 id="exit-device-title">退出当前设备？</h2>
-          <p>
-            这个匿名身份无法再次登录。退出后，本设备上的邀请和身份缓存会被清除；友间中的历史记录仍会保留。
-          </p>
-          <p>若正在专注，请先结束本次专注再退出。</p>
-          {exitError && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              无法清除当前身份，请检查连接后重试。
+            <Presence>
+              {leave.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {leave.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                autoFocus
+                className="button button--secondary"
+                disabled={leave.isPending}
+                onClick={() => setConfirmLeave(false)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--danger"
+                disabled={leave.isPending || data?.me.role === 'owner'}
+                onClick={() => leave.mutate()}
+              >
+                {leave.isPending ? '正在退出…' : '确认退出友间'}
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              autoFocus
-              className="button button--secondary"
-              disabled={exiting}
-              onClick={() => setConfirmExit(false)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--danger"
-              disabled={exiting}
-              onClick={() => void exitCurrentDevice()}
-            >
-              {exiting ? '正在退出…' : '确认退出'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {confirmLeave && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="leave-space-title"
-          onClose={() => {
-            if (!leave.isPending) setConfirmLeave(false);
-          }}
-          closeOnBackdrop={!leave.isPending}
-        >
-          <h2 id="leave-space-title">主动退出友间？</h2>
-          <p>
-            退出后会立即失去访问权并保留历史记录；之后可凭当前有效邀请重新加入。
-          </p>
-          {data?.me.role === 'owner' && (
-            <p>房主需要先转让房主，或改为解散友间。</p>
-          )}
-          {leave.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {leave.error.message}
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {transferTarget && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="transfer-owner-title"
+            onClose={() => {
+              if (!transfer.isPending) setTransferTarget(null);
+            }}
+            closeOnBackdrop={!transfer.isPending}
+          >
+            <h2 id="transfer-owner-title">
+              转让房主给 {transferTarget.display_name}？
+            </h2>
+            <p>转让后对方成为房主，你将成为普通成员。此操作不能自动撤销。</p>
+            <Presence>
+              {transfer.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {transfer.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                autoFocus
+                className="button button--secondary"
+                disabled={transfer.isPending}
+                onClick={() => setTransferTarget(null)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--danger"
+                disabled={transfer.isPending}
+                onClick={() => transfer.mutate(transferTarget.member_id)}
+              >
+                {transfer.isPending ? '正在转让…' : '确认转让'}
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              autoFocus
-              className="button button--secondary"
-              disabled={leave.isPending}
-              onClick={() => setConfirmLeave(false)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--danger"
-              disabled={leave.isPending || data?.me.role === 'owner'}
-              onClick={() => leave.mutate()}
-            >
-              {leave.isPending ? '正在退出…' : '确认退出友间'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {transferTarget && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="transfer-owner-title"
-          onClose={() => {
-            if (!transfer.isPending) setTransferTarget(null);
-          }}
-          closeOnBackdrop={!transfer.isPending}
-        >
-          <h2 id="transfer-owner-title">
-            转让房主给 {transferTarget.display_name}？
-          </h2>
-          <p>转让后对方成为房主，你将成为普通成员。此操作不能自动撤销。</p>
-          {transfer.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {transfer.error.message}
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {confirmDissolve && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="dissolve-space-title"
+            onClose={() => {
+              if (!dissolve.isPending) setConfirmDissolve(false);
+            }}
+            closeOnBackdrop={!dissolve.isPending}
+          >
+            <h2 id="dissolve-space-title">永久解散友间？</h2>
+            <p>
+              所有成员会立即失去访问权，活动专注先由服务端结算，历史记录仅保留用于审计。
+            </p>
+            <Presence>
+              {dissolve.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {dissolve.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                autoFocus
+                className="button button--secondary"
+                disabled={dissolve.isPending}
+                onClick={() => setConfirmDissolve(false)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--danger"
+                disabled={dissolve.isPending}
+                onClick={() => dissolve.mutate()}
+              >
+                {dissolve.isPending ? '正在解散…' : '确认永久解散'}
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              autoFocus
-              className="button button--secondary"
-              disabled={transfer.isPending}
-              onClick={() => setTransferTarget(null)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--danger"
-              disabled={transfer.isPending}
-              onClick={() => transfer.mutate(transferTarget.member_id)}
-            >
-              {transfer.isPending ? '正在转让…' : '确认转让'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {confirmDissolve && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="dissolve-space-title"
-          onClose={() => {
-            if (!dissolve.isPending) setConfirmDissolve(false);
-          }}
-          closeOnBackdrop={!dissolve.isPending}
-        >
-          <h2 id="dissolve-space-title">永久解散友间？</h2>
-          <p>
-            所有成员会立即失去访问权，活动专注先由服务端结算，历史记录仅保留用于审计。
-          </p>
-          {dissolve.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {dissolve.error.message}
+          </AccessibleModal>
+        )}
+      </Presence>
+      <Presence>
+        {disableTarget && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="disable-title"
+            onClose={() => {
+              if (!disable.isPending) setDisableTarget(null);
+            }}
+            closeOnBackdrop={!disable.isPending}
+          >
+            <h2 id="disable-title">停用 {disableTarget.display_name}？</h2>
+            <p>
+              对方会立即失去访问权限；正在进行的专注会按服务端时间结算，历史记录仍会保留。
+            </p>
+            <Presence>
+              {disable.error && (
+                <div
+                  className="inline-notice inline-notice--error"
+                  role="alert"
+                >
+                  {disable.error.message}
+                </div>
+              )}
+            </Presence>
+            <div className="dialog__actions">
+              <button
+                autoFocus
+                className="button button--secondary"
+                disabled={disable.isPending}
+                onClick={() => setDisableTarget(null)}
+              >
+                取消
+              </button>
+              <button
+                className="button button--danger"
+                disabled={disable.isPending}
+                onClick={() => disable.mutate(disableTarget.member_id)}
+              >
+                {disable.isPending ? '正在停用…' : '确认停用'}
+              </button>
             </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              autoFocus
-              className="button button--secondary"
-              disabled={dissolve.isPending}
-              onClick={() => setConfirmDissolve(false)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--danger"
-              disabled={dissolve.isPending}
-              onClick={() => dissolve.mutate()}
-            >
-              {dissolve.isPending ? '正在解散…' : '确认永久解散'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
-      {disableTarget && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="disable-title"
-          onClose={() => {
-            if (!disable.isPending) setDisableTarget(null);
-          }}
-          closeOnBackdrop={!disable.isPending}
-        >
-          <h2 id="disable-title">停用 {disableTarget.display_name}？</h2>
-          <p>
-            对方会立即失去访问权限；正在进行的专注会按服务端时间结算，历史记录仍会保留。
-          </p>
-          {disable.error && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {disable.error.message}
-            </div>
-          )}
-          <div className="dialog__actions">
-            <button
-              autoFocus
-              className="button button--secondary"
-              disabled={disable.isPending}
-              onClick={() => setDisableTarget(null)}
-            >
-              取消
-            </button>
-            <button
-              className="button button--danger"
-              disabled={disable.isPending}
-              onClick={() => disable.mutate(disableTarget.member_id)}
-            >
-              {disable.isPending ? '正在停用…' : '确认停用'}
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
+          </AccessibleModal>
+        )}
+      </Presence>
     </div>
   );
 }

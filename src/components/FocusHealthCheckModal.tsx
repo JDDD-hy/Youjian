@@ -1,3 +1,4 @@
+import { Presence } from './Presence';
 import type { FocusSession } from '../domain/types';
 import { AccessibleModal } from './AccessibleModal';
 import { appPath } from '../lib/appBase';
@@ -35,11 +36,13 @@ export function FocusHealthCheckModal({
           <small>秒后自动结束</small>
         </output>
         <p className="sr-only">当前任务：{session.task_name}</p>
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
+        <Presence>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+        </Presence>
         <div className="dialog__actions">
           <button
             className="button button--secondary"

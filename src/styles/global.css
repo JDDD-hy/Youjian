@@ -2082,7 +2082,14 @@ a:focus-visible {
   z-index: 5;
   left: 0;
   bottom: calc(100% + 6px);
-  display: none;
+  display: block;
+  visibility: hidden;
+  opacity: 0;
+  translate: 0 4px;
+  transition:
+    opacity 160ms ease,
+    translate 160ms ease,
+    visibility 160ms;
   width: max-content;
   max-width: min(280px, 72vw);
   padding: 8px 10px;
@@ -2101,7 +2108,9 @@ a:focus-visible {
 .achievement-tooltip-trigger:hover > span[role='tooltip'],
 .achievement-tooltip-trigger:focus-visible > span[role='tooltip'],
 .achievement-tooltip-trigger:focus > span[role='tooltip'] {
-  display: block;
+  visibility: visible;
+  opacity: 1;
+  translate: 0 0;
 }
 @keyframes achievement-breathe {
   0%,
@@ -2449,19 +2458,4 @@ a:focus-visible {
 }
 .focus-health-policy-info li + li {
   margin-top: 6px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .achievement-toast {
-    animation: achievement-in 0.6s ease-out both;
-  }
-}
-@keyframes achievement-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }

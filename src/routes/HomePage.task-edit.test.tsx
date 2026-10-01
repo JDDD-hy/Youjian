@@ -38,11 +38,15 @@ describe('focus task editing', () => {
     );
     const toggle = screen.getByRole('button', { name: /查看旧任务/ });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText('旧任务')).not.toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.getByText('旧任务').closest('[inert]')).not.toBeNull();
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('旧任务')).toBeVisible();
     expect(screen.getByText(/学习.*修改于/)).toBeVisible();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 
   it('prefills the current values and submits a changed task', () => {

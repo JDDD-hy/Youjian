@@ -1,3 +1,4 @@
+import { Presence } from '../Presence';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -25,19 +26,26 @@ export function TaskHistory({ history }: { history: TaskRevision[] }) {
       >
         已修改 · {expanded ? '收起旧任务' : `查看旧任务 (${history.length})`}
       </button>
-      {expanded && (
-        <ol className="task-history__list">
-          {history.map((revision, index) => (
-            <li key={`${revision.changed_at}:${index}`}>
-              <span>{revision.task_name}</span>
-              <small>
-                {categoryLabels[revision.category]} · 修改于{' '}
-                {formatLocalDateTime(revision.changed_at)}
-              </small>
-            </li>
-          ))}
-        </ol>
-      )}
+      <div
+        className="task-history__reveal"
+        data-expanded={expanded}
+        inert={!expanded}
+        aria-hidden={!expanded}
+      >
+        <div>
+          <ol className="task-history__list">
+            {history.map((revision, index) => (
+              <li key={`${revision.changed_at}:${index}`}>
+                <span>{revision.task_name}</span>
+                <small>
+                  {categoryLabels[revision.category]} · 修改于{' '}
+                  {formatLocalDateTime(revision.changed_at)}
+                </small>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
     </div>
   );
 }
@@ -197,15 +205,17 @@ export function FocusPanel({
           修改任务
         </button>
         <strong className="timer">{formatDuration(seconds, true)}</strong>
-        {session.auto_settle_at &&
-          Date.parse(session.auto_settle_at) - now <= 30 * 60 * 1000 && (
-            <p className="limit-note">
-              距离本次专注上限还有{' '}
-              {formatDuration(
-                (Date.parse(session.auto_settle_at) - now) / 1000,
-              )}
-            </p>
-          )}
+        <Presence>
+          {session.auto_settle_at &&
+            Date.parse(session.auto_settle_at) - now <= 30 * 60 * 1000 && (
+              <p className="limit-note">
+                距离本次专注上限还有{' '}
+                {formatDuration(
+                  (Date.parse(session.auto_settle_at) - now) / 1000,
+                )}
+              </p>
+            )}
+        </Presence>
         <button
           className="button button--primary button--wide"
           disabled={pending || authorityPending}

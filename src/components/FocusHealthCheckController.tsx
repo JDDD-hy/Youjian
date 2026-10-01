@@ -1,3 +1,4 @@
+import { Presence } from './Presence';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FocusSession } from '../domain/types';
 import { ApiError, createIdempotencyKey, rpc } from '../lib/api';
@@ -141,19 +142,23 @@ export function FocusHealthCheckController({
 
   return (
     <>
-      {isPending && document.visibilityState === 'visible' && (
-        <FocusHealthCheckModal
-          session={session}
-          remainingSeconds={remainingSeconds}
-          pending={pendingChoice}
-          error={error}
-          onEnd={() => void respond('end')}
-          onContinue={() => void respond('continue')}
-        />
-      )}
-      {hasUnreadResult && (
-        <FocusHealthResultModal session={session} onDismiss={dismissResult} />
-      )}
+      <Presence>
+        {isPending && document.visibilityState === 'visible' && (
+          <FocusHealthCheckModal
+            session={session}
+            remainingSeconds={remainingSeconds}
+            pending={pendingChoice}
+            error={error}
+            onEnd={() => void respond('end')}
+            onContinue={() => void respond('continue')}
+          />
+        )}
+      </Presence>
+      <Presence>
+        {hasUnreadResult && (
+          <FocusHealthResultModal session={session} onDismiss={dismissResult} />
+        )}
+      </Presence>
     </>
   );
 }

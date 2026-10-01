@@ -1,3 +1,4 @@
+import { Presence } from '../components/Presence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -210,12 +211,16 @@ export function DailyGoalDrawer({
           今天已经开始过专注，只能修改明天起的默认目标。
         </p>
       )}
-      {!valid && <p className="field-error">请输入30–720之间的整数分钟。</p>}
-      {error && (
-        <p className="field-error" role="alert">
-          {error}
-        </p>
-      )}
+      <Presence>
+        {!valid && <p className="field-error">请输入30–720之间的整数分钟。</p>}
+      </Presence>
+      <Presence>
+        {error && (
+          <p className="field-error" role="alert">
+            {error}
+          </p>
+        )}
+      </Presence>
       <button
         className="button button--primary button--full"
         type="button"
@@ -324,9 +329,11 @@ function StartDrawer({
           ),
         )}
       </fieldset>
-      {!trimmed && task.length > 0 && (
-        <p className="field-error">写下这次要做的事情。</p>
-      )}
+      <Presence>
+        {!trimmed && task.length > 0 && (
+          <p className="field-error">写下这次要做的事情。</p>
+        )}
+      </Presence>
       <button
         className="button button--primary button--full"
         type="button"
@@ -403,9 +410,11 @@ export function EditTaskDrawer({
           ),
         )}
       </fieldset>
-      {!trimmed && task.length > 0 && (
-        <p className="field-error">写下这次要做的事情。</p>
-      )}
+      <Presence>
+        {!trimmed && task.length > 0 && (
+          <p className="field-error">写下这次要做的事情。</p>
+        )}
+      </Presence>
       <button
         className="button button--primary button--full"
         type="button"
@@ -795,60 +804,85 @@ export function HomePage() {
           <h1>{data.space.name}</h1>
         </div>
       </header>
-      {connectionCopy[connection] && (
-        <div
-          className={`connection-banner connection-banner--${connection}`}
-          role="status"
-        >
-          <Icon name={connection === 'offline' ? 'warning' : 'wifi'} />
-          {connectionCopy[connection]}
-        </div>
-      )}
-      {query.error && (
-        <div className="inline-notice inline-notice--warning" role="status">
-          部分内容暂时没有更新。上次数据仍保留，计时状态正在重新确认。
-          <button type="button" onClick={() => void query.refetch()}>
-            重新加载
-          </button>
-        </div>
-      )}
-      {notice && (
-        <div className="inline-notice inline-notice--success" role="status">
-          <Icon name="check" />
-          友间已创建。邀请链接已安全保存在这台设备的设置页。
-          <button onClick={() => setNotice(false)} aria-label="关闭提示">
-            ×
-          </button>
-        </div>
-      )}
+      <Presence>
+        {connectionCopy[connection] && (
+          <div
+            className={`connection-banner connection-banner--${connection}`}
+            role="status"
+          >
+            <Icon name={connection === 'offline' ? 'warning' : 'wifi'} />
+            {connectionCopy[connection]}
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {query.error && (
+          <div className="inline-notice inline-notice--warning" role="status">
+            部分内容暂时没有更新。上次数据仍保留，计时状态正在重新确认。
+            <button type="button" onClick={() => void query.refetch()}>
+              重新加载
+            </button>
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {notice && (
+          <div className="inline-notice inline-notice--success" role="status">
+            <Icon name="check" />
+            友间已创建。邀请链接已安全保存在这台设备的设置页。
+            <button onClick={() => setNotice(false)} aria-label="关闭提示">
+              ×
+            </button>
+          </div>
+        )}
+      </Presence>
       <Summary data={data.today} onEdit={() => setEditingGoal(true)} />
-      {session ? (
+      <div className="presence-stack">
+        <Presence>
+          {session ? (
+            <FocusPanel
+              key={`${session.session_id}:${session.status}`}
+              session={session}
+              now={now}
+              connection={connection}
+              pending={command.isPending}
+              lampOverlay={<PersonalDeadlineCurtain />}
+              onPause={() =>
+                runCommand('pause_focus', { session_id: session.session_id })
+              }
+              onResume={() =>
+                runCommand('resume_focus', { session_id: session.session_id })
+              }
+              onEnd={end}
+              onEdit={() => setEditingSession(session)}
+              onDismiss={() => {
+                setLocalSettled(null);
+                void queryClient.invalidateQueries({
+                  queryKey: ['home', spaceId],
+                });
+              }}
+              timezoneLabel={focusTimezoneLabel(
+                session.timezone_snapshot,
+                data.space.timezone,
+              )}
+            />
+          ) : (
+            <section key="idle" className="focus-panel focus-panel--idle">
+              <Lamp />
+              <h2>留一段完整的时间给自己</h2>
+              <p>准备好后，点亮台灯开始专注。</p>
+              <button
+                className="button button--primary button--wide"
+                onClick={() => setDrawer(true)}
+              >
+                开始专注
+              </button>
+            </section>
+          )}
+        </Presence>
+      </div>
+      {session && (
         <>
-          <FocusPanel
-            session={session}
-            now={now}
-            connection={connection}
-            pending={command.isPending}
-            lampOverlay={<PersonalDeadlineCurtain />}
-            onPause={() =>
-              runCommand('pause_focus', { session_id: session.session_id })
-            }
-            onResume={() =>
-              runCommand('resume_focus', { session_id: session.session_id })
-            }
-            onEnd={end}
-            onEdit={() => setEditingSession(session)}
-            onDismiss={() => {
-              setLocalSettled(null);
-              void queryClient.invalidateQueries({
-                queryKey: ['home', spaceId],
-              });
-            }}
-            timezoneLabel={focusTimezoneLabel(
-              session.timezone_snapshot,
-              data.space.timezone,
-            )}
-          />
           {(session.status === 'focusing' || session.status === 'paused') && (
             <>
               <FocusReminder
@@ -873,61 +907,57 @@ export function HomePage() {
             />
           )}
         </>
-      ) : (
-        <section className="focus-panel focus-panel--idle">
-          <Lamp />
-          <h2>留一段完整的时间给自己</h2>
-          <p>准备好后，点亮台灯开始专注。</p>
-          <button
-            className="button button--primary button--wide"
-            onClick={() => setDrawer(true)}
-          >
-            开始专注
-          </button>
-        </section>
       )}
-      {editingGoal && (
-        <DailyGoalDrawer
-          today={data.today}
-          pending={updateDailyGoal.isPending}
-          error={
-            updateDailyGoal.error instanceof Error
-              ? updateDailyGoal.error.message
-              : undefined
-          }
-          onClose={() => setEditingGoal(false)}
-          onSave={(scope, targetMinutes) =>
-            updateDailyGoal.mutate({ scope, targetMinutes })
-          }
-        />
-      )}
-      {editingSession && (
-        <EditTaskDrawer
-          session={editingSession}
-          pending={command.isPending}
-          onClose={() => setEditingSession(null)}
-          onSave={updateTask}
-        />
-      )}
-      {command.error && (
-        <div className="inline-notice inline-notice--error" role="alert">
-          {command.error instanceof ApiError
-            ? command.error.message
-            : '这次操作还没有生效，请稍后重试。'}
-        </div>
-      )}
-      {offlineAction && (
-        <div className="inline-notice inline-notice--warning" role="status">
-          当前无法连接服务器，这次操作还没有生效，专注计时仍在继续。连接恢复后请重试。
-        </div>
-      )}
+      <Presence>
+        {editingGoal && (
+          <DailyGoalDrawer
+            today={data.today}
+            pending={updateDailyGoal.isPending}
+            error={
+              updateDailyGoal.error instanceof Error
+                ? updateDailyGoal.error.message
+                : undefined
+            }
+            onClose={() => setEditingGoal(false)}
+            onSave={(scope, targetMinutes) =>
+              updateDailyGoal.mutate({ scope, targetMinutes })
+            }
+          />
+        )}
+      </Presence>
+      <Presence>
+        {editingSession && (
+          <EditTaskDrawer
+            session={editingSession}
+            pending={command.isPending}
+            onClose={() => setEditingSession(null)}
+            onSave={updateTask}
+          />
+        )}
+      </Presence>
+      <Presence>
+        {command.error && (
+          <div className="inline-notice inline-notice--error" role="alert">
+            {command.error instanceof ApiError
+              ? command.error.message
+              : '这次操作还没有生效，请稍后重试。'}
+          </div>
+        )}
+      </Presence>
+      <Presence>
+        {offlineAction && (
+          <div className="inline-notice inline-notice--warning" role="status">
+            当前无法连接服务器，这次操作还没有生效，专注计时仍在继续。连接恢复后请重试。
+          </div>
+        )}
+      </Presence>
       <section className="section">
         <div className="section-heading">
           <h2>正在亮灯</h2>
           <span>{data.focusing_members.length} 人</span>
         </div>
-        {data.focusing_members.length ? (
-          <div className="member-list">
+        <div className="member-list">
+          <Presence>
             {data.focusing_members
               .slice(0, showAllFriends ? undefined : 4)
               .map((member) => (
@@ -974,27 +1004,28 @@ export function HomePage() {
                   </span>
                 </article>
               ))}
-            {data.focusing_members.length > 4 && (
-              <button
-                className="button button--text button--full"
-                type="button"
-                onClick={() => setShowAllFriends((value) => !value)}
-              >
-                {showAllFriends
-                  ? '收起好友'
-                  : `查看全部 ${data.focusing_members.length} 人`}
-              </button>
+            {!data.focusing_members.length && (
+              <EmptyState key="empty" title="现在还没有人亮灯">
+                <p>
+                  {session?.status === 'focusing'
+                    ? '你的灯已经亮了。朋友加入后会在这里出现。'
+                    : '你可以先开始，朋友打开友间后就能看到。'}
+                </p>
+              </EmptyState>
             )}
-          </div>
-        ) : (
-          <EmptyState title="现在还没有人亮灯">
-            <p>
-              {session?.status === 'focusing'
-                ? '你的灯已经亮了。朋友加入后会在这里出现。'
-                : '你可以先开始，朋友打开友间后就能看到。'}
-            </p>
-          </EmptyState>
-        )}
+          </Presence>
+          {data.focusing_members.length > 4 && (
+            <button
+              className="button button--text button--full"
+              type="button"
+              onClick={() => setShowAllFriends((value) => !value)}
+            >
+              {showAllFriends
+                ? '收起好友'
+                : `查看全部 ${data.focusing_members.length} 人`}
+            </button>
+          )}
+        </div>
       </section>
       {data.active_goal_summary ? (
         <Link className="goal-summary" to="goals">
@@ -1017,66 +1048,74 @@ export function HomePage() {
           <strong aria-hidden="true">→</strong>
         </Link>
       )}
-      {data.unseen_achievement && (
-        <section className="achievement-toast">
-          <span>
-            <Icon name="sparkle" />
-          </span>
-          <div>
-            <small>获得共同成就</small>
-            <strong>{achievementTitle(data.unseen_achievement)}</strong>
-          </div>
-          <small>已记录，可在统计页查看</small>
-        </section>
-      )}
-      {data.unseen_personal_achievement && (
-        <section className="achievement-toast">
-          <span>
-            <Icon name="sparkle" />
-          </span>
-          <div>
-            <small>获得个人成就</small>
-            <strong>
-              {achievementTitle(data.unseen_personal_achievement)}
-            </strong>
-          </div>
-          <small>已记录，可在成就页查看</small>
-        </section>
-      )}
-      {drawer && (
-        <StartDrawer
-          pending={command.isPending}
-          requiresPolicy={Boolean(
-            data.health_check_policy?.enabled &&
-            data.health_check_policy.acknowledged_version <
-              data.health_check_policy.current_version,
-          )}
-          onClose={() => setDrawer(false)}
-          onStart={start}
-        />
-      )}
-      {confirmEnd && (
-        <AccessibleModal
-          kind="dialog"
-          titleId="end-title"
-          onClose={() => setConfirmEnd(false)}
-        >
-          <h2 id="end-title">现在结束吗？</h2>
-          <p>结束后这段记录会保留，但少于 5 分钟不会计入统计。</p>
-          <div className="dialog__actions">
-            <button
-              data-autofocus
-              className="button button--secondary"
-              onClick={() => setConfirmEnd(false)}
-            >
-              继续专注
-            </button>
-            <button className="button button--danger" onClick={end}>
-              确认结束
-            </button>
-          </div>
-        </AccessibleModal>
-      )}
+      <Presence>
+        {data.unseen_achievement && (
+          <section className="achievement-toast">
+            <span>
+              <Icon name="sparkle" />
+            </span>
+            <div>
+              <small>获得共同成就</small>
+              <strong>{achievementTitle(data.unseen_achievement)}</strong>
+            </div>
+            <small>已记录，可在统计页查看</small>
+          </section>
+        )}
+      </Presence>
+      <Presence>
+        {data.unseen_personal_achievement && (
+          <section className="achievement-toast">
+            <span>
+              <Icon name="sparkle" />
+            </span>
+            <div>
+              <small>获得个人成就</small>
+              <strong>
+                {achievementTitle(data.unseen_personal_achievement)}
+              </strong>
+            </div>
+            <small>已记录，可在成就页查看</small>
+          </section>
+        )}
+      </Presence>
+      <Presence>
+        {drawer && (
+          <StartDrawer
+            pending={command.isPending}
+            requiresPolicy={Boolean(
+              data.health_check_policy?.enabled &&
+              data.health_check_policy.acknowledged_version <
+                data.health_check_policy.current_version,
+            )}
+            onClose={() => setDrawer(false)}
+            onStart={start}
+          />
+        )}
+      </Presence>
+      <Presence>
+        {confirmEnd && (
+          <AccessibleModal
+            kind="dialog"
+            titleId="end-title"
+            onClose={() => setConfirmEnd(false)}
+          >
+            <h2 id="end-title">现在结束吗？</h2>
+            <p>结束后这段记录会保留，但少于 5 分钟不会计入统计。</p>
+            <div className="dialog__actions">
+              <button
+                data-autofocus
+                className="button button--secondary"
+                onClick={() => setConfirmEnd(false)}
+              >
+                继续专注
+              </button>
+              <button className="button button--danger" onClick={end}>
+                确认结束
+              </button>
+            </div>
+          </AccessibleModal>
+        )}
+      </Presence>
     </div>
   );
 }

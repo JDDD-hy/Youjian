@@ -2,19 +2,22 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { AccessibleModal } from './AccessibleModal';
+import { Presence } from './Presence';
 
 function Harness() {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button onClick={() => setOpen(true)}>打开</button>
-      {open && (
-        <AccessibleModal titleId="modal-title" onClose={() => setOpen(false)}>
-          <h2 id="modal-title">测试对话框</h2>
-          <button data-autofocus>确认</button>
-          <button>取消</button>
-        </AccessibleModal>
-      )}
+      <Presence>
+        {open && (
+          <AccessibleModal titleId="modal-title" onClose={() => setOpen(false)}>
+            <h2 id="modal-title">测试对话框</h2>
+            <button data-autofocus>确认</button>
+            <button>取消</button>
+          </AccessibleModal>
+        )}
+      </Presence>
     </>
   );
 }

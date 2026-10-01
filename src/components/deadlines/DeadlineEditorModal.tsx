@@ -1,3 +1,4 @@
+import { Presence } from '../Presence';
 import { type FormEvent, useMemo, useState } from 'react';
 import { localDateValue } from '../../domain/deadlineDate';
 import type {
@@ -100,11 +101,16 @@ export function DeadlineEditorModal({
             onChange={(event) => setTitle(event.target.value)}
           />
           <small className="deadline-editor__counter">{titleLength}/40</small>
-          {titleError && (
-            <small id="deadline-title-error" className="deadline-editor__error">
-              {titleError}
-            </small>
-          )}
+          <Presence>
+            {titleError && (
+              <small
+                id="deadline-title-error"
+                className="deadline-editor__error"
+              >
+                {titleError}
+              </small>
+            )}
+          </Presence>
         </label>
         <label className="deadline-editor__field" htmlFor="deadline-date-input">
           <span>日期</span>
@@ -129,20 +135,27 @@ export function DeadlineEditorModal({
               yyyy/mm/dd
             </span>
           )}
-          {dateError && (
-            <small id="deadline-date-error" className="deadline-editor__error">
-              {dateError}
-            </small>
-          )}
+          <Presence>
+            {dateError && (
+              <small
+                id="deadline-date-error"
+                className="deadline-editor__error"
+              >
+                {dateError}
+              </small>
+            )}
+          </Presence>
         </label>
         <p className="deadline-editor__hint">
           可随时修改；按 Esc 或点击空白处退出，未保存的更改不会生效。
         </p>
-        {saveError && (
-          <p className="deadline-editor__error" role="alert">
-            {saveError}
-          </p>
-        )}
+        <Presence>
+          {saveError && (
+            <p className="deadline-editor__error" role="alert">
+              {saveError}
+            </p>
+          )}
+        </Presence>
         <footer className="deadline-editor__actions">
           <button
             type="button"

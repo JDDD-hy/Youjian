@@ -1,3 +1,4 @@
+import { Presence } from '../components/Presence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -223,17 +224,23 @@ export function InvitePage() {
               onChange={(e) => setDisplayName(e.target.value)}
               aria-invalid={Boolean(fieldError)}
             />
-            {fieldError && <small className="field-error">{fieldError}</small>}
+            <Presence>
+              {fieldError && (
+                <small className="field-error">{fieldError}</small>
+              )}
+            </Presence>
           </label>
           <p className="identity-explainer">
             身份只保存在当前设备；清除浏览器数据或更换设备后无法恢复。
           </p>
           <TurnstileField onToken={setCaptchaToken} />
-          {join.error && !fieldError && (
-            <div className="inline-notice inline-notice--error" role="alert">
-              {join.error.message}
-            </div>
-          )}
+          <Presence>
+            {join.error && !fieldError && (
+              <div className="inline-notice inline-notice--error" role="alert">
+                {join.error.message}
+              </div>
+            )}
+          </Presence>
           <button
             className="button button--primary button--full"
             disabled={join.isPending || !online}

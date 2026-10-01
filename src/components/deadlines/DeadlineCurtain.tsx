@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { DeadlineDayState } from '../../domain/deadlineDate';
 import { formatDeadlineDate } from '../../domain/deadlineDate';
 import type { PersonalDeadline } from '../../hooks/usePersonalDeadline';
@@ -23,7 +24,7 @@ export function DeadlineCurtain({
   onRetry,
   onEdit,
 }: DeadlineCurtainProps) {
-  const contentId = 'personal-deadline-curtain';
+  const contentId = useId();
   return (
     <div className={`deadline-curtain${open ? ' is-open' : ''}`}>
       <div className="deadline-curtain__roller" aria-hidden="true">

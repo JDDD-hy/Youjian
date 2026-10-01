@@ -1,3 +1,4 @@
+import { Presence } from '../Presence';
 import { ErrorState } from '../AsyncState';
 import { GoalCard } from './GoalCard';
 import { useGoalHistory } from '../../hooks/useGoalHistories';
@@ -27,14 +28,21 @@ export function GoalHistorySection({
         />
       ) : (
         <>
-          {history.error && (
-            <div className="inline-notice inline-notice--warning" role="status">
-              更多过往目标暂时没有加载，当前记录仍可查看。
-            </div>
-          )}
-          {items.map((goal) => (
-            <GoalCard key={goal.goal_id} goal={goal} />
-          ))}
+          <Presence>
+            {history.error && (
+              <div
+                className="inline-notice inline-notice--warning"
+                role="status"
+              >
+                更多过往目标暂时没有加载，当前记录仍可查看。
+              </div>
+            )}
+          </Presence>
+          <Presence>
+            {items.map((goal) => (
+              <GoalCard key={goal.goal_id} goal={goal} />
+            ))}
+          </Presence>
           {history.hasNextPage && (
             <button
               className="button button--secondary button--full"

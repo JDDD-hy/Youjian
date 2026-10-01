@@ -1,0 +1,88 @@
+.presence-item {
+  display: contents;
+}
+
+.presence-stack {
+  display: grid;
+}
+.presence-stack > *,
+.presence-stack > .presence-item > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+.proposal-list > .quiet-copy {
+  grid-column: 1 / -1;
+}
+
+.task-history__reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 160ms ease,
+    visibility 220ms;
+}
+.task-history__reveal[data-expanded='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.task-history__reveal > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-presence='present']:not(.presence-item),
+  .presence-item[data-presence='present'] > * {
+    animation: presence-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+
+  [data-presence='exiting']:not(.presence-item),
+  .presence-item[data-presence='exiting'] > * {
+    animation: presence-out 160ms ease-in both;
+    pointer-events: none;
+  }
+
+  .modal-backdrop {
+    --presence-offset: 0px;
+  }
+
+  [data-presence='present'] .modal-backdrop > :is(.drawer, .dialog) {
+    animation: presence-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+    --presence-offset: 12px;
+  }
+
+  [data-presence='exiting'] .modal-backdrop > :is(.drawer, .dialog) {
+    animation: presence-out 160ms ease-in both;
+    --presence-offset: 8px;
+  }
+
+  :is(.page-header, .welcome-card, .form-card, .state-card, .empty-state) {
+    animation: presence-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+}
+
+@keyframes presence-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--presence-offset, 6px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes presence-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 var(--presence-offset, 4px);
+  }
+}
