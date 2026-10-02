@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRoomRealtime } from './useRoomRealtime';
+import { scheduleRoomRefresh } from '../lib/roomRefresh';
 
 const realtime = vi.hoisted(() => ({
   channels: [] as Array<{
@@ -50,6 +51,10 @@ function createWrapper(client: QueryClient) {
 }
 
 describe('useRoomRealtime', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     realtime.channels.length = 0;
     realtime.removeChannel.mockClear();
@@ -74,6 +79,63 @@ describe('useRoomRealtime', () => {
     expect(result.current).toBe('unconfirmed');
     rerender({ failed: true });
     expect(result.current).toBe('offline');
+  });
+
+  it('coalesces heartbeat and realtime bursts without starving later updates', () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    renderHook(() => useRoomRealtime('space', Number.MAX_SAFE_INTEGER), {
+      wrapper: createWrapper(client),
+    });
+
+    act(() => {
+      scheduleRoomRefresh(client, 'space', ['home']);
+      realtime.channels[0]?.handlers.focus_sessions?.();
+      realtime.channels[0]?.handlers.goals?.();
+      realtime.channels[0]?.handlers.achievements?.();
+      vi.advanceTimersByTime(90);
+      realtime.channels[0]?.handlers.focus_sessions?.();
+    });
+    expect(invalidate).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(10);
+    });
+    expect(invalidate.mock.calls.map(([filter]) => filter?.queryKey)).toEqual([
+      ['home', 'space'],
+      ['goals', 'space'],
+      ['achievements', 'space'],
+      ['personal-achievements', 'space'],
+      ['nav-notifications', 'space'],
+      ['settings', 'space'],
+    ]);
+
+    act(() => {
+      realtime.channels[0]?.handlers.focus_sessions?.();
+      vi.advanceTimersByTime(100);
+    });
+    expect(invalidate).toHaveBeenCalledTimes(12);
+  });
+
+  it('keeps refresh batches separate for different rooms and clients', () => {
+    vi.useFakeTimers();
+    const first = new QueryClient();
+    const second = new QueryClient();
+    const firstRefresh = vi.spyOn(first, 'invalidateQueries');
+    const secondRefresh = vi.spyOn(second, 'invalidateQueries');
+    scheduleRoomRefresh(first, 'one', ['home']);
+    scheduleRoomRefresh(first, 'two', ['home']);
+    scheduleRoomRefresh(second, 'one', ['home']);
+    vi.advanceTimersByTime(100);
+    expect(firstRefresh.mock.calls.map(([filter]) => filter?.queryKey)).toEqual(
+      [
+        ['home', 'one'],
+        ['home', 'two'],
+      ],
+    );
+    expect(secondRefresh).toHaveBeenCalledExactlyOnceWith({
+      queryKey: ['home', 'one'],
+    });
   });
 
   it('re-subscribes after returning from the background', async () => {

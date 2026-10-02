@@ -1,4 +1,5 @@
 import { Presence } from '../components/Presence';
+import { scheduleRoomRefresh } from '../lib/roomRefresh';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -644,7 +645,7 @@ export function HomePage() {
             data.session.status === 'discarded'
           )
             setLocalSettled(data.session);
-          void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
+          scheduleRoomRefresh(queryClient, spaceId, ['home']);
         })
         .catch(() => setHeartbeatFailed(true));
     };

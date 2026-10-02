@@ -32,6 +32,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run db:start
       - run: npm run db:reset
+      - run: npx supabase db advisors --local --type all --level warn --fail-on none
       - name: Build against local Supabase for E2E
         shell: bash
         run: |
@@ -48,6 +49,7 @@ jobs:
       - run: npm run test:integration
       - run: npm run test:performance
       - run: npm run test:performance:scale
+      - run: npm run test:query-hotpaths
       - run: npm run ops:monitor-check
       - run: npm run ops:monitor-alert-drill
       - run: npm run db:test
