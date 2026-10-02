@@ -89,7 +89,7 @@ select jsonb_build_object(
         ) state
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
-      where n.nspname in ('auth', 'private', 'public') and c.relkind in ('r', 'p', 'v')
+      where n.nspname in ('auth', 'private', 'public') and c.relkind in ('r', 'p', 'v', 'm')
     ) t
   )
 )::text;
@@ -111,6 +111,8 @@ try {
   $cronState = docker exec $sourceContainer psql -v ON_ERROR_STOP=1 -U supabase_admin -d postgres -Atq -c "select active from cron.job where jobname='youjian-minute-maintenance'"
   if ($LASTEXITCODE -ne 0 -or $cronState -notin @('t', 'f')) { throw 'Unable to read the maintenance Cron state.' }
   $cronWasActive = $cronState -eq 't'
+  $timezoneCronState = docker exec $sourceContainer psql -v ON_ERROR_STOP=1 -U supabase_admin -d postgres -Atq -c "select active from cron.job where jobname='youjian-timezone-cache-refresh'"
+  if ($LASTEXITCODE -ne 0 -or $timezoneCronState -notin @('t', 'f')) { throw 'Unable to read the timezone cache Cron state.' }
   docker exec $sourceContainer psql -v ON_ERROR_STOP=1 -U supabase_admin -d postgres -Atq -c "update cron.job set active=false where jobname='youjian-minute-maintenance'"
   if ($LASTEXITCODE -ne 0) { throw 'Unable to pause maintenance Cron for a consistent backup.' }
   $sourceRealtimeTables = docker exec $sourceContainer psql -v ON_ERROR_STOP=1 -U postgres -d postgres -Atq -c "select string_agg(format('%I.%I',schemaname,tablename),',' order by schemaname,tablename) from pg_publication_tables where pubname='supabase_realtime' and schemaname in('auth','private','public')"
@@ -174,6 +176,9 @@ drop schema if exists supabase_migrations cascade;
 
   docker exec $drillContainer pg_restore -U supabase_admin -d postgres --exit-on-error $containerSchemaDump
   if ($LASTEXITCODE -ne 0) { throw 'Schema restore failed.' }
+  # Schema-only restores leave materialized views unpopulated. Validators need this cache before data is loaded.
+  docker exec $drillContainer psql -v ON_ERROR_STOP=1 -U postgres -d postgres -Atq -c 'refresh materialized view private.iana_timezones'
+  if ($LASTEXITCODE -ne 0) { throw 'Unable to populate the restored timezone cache.' }
   docker exec $drillContainer pg_restore -U supabase_admin -d postgres --data-only --disable-triggers --exit-on-error $containerDataDump
   if ($LASTEXITCODE -ne 0) { throw 'Data restore failed.' }
 
@@ -182,9 +187,13 @@ drop schema if exists supabase_migrations cascade;
   if ($LASTEXITCODE -ne 0) { throw 'Unable to restore the realtime publication.' }
 
   $cronActive = if ($cronWasActive) { 'true' } else { 'false' }
-  $restoreCronSql = "select cron.schedule_in_database('youjian-minute-maintenance','* * * * *','select private.run_scheduled_minute_maintenance()','postgres','postgres',$cronActive);"
+  $timezoneCronActive = if ($timezoneCronState -eq 't') { 'true' } else { 'false' }
+  $restoreCronSql = @"
+select cron.schedule_in_database('youjian-minute-maintenance','* * * * *','select private.run_scheduled_minute_maintenance()','postgres','postgres',$cronActive);
+select cron.schedule_in_database('youjian-timezone-cache-refresh','17 3 * * *','refresh materialized view concurrently private.iana_timezones','postgres','postgres',$timezoneCronActive);
+"@
   docker exec $drillContainer psql -v ON_ERROR_STOP=1 -U supabase_admin -d postgres -Atq -c $restoreCronSql | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw 'Unable to restore the maintenance Cron job.' }
+  if ($LASTEXITCODE -ne 0) { throw 'Unable to restore the maintenance and timezone cache Cron jobs.' }
 
   $enableEventTriggersSql = @'
 do $$
@@ -223,6 +232,8 @@ select jsonb_build_object(
   'rls_table_count', (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity),
   'migration_count', (select count(*) from supabase_migrations.schema_migrations),
   'cron_job_count', (select count(*) from cron.job where jobname='youjian-minute-maintenance' and schedule='* * * * *' and command='select private.run_scheduled_minute_maintenance()'),
+  'timezone_cache_count', (select count(*) from private.iana_timezones),
+  'timezone_cron_job_count', (select count(*) from cron.job where jobname='youjian-timezone-cache-refresh' and schedule='17 3 * * *' and command='refresh materialized view concurrently private.iana_timezones'),
   'realtime_table_count', (select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname in('auth','private','public')),
   'unsafe_helper_execute_count', (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private') and p.prosecdef and p.proname in ('settle_session','finish_focus_session','run_minute_maintenance_core','run_space_maintenance','run_space_goal_maintenance') and (has_function_privilege('anon',p.oid,'execute') or has_function_privilege('authenticated',p.oid,'execute')))
 )::text;
@@ -235,6 +246,9 @@ select jsonb_build_object(
   }
   if ($integrityObject.app_secret_count -lt 1 -or $integrityObject.required_rpc_count -ne 7 -or $integrityObject.rls_table_count -lt 10 -or $integrityObject.migration_count -lt 1 -or $integrityObject.cron_job_count -ne 1 -or $integrityObject.realtime_table_count -lt 1 -or $integrityObject.unsafe_helper_execute_count -ne 0) {
     throw 'The restored database is missing secrets, RPCs, migrations, Cron, Realtime, or safe ACL/RLS configuration.'
+  }
+  if ($integrityObject.timezone_cache_count -lt 1 -or $integrityObject.timezone_cron_job_count -ne 1) {
+    throw 'The restored database is missing its timezone cache or refresh job.'
   }
 
   $testTarget = '/tmp/youjian-tests'

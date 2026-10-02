@@ -3,6 +3,7 @@ import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../lib/supabase';
 import { loadMembership } from '../lib/membership';
+import { scheduleRoomRefresh } from '../lib/roomRefresh';
 import { useOnlineStatus } from './useOnlineStatus';
 
 export type ConnectionState =
@@ -30,18 +31,14 @@ export function useRoomRealtime(
   useEffect(() => {
     const supabase = getSupabaseClient();
     const refresh = () => {
-      void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
-      void queryClient.invalidateQueries({ queryKey: ['goals', spaceId] });
-      void queryClient.invalidateQueries({
-        queryKey: ['achievements', spaceId],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ['personal-achievements', spaceId],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ['nav-notifications', spaceId],
-      });
-      void queryClient.invalidateQueries({ queryKey: ['settings', spaceId] });
+      scheduleRoomRefresh(queryClient, spaceId, [
+        'home',
+        'goals',
+        'achievements',
+        'personal-achievements',
+        'nav-notifications',
+        'settings',
+      ]);
     };
     const refreshMembership = async () => {
       const state = await queryClient.fetchQuery({

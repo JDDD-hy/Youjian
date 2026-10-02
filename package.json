@@ -31,6 +31,7 @@
     "db:test": "supabase test db",
     "test:integration": "node scripts/integration/multi-client-supabase.mjs",
     "test:performance": "node scripts/integration/performance-smoke.mjs",
+    "test:query-hotpaths": "node scripts/integration/query-hotpaths.mjs",
     "test:performance:scale": "node scripts/integration/performance-scale.mjs"
   },
   "dependencies": {
