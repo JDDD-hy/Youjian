@@ -419,16 +419,14 @@ a:focus-visible {
   font-size: 0.76rem;
 }
 .summary-card {
+  --summary-progress: var(--primary-deep);
   position: relative;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  padding: 15px 4px 18px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  box-shadow: 0 4px 14px rgb(66 57 39/5%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 8px 0 16px;
 }
 .summary-card-wrap {
   display: grid;
@@ -456,14 +454,10 @@ a:focus-visible {
   gap: 8px;
 }
 .summary-card > div {
-  display: grid;
-  gap: 4px;
-  padding: 0 8px;
-  text-align: center;
-  border-right: 1px solid var(--border);
-}
-.summary-card > div:last-of-type {
-  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
 }
 .summary-card small {
   color: var(--muted);
@@ -476,19 +470,30 @@ a:focus-visible {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: var(--progress);
+  display: block;
+  width: 100%;
   height: 3px;
-  background: var(--primary-deep);
+  appearance: none;
+  border: 0;
+  background: var(--border);
+  color: var(--summary-progress);
 }
-.summary-card--complete .summary-card__progress {
-  background: var(--success);
+.summary-card__progress::-webkit-progress-bar {
+  background: var(--border);
+}
+.summary-card__progress::-webkit-progress-value {
+  background: var(--summary-progress);
+}
+.summary-card__progress::-moz-progress-bar {
+  background: var(--summary-progress);
+}
+.summary-card--complete {
+  --summary-progress: var(--success);
 }
 .focus-panel {
   margin-top: 18px;
-  padding: 24px 18px;
-  border-radius: 24px;
+  padding: 24px 0;
   text-align: center;
-  background: rgb(255 252 246/82%);
 }
 .focus-panel h2 {
   margin-top: 6px;
@@ -498,9 +503,13 @@ a:focus-visible {
   margin: 8px 0;
   color: var(--muted);
 }
-.focus-panel--active {
-  background: radial-gradient(ellipse at 50% 35%, #fff3c9 0, #fffcf6 60%);
-  box-shadow: 0 12px 34px rgb(245 201 106/12%);
+.focus-panel--active .focus-panel__lamp-zone::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -12px 0;
+  background: radial-gradient(ellipse at center, #fff3c9 0, transparent 70%);
+  pointer-events: none;
 }
 .focus-panel--paused {
   padding: 0;
@@ -512,10 +521,8 @@ a:focus-visible {
   justify-content: space-between;
   gap: 14px;
   margin-top: 12px;
-  padding: 12px 14px;
-  border: 1px solid #eadcae;
-  border-radius: 14px;
-  background: #fff9df;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
 }
 .focus-reminder div {
   min-width: 0;
@@ -535,12 +542,45 @@ a:focus-visible {
   font-size: 0.72rem;
   line-height: 1.45;
 }
-.focus-reminder .button {
+.focus-reminder__switch {
+  position: relative;
   flex: 0 0 auto;
-  min-height: 34px;
-  padding: 5px 9px;
-  color: #775d1c;
-  font-size: 0.72rem;
+  width: 50px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+.focus-reminder__switch::before,
+.focus-reminder__switch::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+}
+.focus-reminder__switch::before {
+  inset: 7px 0;
+  background: var(--border);
+  transition: background 180ms ease;
+}
+.focus-reminder__switch::after {
+  top: 10px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgb(66 57 39/18%);
+  transition: transform 180ms ease;
+}
+.focus-reminder__switch[aria-checked='true']::before {
+  background: var(--primary-deep);
+}
+.focus-reminder__switch[aria-checked='true']::after {
+  transform: translateX(20px);
+}
+.focus-reminder__switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 .pause-stage {
   padding: 24px 16px;
@@ -640,10 +680,7 @@ a:focus-visible {
 }
 .result-card {
   margin-top: 18px;
-  padding: 34px 20px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--surface);
+  padding: 34px 0;
   text-align: center;
 }
 .result-card__icon {
@@ -670,30 +707,55 @@ a:focus-visible {
 }
 .member-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+.member-list > .presence-item > *,
+.member-list > .button {
+  grid-column: 1 / -1;
+}
+.member-list .empty-state {
+  padding-inline: 0;
+  border: 0;
+  background: transparent;
 }
 .member-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 13px 15px;
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  background: var(--surface);
-  box-shadow: 0 4px 12px rgb(66 57 39/5%);
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.member-card .lamp--compact {
+  width: 32px;
+  height: 38px;
+  margin: 0;
+}
+.member-card > .status-dot {
+  position: absolute;
+  top: 46px;
+  left: 26px;
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 2px var(--bg);
 }
 .member-card > div:nth-child(2) {
   min-width: 0;
-  flex: 1;
 }
 .member-card h3,
 .member-card p {
   margin: 0;
 }
+.member-card h3 {
+  font-size: 0.9rem;
+}
 .member-card p {
   margin-top: 4px;
   color: #514d47;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 .member-card small {
   display: block;
@@ -705,8 +767,13 @@ a:focus-visible {
 }
 .member-card .task-history__toggle {
   min-height: 30px;
-  padding-block: 3px;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
   font-size: 0.66rem;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .member-card__uncertain {
   display: block;
@@ -723,17 +790,13 @@ a:focus-visible {
 }
 .goal-summary {
   margin-top: 22px;
-  padding: 18px;
+  padding: 18px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 15px;
-  background: var(--primary-soft);
+  border-top: 1px solid var(--border);
   color: inherit;
   text-decoration: none;
-}
-.goal-summary--empty {
-  border: 1px dashed #d8bc74;
 }
 .goal-summary h2 {
   font-size: 1rem;
@@ -2149,6 +2212,10 @@ a:focus-visible {
   flex-wrap: wrap;
 }
 @media (prefers-reduced-motion: reduce) {
+  .focus-reminder__switch::before,
+  .focus-reminder__switch::after {
+    transition: none;
+  }
   .deadline-curtain__sheet,
   .deadline-curtain__bottom-rail,
   .deadline-curtain__cord-ring {
@@ -2227,7 +2294,6 @@ a:focus-visible {
   .metric-grid article:first-child {
     grid-column: auto;
   }
-  .member-list,
   .proposal-list {
     grid-template-columns: repeat(2, 1fr);
     display: grid;
