@@ -96,13 +96,37 @@ describe('FocusReminder', () => {
   it('enables reminders after the user grants notification permission', async () => {
     render(<FocusReminder session={session} />);
 
-    fireEvent.click(screen.getByRole('button', { name: '开启提醒' }));
+    const toggle = screen.getByRole('switch', { name: '桌面提醒' });
+    expect(toggle).not.toBeChecked();
+    fireEvent.click(toggle);
     await act(() => Promise.resolve());
 
+    expect(toggle).toBeChecked();
     expect(localStorage.getItem('youjian:focus-reminder-enabled')).toBe('true');
     expect(
       screen.getByText(/离开 2 分钟后提醒，持续离开则在 30 分钟后每小时提醒/),
     ).toBeVisible();
+
+    fireEvent.click(toggle);
+    expect(toggle).not.toBeChecked();
+    expect(localStorage.getItem('youjian:focus-reminder-enabled')).toBeNull();
+  });
+
+  it('keeps the switch off when notification permission is denied', async () => {
+    vi.spyOn(Notification, 'requestPermission').mockImplementation(() => {
+      permission = 'denied';
+      return Promise.resolve(permission);
+    });
+    render(<FocusReminder session={session} />);
+
+    const toggle = screen.getByRole('switch', { name: '桌面提醒' });
+    fireEvent.click(toggle);
+    await act(() => Promise.resolve());
+
+    expect(toggle).not.toBeChecked();
+    expect(toggle).toBeDisabled();
+    expect(localStorage.getItem('youjian:focus-reminder-enabled')).toBeNull();
+    expect(screen.getByText(/浏览器已阻止通知/)).toBeVisible();
   });
 
   it('notifies after an enabled focus stays in the background for two minutes', async () => {

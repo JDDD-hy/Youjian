@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { FocusSession } from '../domain/types';
 import { calculateFocusSeconds } from '../hooks/useServerClock';
 import {
@@ -27,6 +27,7 @@ export function FocusReminder({
   validateActiveSession?: (sessionId: string) => Promise<boolean>;
 }) {
   const sessionRef = useRef(session);
+  const descriptionId = useId();
   const validateActiveSessionRef = useRef(validateActiveSession);
   const supported = supportsFocusReminder();
   const [enabled, setEnabled] = useState(readFocusReminderEnabled);
@@ -248,6 +249,7 @@ export function FocusReminder({
 
   if (!supported) return null;
 
+  const reminderEnabled = enabled && permission === 'granted';
   const turnOn = async () => {
     const result = await enableFocusReminder();
     setPermission(result);
@@ -263,23 +265,24 @@ export function FocusReminder({
     <section className="focus-reminder" aria-label="桌面专注提醒">
       <div>
         <strong>桌面提醒</strong>
-        <p>
+        <p id={descriptionId}>
           {permission === 'denied'
             ? '浏览器已阻止通知，请在地址栏的网站设置中重新允许。'
-            : enabled
+            : reminderEnabled
               ? '已开启。离开 2 分钟后提醒，持续离开则在 30 分钟后每小时提醒；暂停 10 分钟时预警自动结束。'
-              : '页面最小化后，用 Windows 通知提醒专注仍在进行。'}
+              : '离开页面后，用系统通知提醒专注仍在进行。'}
         </p>
       </div>
-      {permission !== 'denied' && (
-        <button
-          className="button button--text"
-          type="button"
-          onClick={() => (enabled ? turnOff() : void turnOn())}
-        >
-          {enabled ? '关闭' : '开启提醒'}
-        </button>
-      )}
+      <button
+        className="focus-reminder__switch"
+        type="button"
+        role="switch"
+        aria-label="桌面提醒"
+        aria-checked={reminderEnabled}
+        aria-describedby={descriptionId}
+        disabled={permission === 'denied'}
+        onClick={() => (reminderEnabled ? turnOff() : void turnOn())}
+      />
     </section>
   );
 }
