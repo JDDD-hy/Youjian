@@ -319,40 +319,42 @@ export function StatsPage() {
           <h1>统计</h1>
         </div>
       </header>
-      <div className="segmented" aria-label="统计视角">
-        {(
-          [
-            ['mine', '我的'],
-            ['space', '友间'],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            className={view === value ? 'active' : ''}
-            aria-pressed={view === value}
-            onClick={() => setView(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="segmented segmented--small" aria-label="统计周期">
-        {(
-          [
-            ['daily', '日'],
-            ['weekly', '周'],
-            ['monthly', '月'],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            className={period === value ? 'active' : ''}
-            aria-pressed={period === value}
-            onClick={() => setPeriod(value)}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="stats-toolbar">
+        <div className="segmented stats-view-tabs" aria-label="统计视角">
+          {(
+            [
+              ['mine', '我的'],
+              ['space', '友间'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              className={view === value ? 'active' : ''}
+              aria-pressed={view === value}
+              onClick={() => setView(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="stats-period-tabs" aria-label="统计周期">
+          {(
+            [
+              ['daily', '日'],
+              ['weekly', '周'],
+              ['monthly', '月'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              className={period === value ? 'active' : ''}
+              aria-pressed={period === value}
+              onClick={() => setPeriod(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       {home.isLoading || summary.isLoading ? (
         <PageLoader />
@@ -384,6 +386,19 @@ export function StatsPage() {
               </div>
             )}
           </Presence>
+          <p className="stats-range-label">
+            {period === 'daily'
+              ? range.anchor_local_date
+              : period === 'weekly'
+                ? exportPeriodLabel(
+                    'weekly',
+                    isoWeekValue(range.anchor_local_date),
+                  )
+                : exportPeriodLabel(
+                    'monthly',
+                    range.anchor_local_date.slice(0, 7),
+                  )}
+          </p>
           <section className="metric-grid">
             <article>
               <small>专注时间</small>

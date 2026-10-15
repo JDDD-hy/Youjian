@@ -2525,3 +2525,94 @@ a:focus-visible {
 .focus-health-policy-info li + li {
   margin-top: 6px;
 }
+
+/* Statistics share the page surface; the export chooser keeps its own tabs. */
+.stats-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+.stats-view-tabs {
+  width: 160px;
+}
+.stats-view-tabs button {
+  min-height: 36px;
+}
+.stats-period-tabs {
+  display: flex;
+  gap: 8px;
+}
+.stats-period-tabs button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+}
+.stats-period-tabs button.active {
+  border-bottom-color: var(--primary-deep);
+  color: var(--text);
+  font-weight: 700;
+}
+.stats-range-label {
+  margin: 24px 0 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.stats-page .metric-grid {
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+.stats-page .metric-grid article {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.stats-page .metric-grid article:first-child {
+  grid-column: auto;
+}
+.stats-page .metric-grid strong {
+  font-size: clamp(1.05rem, 3.5vw, 1.65rem);
+  overflow-wrap: anywhere;
+}
+.stats-page .metric-grid article:first-child strong {
+  font-size: clamp(1.3rem, 4.5vw, 2.15rem);
+}
+.stats-page .chart-card {
+  margin-top: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.stats-page .history-list {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+}
+.stats-page .history-row {
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  padding: 16px 0;
+  background: transparent;
+}
+.stats-page .history-row:hover {
+  background: var(--primary-soft);
+}
+@media (max-width: 479px) {
+  .stats-page .history-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+  }
+  .stats-page .history-row__date {
+    grid-column: 1 / -1;
+  }
+}
