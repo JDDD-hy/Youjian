@@ -15,6 +15,7 @@ import {
 } from '../../domain/achievementTier';
 import { uniqueAchievementParticipantCount } from '../../domain/achievementParticipants';
 import { isPersonalAchievementType } from '../../domain/achievementCatalog';
+import { AchievementCondition } from './AchievementCondition';
 
 export function AchievementCard({ item }: { item: Achievement }) {
   const [open, setOpen] = useState(false);
@@ -59,11 +60,6 @@ export function AchievementCard({ item }: { item: Achievement }) {
         >
           <AchievementIcon item={item} />
         </span>
-        {achievementSeries(item) && (
-          <span className="achievement-card__series">
-            {achievementSeries(item)}
-          </span>
-        )}
       </button>
       <Presence>
         {open && (
@@ -83,38 +79,40 @@ export function AchievementCard({ item }: { item: Achievement }) {
               >
                 ×
               </button>
-              <span
-                className={`achievement-card__icon achievement-card__icon--${tier}`}
-              >
-                <AchievementIcon item={item} />
-              </span>
-              <h3 id={titleId}>{achievementTitle(item)}</h3>
-              {achievementSeries(item) && (
-                <small className="achievement-card__series">
-                  系列 · {achievementSeries(item)}
-                </small>
-              )}
-              {achievementStages(item) && (
-                <small className="achievement-card__earned-stages">
-                  已获得：{achievementStages(item)}
-                </small>
-              )}
-              <p>{formatLocalDateTime(achievementDisplayDate(item))}</p>
-              <button
-                type="button"
-                className="achievement-condition"
-                aria-label={`达成条件：${achievementCondition(item)}`}
-              >
-                达成条件
-                <span role="tooltip">{achievementCondition(item)}</span>
-              </button>
-              {!isPersonalAchievementType(item.achievement_type) && (
-                <p className="achievement-profile__participants">
-                  共同达成（{participantCount || '—'} 人）
-                  <br />
-                  {participantText}
-                </p>
-              )}
+              <header className="achievement-profile__hero">
+                <span
+                  className={`achievement-card__icon achievement-card__icon--${tier}`}
+                >
+                  <AchievementIcon item={item} />
+                </span>
+                <h3 id={titleId}>{achievementTitle(item)}</h3>
+                {achievementSeries(item) && (
+                  <small className="achievement-card__series">
+                    {achievementSeries(item)}
+                  </small>
+                )}
+              </header>
+              <dl className="achievement-profile__details">
+                <dt>获得时间</dt>
+                <dd>{formatLocalDateTime(achievementDisplayDate(item))}</dd>
+                {achievementStages(item) && (
+                  <>
+                    <dt>已达成</dt>
+                    <dd className="achievement-card__earned-stages">
+                      {achievementStages(item)}
+                    </dd>
+                  </>
+                )}
+                {!isPersonalAchievementType(item.achievement_type) && (
+                  <>
+                    <dt>共同达成</dt>
+                    <dd className="achievement-profile__participants">
+                      {participantText}（{participantCount || '—'} 人）
+                    </dd>
+                  </>
+                )}
+              </dl>
+              <AchievementCondition text={achievementCondition(item)} />
             </article>
           </AccessibleModal>
         )}

@@ -239,7 +239,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     await expect(
       achievementHeading.locator('..').locator('.achievement-card__icon--gold'),
     ).toBeVisible();
-    const goldCard = achievementHeading.locator('..');
+    const goldCard = owner.locator('.achievement-profile');
     const goldIcon = goldCard.locator('.achievement-card__icon--gold');
     await expect
       .poll(() =>
@@ -265,15 +265,45 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
           height: getComputedStyle(element).height,
         })),
       )
-      .toEqual({ width: '27px', height: '27px' });
+      .toEqual({ width: '34px', height: '34px' });
     await expect(
       goldCard.locator('.achievement-card__earned-stages'),
-    ).toHaveCSS('font-size', '12.8px');
-    const conditionTrigger = achievementHeading
-      .locator('..')
-      .getByRole('button', { name: /达成条件/ });
-    await conditionTrigger.hover();
-    await expect(conditionTrigger.getByRole('tooltip')).toBeVisible();
+    ).toHaveCSS('font-size', '13px');
+    await expect(
+      achievementTrigger.locator('.achievement-card__series'),
+    ).toHaveCount(0);
+    const condition = goldCard.locator('.achievement-condition-reveal');
+    await expect(condition.locator('canvas')).toBeVisible();
+    const canvas = condition.locator('canvas');
+    const dustAlpha = () =>
+      canvas.evaluate((element) => {
+        if (!(element instanceof HTMLCanvasElement))
+          throw new Error('Expected dust canvas');
+        const context = element.getContext('2d');
+        if (!context) throw new Error('Dust canvas is unavailable');
+        const pixels = context.getImageData(
+          0,
+          0,
+          element.width,
+          element.height,
+        ).data;
+        let alpha = 0;
+        for (let i = 3; i < pixels.length; i += 4) alpha += pixels[i];
+        return alpha;
+      });
+    await expect.poll(dustAlpha).toBeGreaterThan(0);
+    const beforeWipe = await dustAlpha();
+    const area = await canvas.boundingBox();
+    if (!area) throw new Error('Dust surface is not visible');
+    await owner.mouse.move(area.x + 8, area.y + area.height / 2);
+    await owner.mouse.move(area.x + area.width - 8, area.y + area.height / 2, {
+      steps: 30,
+    });
+    await expect.poll(dustAlpha).toBeLessThan(beforeWipe);
+    await condition.getByRole('button', { name: '直接显示' }).focus();
+    await owner.keyboard.press('Enter');
+    await expect(condition.locator('canvas')).toHaveCount(0);
+    await expect(condition.locator('p')).toBeVisible();
     await expect(
       goldCard.locator('.achievement-profile__participants'),
     ).toContainText(`房主-${suffix}（7 天）、成员-${suffix}（7 天）`);

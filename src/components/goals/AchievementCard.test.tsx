@@ -21,11 +21,7 @@ it('keeps names inside the profile and restores focus after closing', () => {
   fireEvent.click(trigger);
   expect(screen.getByRole('heading', { name: '挑灯夜战' })).toBeVisible();
   expect(screen.queryByText(/共同达成/)).not.toBeInTheDocument();
-  expect(
-    screen
-      .getByRole('button', { name: /达成条件/ })
-      .querySelector('[role="tooltip"]'),
-  ).toBeInTheDocument();
+  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   fireEvent.keyDown(document, { key: 'Escape' });
   expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   expect(trigger).toHaveFocus();
