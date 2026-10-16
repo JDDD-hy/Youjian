@@ -306,7 +306,7 @@ export function SettingsPage() {
               </div>
             )}
           </Presence>
-          <section className="settings-card">
+          <section className="settings-card settings-room">
             <div className="section-heading">
               <h2>{data.space.name}</h2>
               {data.owner_actions.can_update_space_name ? (
@@ -363,244 +363,322 @@ export function SettingsPage() {
               )}
             </dl>
           </section>
-          {data.owner_actions.can_copy_invite && (
-            <section className="settings-card">
-              <div className="section-heading">
-                <h2>邀请链接</h2>
-                <Icon name="copy" />
-              </div>
-              <p>
-                {invite
-                  ? '明文邀请链接只保存在当前浏览器中。'
-                  : '当前设备没有保存邀请链接，生成新链接会让旧链接立即失效。'}
-              </p>
-              <button
-                className="button button--primary button--full"
-                onClick={() => void copy()}
-              >
-                {copied ? '已复制' : invite ? '复制邀请链接' : '生成新邀请链接'}
-              </button>
-              {invite && (
-                <button
-                  className="button button--secondary button--full"
-                  onClick={() => void share()}
-                >
-                  {shared ? '已打开分享' : '分享邀请链接'}
-                </button>
-              )}
-              <Presence>
-                {copyError && (
-                  <div
-                    className="inline-notice inline-notice--error"
-                    role="alert"
-                  >
-                    无法访问剪贴板，请检查浏览器权限后重试。
-                  </div>
-                )}
-              </Presence>
-              {invite && (
-                <button
-                  className="button button--text button--full"
-                  onClick={() => {
-                    rotate.reset();
-                    setConfirmRotate(true);
-                  }}
-                >
-                  轮换邀请链接
-                </button>
-              )}
-            </section>
-          )}
-          <section className="settings-card">
-            <div className="section-heading">
-              <h2>成员</h2>
-              <span>
-                {data.members.filter((m) => m.status === 'active').length} 人
-              </span>
-            </div>
-            {data.members.length ? (
-              <div className="settings-members">
-                <Presence>
-                  {data.members.map((member) => (
-                    <div key={member.member_id}>
-                      <span className={`avatar avatar--${member.status}`}>
-                        {member.display_name.slice(0, 1)}
-                      </span>
-                      <div>
-                        <strong>{member.display_name}</strong>
-                        <small>
-                          {member.role === 'owner'
-                            ? '房主'
-                            : member.status === 'active'
-                              ? '成员'
-                              : '已停用'}
-                        </small>
-                      </div>
-                      {data.owner_actions.can_disable_members &&
-                        member.role !== 'owner' &&
-                        member.status === 'active' && (
-                          <button
-                            className="button button--text-danger"
-                            onClick={() => {
-                              disable.reset();
-                              setDisableTarget(member);
-                            }}
-                          >
-                            停用
-                          </button>
-                        )}
-                      {data.me.role === 'owner' &&
-                        member.role !== 'owner' &&
-                        member.status === 'active' && (
-                          <button
-                            className="button button--text"
-                            disabled={createMemberRecoveryCode.isPending}
-                            onClick={() =>
-                              createMemberRecoveryCode.mutate(member)
-                            }
-                          >
-                            协助恢复
-                          </button>
-                        )}
-                      {data.me.role === 'owner' &&
-                        member.role !== 'owner' &&
-                        member.status === 'active' && (
-                          <button
-                            className="button button--text"
-                            onClick={() => {
-                              transfer.reset();
-                              setTransferTarget(member);
-                            }}
-                          >
-                            转让房主
-                          </button>
-                        )}
-                    </div>
-                  ))}
-                </Presence>
-              </div>
-            ) : (
-              <EmptyState icon="people" title="没有成员">
-                <p>成员列表暂时为空。</p>
-              </EmptyState>
-            )}
-          </section>
-          <section className="settings-card">
-            <div className="section-heading">
-              <h2>安装应用</h2>
-              <span>{installState.installed ? '已安装' : '可选'}</span>
-            </div>
-            {installState.installed ? (
-              <p>友间已作为独立应用安装在当前设备。</p>
-            ) : installState.promptEvent ? (
-              <>
-                <p>安装后可以从桌面直接打开，并使用已缓存的应用外壳。</p>
-                <button
-                  className="button button--primary button--full"
-                  onClick={() => {
-                    setInstallError(false);
-                    void promptPwaInstall().catch(() => setInstallError(true));
-                  }}
-                >
-                  安装友间
-                </button>
-              </>
-            ) : isIos ? (
-              <p>在 Safari 中点按“分享”，再选择“添加到主屏幕”。</p>
-            ) : (
-              <p>
-                当前浏览器尚未提供安装入口；可在浏览器菜单中查找“安装应用”。
-              </p>
-            )}
-            <Presence>
-              {installError && (
-                <div
-                  className="inline-notice inline-notice--error"
-                  role="alert"
-                >
-                  安装提示未能打开，请通过浏览器菜单重试。
-                </div>
-              )}
-            </Presence>
-            <small>应用版本 {packageInfo.version}</small>
-          </section>
-          <FocusHealthPolicyInfo />
-          <section className="settings-card">
-            <h2>关于身份</h2>
-            <p>
-              匿名身份只保存在当前设备。清除浏览器数据、更换设备或删除 PWA
-              数据后无法恢复。
-            </p>
-            <div className="legal-links">
-              <a href={appPath('identity.html')}>身份与数据说明</a>
-              <a href={appPath('privacy.html')}>隐私说明</a>
-            </div>
-            <button
-              className="button button--secondary button--full"
-              disabled={createTransferCode.isPending}
-              onClick={() => createTransferCode.mutate()}
-            >
-              {createTransferCode.isPending ? '正在生成…' : '生成身份迁移码'}
-            </button>
-            <button
-              className="button button--secondary button--full"
-              disabled={createRecoveryCodes.isPending}
-              onClick={() => createRecoveryCodes.mutate()}
-            >
-              {createRecoveryCodes.isPending
-                ? '正在生成…'
-                : '生成长期身份恢复码'}
-            </button>
-            <Presence>
-              {createRecoveryCodes.error && (
-                <div
-                  className="inline-notice inline-notice--error"
-                  role="alert"
-                >
-                  {createRecoveryCodes.error.message}
-                </div>
-              )}
-            </Presence>
-            <Presence>
-              {createTransferCode.error && (
-                <div
-                  className="inline-notice inline-notice--error"
-                  role="alert"
-                >
-                  {createTransferCode.error.message}
-                </div>
-              )}
-            </Presence>
-            <button
-              className="button button--text-danger button--full"
-              onClick={() => {
-                leave.reset();
-                setConfirmLeave(true);
-              }}
-            >
-              主动退出友间
-            </button>
-            {data.me.role === 'owner' && (
-              <button
-                className="button button--text-danger button--full"
+          <div className="settings-layout">
+            <nav className="settings-directory" aria-label="设置目录">
+              <a href="#settings-members">邀请与成员</a>
+              <a href="#settings-identity">身份与安全</a>
+              <a href="#settings-device">应用与规则</a>
+              <a
+                href="#settings-danger"
                 onClick={() => {
-                  dissolve.reset();
-                  setConfirmDissolve(true);
+                  const details = document.getElementById(
+                    'settings-danger-details',
+                  );
+                  if (details instanceof HTMLDetailsElement)
+                    details.open = true;
                 }}
               >
-                解散友间
-              </button>
-            )}
-            <button
-              className="button button--text-danger button--full"
-              onClick={() => {
-                setExitError(false);
-                setConfirmExit(true);
-              }}
-            >
-              退出当前设备
-            </button>
-          </section>
+                退出与解散
+              </a>
+            </nav>
+            <div className="settings-sections">
+              <section
+                id="settings-members"
+                className="settings-group"
+                aria-label="邀请与成员"
+                tabIndex={-1}
+              >
+                {data.owner_actions.can_copy_invite && (
+                  <section className="settings-card">
+                    <div className="section-heading">
+                      <h2>邀请链接</h2>
+                      <Icon name="copy" />
+                    </div>
+                    <p>
+                      {invite
+                        ? '明文邀请链接只保存在当前浏览器中。'
+                        : '当前设备没有保存邀请链接，生成新链接会让旧链接立即失效。'}
+                    </p>
+                    <button
+                      className="button button--primary button--full"
+                      onClick={() => void copy()}
+                    >
+                      {copied
+                        ? '已复制'
+                        : invite
+                          ? '复制邀请链接'
+                          : '生成新邀请链接'}
+                    </button>
+                    {invite && (
+                      <button
+                        className="button button--secondary button--full"
+                        onClick={() => void share()}
+                      >
+                        {shared ? '已打开分享' : '分享邀请链接'}
+                      </button>
+                    )}
+                    <Presence>
+                      {copyError && (
+                        <div
+                          className="inline-notice inline-notice--error"
+                          role="alert"
+                        >
+                          无法访问剪贴板，请检查浏览器权限后重试。
+                        </div>
+                      )}
+                    </Presence>
+                    {invite && (
+                      <button
+                        className="button button--text button--full"
+                        onClick={() => {
+                          rotate.reset();
+                          setConfirmRotate(true);
+                        }}
+                      >
+                        轮换邀请链接
+                      </button>
+                    )}
+                  </section>
+                )}
+                <section className="settings-card">
+                  <div className="section-heading">
+                    <h2>成员</h2>
+                    <span>
+                      {data.members.filter((m) => m.status === 'active').length}{' '}
+                      人
+                    </span>
+                  </div>
+                  {data.members.length ? (
+                    <div className="settings-members">
+                      <Presence>
+                        {data.members.map((member) => (
+                          <div key={member.member_id}>
+                            <span className={`avatar avatar--${member.status}`}>
+                              {member.display_name.slice(0, 1)}
+                            </span>
+                            <div>
+                              <strong>{member.display_name}</strong>
+                              <small>
+                                {member.role === 'owner'
+                                  ? '房主'
+                                  : member.status === 'active'
+                                    ? '成员'
+                                    : '已停用'}
+                              </small>
+                            </div>
+                            {member.role !== 'owner' &&
+                              member.status === 'active' &&
+                              (data.owner_actions.can_disable_members ||
+                                data.me.role === 'owner') && (
+                                <details className="settings-member-menu">
+                                  <summary>管理</summary>
+                                  <div className="settings-member-actions">
+                                    {data.owner_actions.can_disable_members && (
+                                      <button
+                                        className="button button--text-danger"
+                                        onClick={() => {
+                                          disable.reset();
+                                          setDisableTarget(member);
+                                        }}
+                                      >
+                                        停用
+                                      </button>
+                                    )}
+                                    {data.me.role === 'owner' && (
+                                      <button
+                                        className="button button--text"
+                                        disabled={
+                                          createMemberRecoveryCode.isPending
+                                        }
+                                        onClick={() =>
+                                          createMemberRecoveryCode.mutate(
+                                            member,
+                                          )
+                                        }
+                                      >
+                                        协助恢复
+                                      </button>
+                                    )}
+                                    {data.me.role === 'owner' && (
+                                      <button
+                                        className="button button--text"
+                                        onClick={() => {
+                                          transfer.reset();
+                                          setTransferTarget(member);
+                                        }}
+                                      >
+                                        转让房主
+                                      </button>
+                                    )}
+                                  </div>
+                                </details>
+                              )}
+                          </div>
+                        ))}
+                      </Presence>
+                    </div>
+                  ) : (
+                    <EmptyState icon="people" title="没有成员">
+                      <p>成员列表暂时为空。</p>
+                    </EmptyState>
+                  )}
+                </section>
+              </section>
+              <section
+                id="settings-identity"
+                className="settings-group"
+                aria-label="身份与安全"
+                tabIndex={-1}
+              >
+                <section className="settings-card">
+                  <h2>身份与安全</h2>
+                  <p className="settings-identity-note">
+                    更换设备或清除数据前，请先保存长期身份恢复码。
+                  </p>
+                  <p>
+                    匿名身份只保存在当前设备。清除浏览器数据、更换设备或删除 PWA
+                    数据后无法恢复。
+                  </p>
+                  <div className="legal-links">
+                    <a href={appPath('identity.html')}>身份与数据说明</a>
+                    <a href={appPath('privacy.html')}>隐私说明</a>
+                  </div>
+                  <button
+                    className="button button--secondary button--full"
+                    disabled={createTransferCode.isPending}
+                    onClick={() => createTransferCode.mutate()}
+                  >
+                    {createTransferCode.isPending
+                      ? '正在生成…'
+                      : '生成身份迁移码'}
+                  </button>
+                  <button
+                    className="button button--secondary button--full"
+                    disabled={createRecoveryCodes.isPending}
+                    onClick={() => createRecoveryCodes.mutate()}
+                  >
+                    {createRecoveryCodes.isPending
+                      ? '正在生成…'
+                      : '生成长期身份恢复码'}
+                  </button>
+                  <Presence>
+                    {createRecoveryCodes.error && (
+                      <div
+                        className="inline-notice inline-notice--error"
+                        role="alert"
+                      >
+                        {createRecoveryCodes.error.message}
+                      </div>
+                    )}
+                  </Presence>
+                  <Presence>
+                    {createTransferCode.error && (
+                      <div
+                        className="inline-notice inline-notice--error"
+                        role="alert"
+                      >
+                        {createTransferCode.error.message}
+                      </div>
+                    )}
+                  </Presence>
+                </section>
+              </section>
+              <section
+                id="settings-device"
+                className="settings-group"
+                aria-label="应用与规则"
+                tabIndex={-1}
+              >
+                <section className="settings-card">
+                  <div className="section-heading">
+                    <h2>安装应用</h2>
+                    <span>{installState.installed ? '已安装' : '可选'}</span>
+                  </div>
+                  {installState.installed ? (
+                    <p>友间已作为独立应用安装在当前设备。</p>
+                  ) : installState.promptEvent ? (
+                    <>
+                      <p>安装后可以从桌面直接打开，并使用已缓存的应用外壳。</p>
+                      <button
+                        className="button button--primary button--full"
+                        onClick={() => {
+                          setInstallError(false);
+                          void promptPwaInstall().catch(() =>
+                            setInstallError(true),
+                          );
+                        }}
+                      >
+                        安装友间
+                      </button>
+                    </>
+                  ) : isIos ? (
+                    <p>在 Safari 中点按“分享”，再选择“添加到主屏幕”。</p>
+                  ) : (
+                    <p>
+                      当前浏览器尚未提供安装入口；可在浏览器菜单中查找“安装应用”。
+                    </p>
+                  )}
+                  <Presence>
+                    {installError && (
+                      <div
+                        className="inline-notice inline-notice--error"
+                        role="alert"
+                      >
+                        安装提示未能打开，请通过浏览器菜单重试。
+                      </div>
+                    )}
+                  </Presence>
+                  <small>应用版本 {packageInfo.version}</small>
+                </section>
+                <FocusHealthPolicyInfo />
+              </section>
+              <section
+                id="settings-danger"
+                className="settings-group"
+                aria-label="退出与解散"
+                tabIndex={-1}
+              >
+                <details
+                  id="settings-danger-details"
+                  className="settings-danger-details"
+                >
+                  <summary>
+                    退出与解散 <span>谨慎操作</span>
+                  </summary>
+                  <p>退出设备、离开友间和解散空间的影响不同，请确认后操作。</p>
+                  <button
+                    className="button button--text-danger button--full"
+                    onClick={() => {
+                      leave.reset();
+                      setConfirmLeave(true);
+                    }}
+                  >
+                    主动退出友间
+                  </button>
+                  {data.me.role === 'owner' && (
+                    <button
+                      className="button button--text-danger button--full"
+                      onClick={() => {
+                        dissolve.reset();
+                        setConfirmDissolve(true);
+                      }}
+                    >
+                      解散友间
+                    </button>
+                  )}
+                  <button
+                    className="button button--text-danger button--full"
+                    onClick={() => {
+                      setExitError(false);
+                      setConfirmExit(true);
+                    }}
+                  >
+                    退出当前设备
+                  </button>
+                </details>
+              </section>
+            </div>
+          </div>
         </>
       )}
       <Presence>

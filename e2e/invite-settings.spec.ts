@@ -84,6 +84,22 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       0,
     );
 
+    const directory = member.getByRole('navigation', { name: '设置目录' });
+    for (const [label, id] of [
+      ['邀请与成员', 'settings-members'],
+      ['身份与安全', 'settings-identity'],
+      ['应用与规则', 'settings-device'],
+      ['退出与解散', 'settings-danger'],
+    ]) {
+      await directory.getByRole('link', { name: label }).click();
+      await expect(member).toHaveURL(new RegExp(`#${id}$`));
+      await expect(member.locator(`#${id}`)).toBeInViewport();
+    }
+    await expect(member.locator('#settings-danger-details')).toHaveAttribute(
+      'open',
+      '',
+    );
+
     const renamedSpace = `新名字-${suffix}`;
     await owner.goto(`./space/${spaceId}/settings`);
     await owner.getByRole('button', { name: '修改名称' }).click();
@@ -335,6 +351,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     }
 
     await owner.goto(`./space/${spaceId}/settings`);
+    await owner.locator('.settings-member-menu summary').click();
     await owner.getByRole('button', { name: '停用' }).click();
     await owner.getByRole('button', { name: '确认停用' }).click();
     await expect(owner.getByText('已停用', { exact: true })).toBeVisible({
@@ -346,6 +363,10 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       member.getByRole('heading', { name: '成员身份已停用' }),
     ).toBeVisible({ timeout: 30_000 });
 
+    await owner
+      .getByRole('navigation', { name: '设置目录' })
+      .getByRole('link', { name: '退出与解散' })
+      .click();
     await owner.getByRole('button', { name: '退出当前设备' }).click();
     await owner.getByRole('button', { name: '确认退出' }).click();
     await expect(owner).toHaveURL(/\/(?:Youjian\/?)?$/, { timeout: 30_000 });
