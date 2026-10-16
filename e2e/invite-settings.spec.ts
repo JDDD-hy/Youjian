@@ -214,10 +214,22 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     );
     await owner.goto(`./space/${spaceId}/goals`);
     await expect(
-      owner.getByRole('heading', { name: '挑灯夜战' }),
+      owner.getByRole('button', { name: '查看挑灯夜战资料卡' }),
     ).toBeVisible();
+    await expect(owner.getByRole('heading', { name: '挑灯夜战' })).toHaveCount(
+      0,
+    );
     await expect(owner.getByText(/累计达成/)).toHaveCount(0);
     await owner.getByRole('tab', { name: '共同成就' }).click();
+    const achievementTrigger = owner.getByRole('button', {
+      name: '查看7 日相伴资料卡',
+    });
+    await expect(achievementTrigger).toBeVisible();
+    await expect(owner.locator('.achievement-grid')).toHaveCSS(
+      'grid-template-columns',
+      /(?:\S+ ){3}\S+/,
+    );
+    await achievementTrigger.click();
     const achievementHeading = owner.getByRole('heading', {
       name: '7 日相伴',
     });
@@ -232,17 +244,10 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     await expect
       .poll(() =>
         goldCard.evaluate(
-          (element) => getComputedStyle(element).borderBottomColor,
-        ),
-      )
-      .toBe('rgb(232, 224, 211)');
-    await expect
-      .poll(() =>
-        goldCard.evaluate(
           (element) => getComputedStyle(element).borderBottomWidth,
         ),
       )
-      .toBe('1px');
+      .toBe('0px');
     await expect
       .poll(() =>
         goldCard.evaluate((element) => getComputedStyle(element).animationName),
@@ -263,19 +268,20 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       .toEqual({ width: '27px', height: '27px' });
     await expect(
       goldCard.locator('.achievement-card__earned-stages'),
-    ).toHaveCSS('font-size', '11.2px');
+    ).toHaveCSS('font-size', '12.8px');
     const conditionTrigger = achievementHeading
       .locator('..')
       .getByRole('button', { name: /达成条件/ });
     await conditionTrigger.hover();
     await expect(conditionTrigger.getByRole('tooltip')).toBeVisible();
-    const participantTrigger = achievementHeading
-      .locator('..')
-      .getByRole('button', { name: /一起达成的人/ });
-    await participantTrigger.hover();
-    await expect(participantTrigger.getByRole('tooltip')).toContainText(
-      `房主-${suffix}（7 天）、成员-${suffix}（7 天）`,
-    );
+    await expect(
+      goldCard.locator('.achievement-profile__participants'),
+    ).toContainText(`房主-${suffix}（7 天）、成员-${suffix}（7 天）`);
+    await owner.getByRole('button', { name: '关闭成就资料卡' }).click();
+    await expect(achievementTrigger).toBeFocused();
+    await achievementTrigger.click();
+    await owner.keyboard.press('Escape');
+    await expect(achievementHeading).toHaveCount(0);
     await owner.getByRole('button', { name: '发起提案' }).click();
     await owner.getByRole('button', { name: '下一步' }).click();
     await owner.getByLabel('目标值（分钟）').fill('30');
