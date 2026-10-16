@@ -184,9 +184,10 @@ async function main() {
     await page.goto(`/space/${spaceId}/goals`, {
       waitUntil: 'domcontentloaded',
     });
-    const card = page
-      .locator('article.achievement-card')
-      .filter({ hasText: decisiveTitle });
+    const card = page.getByRole('button', {
+      name: `查看${decisiveTitle}资料卡`,
+      exact: true,
+    });
     await card.waitFor({ state: 'visible', timeout: 30_000 });
     assert.match(
       (await card.getAttribute('class')) ?? '',
@@ -202,10 +203,16 @@ async function main() {
       achievementTabRequests.length > 0,
       'personal achievement tab read is sent by the browser',
     );
+    await card.click();
+    await page
+      .getByRole('heading', { name: decisiveTitle, exact: true })
+      .waitFor();
+    await page.getByRole('button', { name: '关闭成就资料卡' }).click();
     await page.getByRole('tab', { name: '\u5171\u540c\u6210\u5c31' }).click();
-    const sharedCard = page
-      .locator('article.achievement-card')
-      .filter({ hasText: sharedTitle });
+    const sharedCard = page.getByRole('button', {
+      name: `查看${sharedTitle}资料卡`,
+      exact: true,
+    });
     await sharedCard.waitFor({ state: 'visible', timeout: 30_000 });
     assert.match(
       (await sharedCard.getAttribute('class')) ?? '',

@@ -27,25 +27,12 @@ import { useAutoAcknowledge } from '../hooks/useAutoAcknowledge';
 import { AccessibleModal } from '../components/AccessibleModal';
 import { EmptyState, ErrorState, PageLoader } from '../components/AsyncState';
 import { Icon } from '../components/Icons';
-import { AchievementIcon } from '../components/AchievementIcon';
-import {
-  achievementCondition,
-  achievementDisplayDate,
-  achievementSeries,
-  achievementStages,
-  achievementTitle,
-  achievementTier,
-  isAchievementUnlocked,
-  visibleAchievementEvents,
-} from '../domain/achievementTier';
-import { uniqueAchievementParticipantCount } from '../domain/achievementParticipants';
+import { isAchievementUnlocked } from '../domain/achievementTier';
 import { proposalSentence, proposedPeriodLabel } from '../lib/goalPreview';
 import { assertRouteSpace } from '../lib/spaceBoundary';
-import {
-  achievementReadIntentKey,
-  isPersonalAchievementType,
-} from '../domain/achievementCatalog';
+import { achievementReadIntentKey } from '../domain/achievementCatalog';
 import { parseAchievementListResponse } from '../domain/achievementContract';
+import { AchievementCard } from '../components/goals/AchievementCard';
 import { GoalCard } from '../components/goals/GoalCard';
 import { GoalHistorySection } from '../components/goals/GoalHistorySection';
 import { ProposalHistorySection } from '../components/goals/ProposalHistorySection';
@@ -55,78 +42,6 @@ interface GoalsSnapshot {
   active_goals: Goal[];
   scheduled_goals: Goal[];
   pending_proposals: GoalProposal[];
-}
-
-function AchievementCard({ item }: { item: Achievement }) {
-  const tier = achievementTier(item);
-  const participants = item.participants ?? [];
-  const eventGroups = visibleAchievementEvents(item).filter(
-    (event) => event.participants?.length,
-  );
-  const participantCount = uniqueAchievementParticipantCount({
-    ...item,
-    participants,
-    events: eventGroups,
-  });
-  const participantText = eventGroups.length
-    ? eventGroups
-        .map(
-          (event) =>
-            `${formatLocalDateTime(event.earned_at)}：${event.participants!.map((participant) => participant.display_name).join('、')}`,
-        )
-        .join('\n')
-    : item.participants_recorded
-      ? participants
-          .map((participant) =>
-            participant.participation_days > 1
-              ? `${participant.display_name}（${participant.participation_days} 天）`
-              : participant.display_name,
-          )
-          .join('、')
-      : '早期成就的参与成员记录暂缺';
-  return (
-    <article
-      className={`achievement-card achievement-card--${tier}${!item.seen ? ' achievement--new' : ''}`}
-    >
-      <span
-        className={`achievement-card__icon achievement-card__icon--${tier}`}
-      >
-        <AchievementIcon item={item} />
-      </span>
-      <h3>{achievementTitle(item)}</h3>
-      {achievementSeries(item) && (
-        <small className="achievement-card__series">
-          系列 · {achievementSeries(item)}
-        </small>
-      )}
-      {achievementStages(item) && (
-        <small className="achievement-card__earned-stages">
-          已获得：{achievementStages(item)}
-        </small>
-      )}
-      <p>{formatLocalDateTime(achievementDisplayDate(item))}</p>
-      <button
-        type="button"
-        className="achievement-condition"
-        aria-label={`达成条件：${achievementCondition(item)}`}
-      >
-        达成条件
-        <span role="tooltip">{achievementCondition(item)}</span>
-      </button>
-      {!isPersonalAchievementType(item.achievement_type) && (
-        <button
-          type="button"
-          className="achievement-tooltip-trigger"
-          aria-label={`一起达成的人：${participantText}`}
-        >
-          <Icon name="people" /> 一起达成的人（
-          {participantCount || '—'}）
-          <span role="tooltip">{participantText}</span>
-        </button>
-      )}
-      {!item.seen && <small>新成就，已自动记录为已读</small>}
-    </article>
-  );
 }
 
 export function GoalsPage() {

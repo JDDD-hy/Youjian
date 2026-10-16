@@ -19,17 +19,18 @@
   font-size: 0.8rem;
 }
 .goals-page .achievement-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px 12px;
 }
 .goals-page .achievement-card {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
   align-content: start;
   gap: 3px 12px;
-  padding: 20px 0;
+  padding: 10px 0;
   border: 0;
-  border-bottom: 1px solid var(--border);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -41,7 +42,7 @@
   }
 }
 .goals-page .achievement-card > * {
-  grid-column: 2;
+  grid-column: 1;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -51,7 +52,6 @@
   --plaque-shade: #b5936e;
   --plaque-engrave: #80613d;
   grid-column: 1;
-  grid-row: 1 / 10;
   align-self: start;
   position: relative;
   width: 54px;
@@ -229,6 +229,75 @@
 }
 @media (max-width: 560px) {
   .goals-page .achievement-grid {
-    grid-template-columns: minmax(0, 1fr);
+    gap: 18px 6px;
+  }
+}
+.goals-page .achievement-card__series {
+  margin-top: 10px;
+}
+.goals-page .achievement--new > .achievement-card__icon::after {
+  box-shadow: 3px -6px 0 -2px var(--primary-deep);
+}
+.goals-page .modal-backdrop:has(.achievement-profile) {
+  align-items: center;
+}
+.goals-page .dialog:has(.achievement-profile) {
+  width: min(410px, calc(100vw - 32px));
+  overflow: visible;
+  background: var(--surface);
+  border-radius: 18px;
+}
+.goals-page .achievement-profile {
+  position: relative;
+  padding: 10px 0 0;
+  gap: 12px;
+  text-align: left;
+  justify-items: stretch;
+}
+.goals-page .achievement-profile > .achievement-card__icon {
+  justify-self: center;
+  width: 72px;
+  height: 86px;
+}
+.goals-page .achievement-profile h3,
+.goals-page .achievement-profile .achievement-card__series {
+  text-align: center;
+}
+.goals-page .achievement-profile h3 {
+  font-size: 1.2rem;
+}
+.goals-page .achievement-profile .achievement-card__series {
+  margin: 0 0 8px;
+}
+.goals-page .achievement-profile p,
+.goals-page .achievement-profile small {
+  font-size: 0.8rem;
+  white-space: pre-line;
+}
+.goals-page .achievement-profile__close {
+  position: absolute;
+  top: -20px;
+  right: -12px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 24px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .goals-page [data-presence='present'] .dialog:has(.achievement-profile) {
+    animation: achievement-profile-in 280ms cubic-bezier(0.2, 0.7, 0.3, 1)
+      backwards;
+  }
+  @keyframes achievement-profile-in {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 }
