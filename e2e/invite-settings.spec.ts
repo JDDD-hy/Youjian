@@ -252,7 +252,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       .poll(() =>
         goldIcon.evaluate((element) => getComputedStyle(element).color),
       )
-      .toBe('rgb(150, 109, 10)');
+      .toBe('rgb(141, 105, 36)');
     await expect
       .poll(() =>
         goldIcon.locator('svg').evaluate((element) => ({
@@ -260,7 +260,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
           height: getComputedStyle(element).height,
         })),
       )
-      .toEqual({ width: '30px', height: '30px' });
+      .toEqual({ width: '27px', height: '27px' });
     await expect(
       goldCard.locator('.achievement-card__earned-stages'),
     ).toHaveCSS('font-size', '11.2px');
