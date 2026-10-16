@@ -103,9 +103,7 @@ export function AchievementCondition({ text }: { text: string }) {
         {!revealed && <canvas ref={canvas} aria-hidden="true" />}
       </div>
       {!revealed && (
-        <div className="achievement-condition-reveal__caption">
-          在细尘上左右抹动
-        </div>
+        <div className="achievement-condition-reveal__caption">拂尘见字</div>
       )}
     </section>
   );
