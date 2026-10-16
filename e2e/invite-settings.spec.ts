@@ -65,6 +65,9 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       timeout: 30_000,
     });
 
+    await expect(
+      member.getByRole('heading', { name: spaceName, exact: true }),
+    ).toBeVisible();
     await member.goto(`./space/${spaceId}/settings`);
     await expect(member.getByRole('heading', { name: '设置' })).toBeVisible();
     await expect(
@@ -228,19 +231,23 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
     const goldIcon = goldCard.locator('.achievement-card__icon--gold');
     await expect
       .poll(() =>
-        goldCard.evaluate((element) => getComputedStyle(element).borderColor),
+        goldCard.evaluate(
+          (element) => getComputedStyle(element).borderBottomColor,
+        ),
       )
-      .toBe('rgb(150, 109, 10)');
+      .toBe('rgb(232, 224, 211)');
     await expect
       .poll(() =>
-        goldCard.evaluate((element) => getComputedStyle(element).borderWidth),
+        goldCard.evaluate(
+          (element) => getComputedStyle(element).borderBottomWidth,
+        ),
       )
-      .toBe('2px');
+      .toBe('1px');
     await expect
       .poll(() =>
         goldCard.evaluate((element) => getComputedStyle(element).animationName),
       )
-      .toContain('achievement-breathe');
+      .not.toContain('achievement-breathe');
     await expect
       .poll(() =>
         goldIcon.evaluate((element) => getComputedStyle(element).color),
@@ -253,7 +260,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
           height: getComputedStyle(element).height,
         })),
       )
-      .toEqual({ width: '36px', height: '36px' });
+      .toEqual({ width: '30px', height: '30px' });
     await expect(
       goldCard.locator('.achievement-card__earned-stages'),
     ).toHaveCSS('font-size', '11.2px');

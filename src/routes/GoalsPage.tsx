@@ -1,3 +1,4 @@
+import '../styles/goals.css';
 import { Presence } from '../components/Presence';
 import {
   useInfiniteQuery,
@@ -223,9 +224,8 @@ export function GoalsPage() {
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['goals', spaceId] });
     void queryClient.invalidateQueries({ queryKey: ['home', spaceId] });
-    void queryClient.invalidateQueries({ queryKey: ['goal-history', spaceId] });
     void queryClient.invalidateQueries({
-      queryKey: ['goal-proposal-history', spaceId],
+      queryKey: ['goal-numbered-history', spaceId],
     });
     void queryClient.invalidateQueries({
       queryKey: ['nav-notifications', spaceId],
@@ -485,14 +485,16 @@ export function GoalsPage() {
               </Presence>
             </div>
           </section>
-          <GoalHistorySection
-            spaceId={spaceId}
-            maintenanceVersion={goals.dataUpdatedAt}
-          />
-          <ProposalHistorySection
-            spaceId={spaceId}
-            maintenanceVersion={goals.dataUpdatedAt}
-          />
+          <div className="goal-history-entries">
+            <GoalHistorySection
+              spaceId={spaceId}
+              maintenanceVersion={goals.dataUpdatedAt}
+            />
+            <ProposalHistorySection
+              spaceId={spaceId}
+              maintenanceVersion={goals.dataUpdatedAt}
+            />
+          </div>
           <section className="section achievement-section">
             <div className="section-heading">
               <h2>成就</h2>

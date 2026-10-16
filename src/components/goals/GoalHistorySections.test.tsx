@@ -1,6 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Goal, GoalProposal } from '../../domain/types';
 import { GoalHistorySection } from './GoalHistorySection';
 import { ProposalHistorySection } from './ProposalHistorySection';
@@ -60,99 +66,120 @@ function mount() {
   return { client, view: render(sections(client, 1)) };
 }
 
-describe('goal history sections', () => {
+describe('goal history panels', () => {
+  afterEach(cleanup);
   beforeEach(() => {
     rpc.mockReset();
     rpc.mockImplementation(
-      (name: string, params: { cursor: string | null }) => {
-        if (name === 'list_goal_history')
-          return Promise.resolve({
-            data: {
-              space_id: 'space',
-              items: params.cursor
-                ? [goal(4), goal(5)]
-                : [goal(1), goal(2), goal(3)],
-              next_cursor: params.cursor ? null : 'goal-next',
-            },
-          });
-        if (name === 'list_goal_proposal_history')
-          return Promise.resolve({
-            data: {
-              space_id: 'space',
-              items: params.cursor
-                ? [proposal(5)]
-                : [proposal(1), proposal(2), proposal(3), proposal(4)],
-              next_cursor: params.cursor ? null : 'proposal-next',
-            },
-          });
-        throw new Error(`Unexpected RPC ${name}`);
-      },
+      (_name: string, params: { kind: string; page: number }) =>
+        Promise.resolve({
+          data: {
+            space_id: 'space',
+            page: params.page,
+            page_count: 2,
+            total_count: 5,
+            items:
+              params.kind === 'goals'
+                ? params.page === 1
+                  ? [goal(1), goal(2), goal(3)]
+                  : [goal(4), goal(5)]
+                : params.page === 1
+                  ? [proposal(1), proposal(2), proposal(3), proposal(4)]
+                  : [proposal(5)],
+          },
+        }),
     );
   });
-
-  it('loads three goals and four proposals per cursor page', async () => {
+  it('loads only the opened panel and only the requested page', async () => {
     const { view } = mount();
-
-    await screen.findByRole('button', { name: '加载更多目标' });
-    expect(view.container.querySelectorAll('.goal-card')).toHaveLength(3);
-    expect(view.container.querySelectorAll('.proposal-card')).toHaveLength(4);
-    expect(rpc).toHaveBeenCalledWith('list_goal_history', {
+    expect(rpc).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '过往目标 ›' }));
+    await waitFor(() =>
+      expect(view.container.querySelectorAll('.goal-card')).toHaveLength(3),
+    );
+    expect(rpc).toHaveBeenCalledWith('list_goal_history_page', {
       space_id: 'space',
+      kind: 'goals',
+      page: 1,
       limit: 3,
-      cursor: null,
     });
-    expect(rpc).toHaveBeenCalledWith('list_goal_proposal_history', {
+    fireEvent.click(screen.getByRole('button', { name: '下一页 ›' }));
+    await waitFor(() =>
+      expect(view.container.querySelectorAll('.goal-card')).toHaveLength(2),
+    );
+    expect(rpc).toHaveBeenLastCalledWith('list_goal_history_page', {
       space_id: 'space',
-      limit: 4,
-      cursor: null,
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '加载更多目标' }));
-    fireEvent.click(screen.getByRole('button', { name: '加载更多提案' }));
-
-    await waitFor(() => {
-      expect(view.container.querySelectorAll('.goal-card')).toHaveLength(5);
-      expect(view.container.querySelectorAll('.proposal-card')).toHaveLength(5);
-    });
-    expect(rpc).toHaveBeenCalledWith('list_goal_history', {
-      space_id: 'space',
+      kind: 'goals',
+      page: 2,
       limit: 3,
-      cursor: 'goal-next',
     });
-    expect(rpc).toHaveBeenCalledWith('list_goal_proposal_history', {
-      space_id: 'space',
-      limit: 4,
-      cursor: 'proposal-next',
-    });
-    expect(
-      screen.queryByRole('button', { name: '加载更多目标' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: '加载更多提案' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '下一页 ›' })).toBeDisabled();
   });
-
-  it('refetches histories only after the maintained snapshot version changes', async () => {
-    const { client, view } = mount();
-    await screen.findByRole('button', { name: '加载更多目标' });
-    expect(
-      rpc.mock.calls.filter(([name]) => name === 'list_goal_history'),
-    ).toHaveLength(1);
-    expect(
-      rpc.mock.calls.filter(([name]) => name === 'list_goal_proposal_history'),
-    ).toHaveLength(1);
-
-    view.rerender(sections(client, 2));
-
-    await waitFor(() => {
-      expect(
-        rpc.mock.calls.filter(([name]) => name === 'list_goal_history'),
-      ).toHaveLength(2);
-      expect(
-        rpc.mock.calls.filter(
-          ([name]) => name === 'list_goal_proposal_history',
-        ),
-      ).toHaveLength(2);
+  it('rejects invalid page input without making a request and accepts a direct jump', async () => {
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: '已结束提案 ›' }));
+    await screen.findByText('共 5 条 · 第 1 / 2 页');
+    const input = screen.getByRole('textbox', { name: '跳转页码' });
+    for (const value of [
+      '',
+      ' ',
+      '0',
+      '-1',
+      '3',
+      '1.5',
+      '1e0',
+      'NaN',
+      'Infinity',
+      'abc',
+      '+1',
+      '0x1',
+      '２',
+      '999999999999999999999',
+    ]) {
+      fireEvent.change(input, { target: { value } });
+      fireEvent.submit(input.closest('form')!);
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    }
+    expect(rpc).toHaveBeenCalledTimes(1);
+    fireEvent.change(input, { target: { value: ' 02 ' } });
+    fireEvent.submit(input.closest('form')!);
+    await screen.findByText('共 5 条 · 第 2 / 2 页');
+    expect(rpc).toHaveBeenLastCalledWith('list_goal_history_page', {
+      space_id: 'space',
+      kind: 'proposals',
+      page: 2,
+      limit: 4,
     });
+  });
+  it('refreshes an open panel after the maintained snapshot changes', async () => {
+    const { client, view } = mount();
+    fireEvent.click(screen.getByRole('button', { name: '过往目标 ›' }));
+    await screen.findByText('共 5 条 · 第 1 / 2 页');
+    view.rerender(sections(client, 2));
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
+  });
+  it('shows empty histories without invalid page numbers', async () => {
+    rpc.mockResolvedValue({
+      data: {
+        space_id: 'space',
+        page: 1,
+        page_count: 1,
+        total_count: 0,
+        items: [],
+      },
+    });
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: '过往目标 ›' }));
+    await screen.findByText('暂无过往目标。');
+    expect(screen.getByRole('button', { name: '下一页 ›' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '‹ 上一页' })).toBeDisabled();
+  });
+  it('shows a retry action when history retrieval fails', async () => {
+    rpc.mockRejectedValueOnce(new Error('offline'));
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: '过往目标 ›' }));
+    await screen.findByRole('heading', { name: '无法加载过往目标' });
+    fireEvent.click(screen.getByRole('button', { name: '重新加载' }));
+    await screen.findByText('共 5 条 · 第 1 / 2 页');
   });
 });

@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(29);
 
 insert into auth.users(id) values
   ('00000000-0000-0000-0000-000000000321'),
@@ -106,8 +106,20 @@ select is(public.list_goal_proposal_history('10000000-0000-0000-0000-00000000032
 select is(jsonb_array_length(public.get_goals_snapshot('10000000-0000-0000-0000-000000000321')#>'{data,history}'), 3, 'legacy snapshot caps goal history at three');
 select is(jsonb_array_length(public.get_goals_snapshot('10000000-0000-0000-0000-000000000321')#>'{data,proposal_history}'), 4, 'legacy snapshot caps proposal history at four');
 
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'goals', 1, 3)#>>'{data,total_count}', '5', 'numbered goal history has an exact total');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'goals', 2, 3)#>>'{data,items,0,target_value}', '2', 'direct jump reuses keyset ordering including timestamp ties');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'proposals', 2, 4)#>>'{data,items,0,target_value}', '11', 'proposal jump returns only requested page');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'goals', 2147483647, 3)#>>'{data,page}', '2', 'very large page safely clamps after history shrinks');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'goals', 0, 3)#>>'{error,code}', 'INVALID_PAGE', 'page zero rejected');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'goals', null, 3)#>>'{error,code}', 'INVALID_PAGE', 'null page rejected');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'bad', 1, 3)#>>'{error,code}', 'INVALID_HISTORY_KIND', 'unknown kind rejected');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'goals', 1, 31)#>>'{error,code}', 'INVALID_LIMIT', 'oversized page rejected');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000322', 'goals', 1, 3)#>>'{error,code}', 'SPACE_ACCESS_DENIED', 'numbered history denies other spaces');
+select is(public.list_goal_history_page('10000000-0000-0000-0000-000000000321', 'proposals', 2, 4)#>>'{data,page_count}', '2', 'partial final page is counted');
+
 reset role;
 select ok(not has_function_privilege('anon', 'public.list_goal_history(uuid,integer,text)', 'EXECUTE'), 'anon cannot execute goal history RPC');
 
+select ok(not has_function_privilege('anon', 'public.list_goal_history_page(uuid,text,integer,integer)', 'EXECUTE'), 'anon cannot execute numbered history RPC');
 select * from finish();
 rollback;
