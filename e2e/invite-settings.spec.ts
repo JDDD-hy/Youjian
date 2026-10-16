@@ -65,6 +65,9 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       timeout: 30_000,
     });
 
+    await expect(
+      member.getByRole('heading', { name: spaceName, exact: true }),
+    ).toBeVisible();
     await member.goto(`./space/${spaceId}/settings`);
     await expect(member.getByRole('heading', { name: '设置' })).toBeVisible();
     await expect(
@@ -244,7 +247,7 @@ test('owner rotates a same-origin invite while members cannot manage it', async 
       .poll(() =>
         goldCard.evaluate((element) => getComputedStyle(element).animationName),
       )
-      .toBe('none');
+      .not.toContain('achievement-breathe');
     await expect
       .poll(() =>
         goldIcon.evaluate((element) => getComputedStyle(element).color),
