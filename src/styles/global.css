@@ -2527,6 +2527,142 @@ a:focus-visible {
 }
 
 /* Statistics share the page surface; the export chooser keeps its own tabs. */
+.settings-page .settings-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.settings-page .settings-room {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-room .detail-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-bottom: 0;
+}
+.settings-room .detail-list > div {
+  padding: 0;
+  border: 0;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.8rem;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 32px;
+}
+.settings-directory {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  display: grid;
+  gap: 6px;
+  padding-top: 24px;
+}
+.settings-directory a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.settings-directory a:hover,
+.settings-directory a:focus-visible {
+  color: var(--text);
+  background: var(--primary-soft);
+}
+.settings-group {
+  min-width: 0;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 24px;
+}
+.settings-group > .settings-card + .settings-card {
+  margin-top: 24px;
+}
+.settings-group .button--full {
+  width: auto;
+  max-width: 100%;
+  margin-right: 8px;
+}
+.settings-identity-note {
+  padding-left: 12px;
+  border-left: 3px solid var(--primary);
+}
+.settings-danger-details > summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.settings-danger-details > summary span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+.settings-danger-details > p {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+.settings-danger-details .button--full {
+  display: block;
+}
+.settings-member-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+.settings-member-menu summary {
+  min-height: 44px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 0.84rem;
+}
+.settings-member-actions {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 150px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  z-index: 3;
+}
+.settings-member-actions .button {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.settings-members > div > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 639px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .settings-directory {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    gap: 4px;
+  }
+}
+
 .stats-toolbar {
   display: flex;
   align-items: center;

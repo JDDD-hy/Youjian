@@ -55,12 +55,17 @@ test('owner transfers ownership, former owner leaves, and new owner dissolves', 
     });
 
     await owner.goto(`./space/${spaceId}/settings`);
+    await owner.locator('.settings-member-menu summary').click();
     await owner.getByRole('button', { name: '转让房主' }).click();
     await owner.getByRole('button', { name: '确认转让' }).click();
     await expect(owner.getByText('成员', { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     });
 
+    await owner
+      .getByRole('navigation', { name: '设置目录' })
+      .getByRole('link', { name: '退出与解散' })
+      .click();
     await owner.getByRole('button', { name: '主动退出友间' }).click();
     await owner.getByRole('button', { name: '确认退出友间' }).click();
     await expect(owner).toHaveURL(/\/(?:Youjian)?\/?$/, { timeout: 30_000 });
@@ -82,6 +87,10 @@ test('owner transfers ownership, former owner leaves, and new owner dissolves', 
     await expect(
       member.getByText('房主', { exact: true }).first(),
     ).toBeVisible();
+    await member
+      .getByRole('navigation', { name: '设置目录' })
+      .getByRole('link', { name: '退出与解散' })
+      .click();
     await member.getByRole('button', { name: '解散友间' }).click();
     await member.getByRole('button', { name: '确认永久解散' }).click();
     await expect(member).toHaveURL(/\/(?:Youjian)?\/?$/, { timeout: 30_000 });
